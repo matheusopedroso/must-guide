@@ -19,7 +19,10 @@ const list = useTemplateRef('list');
 
 const results = computed(() => {
   const q = normalizeName(term.value);
-  return props.trophies.filter((t) => t.id !== props.exclude && (!q || normalizeName(t.name).includes(q)));
+  // Acha também pelo nome em inglês (útil seguindo guias gringos)
+  return props.trophies.filter(
+    (t) => t.id !== props.exclude && (!q || normalizeName(`${t.name} ${t.nameEn ?? ''}`).includes(q)),
+  );
 });
 
 watch(results, () => (active.value = 0));

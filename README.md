@@ -73,7 +73,7 @@ Em produção o Hosting guarda as respostas na CDN (`s-maxage`), então a maiori
 | Rota | Retorno | Cache (navegador / CDN) |
 |---|---|---|
 | `GET /api/trophies/titles` | jogos com troféus da conta do NPSSO | 5 min / sem CDN |
-| `GET /api/trophies/list/:npId?service=` | grupos + troféus (pt-BR) de qualquer jogo | 1 h / 24 h |
+| `GET /api/trophies/list/:npId?service=` | grupos + troféus (pt-BR, com `nameEn` em inglês) de qualquer jogo | 1 h / 24 h |
 | `GET /api/trophies/progress/:npId?service=` | conquistados, data e raridade na conta (`null` se não tem o jogo) | 1 min / sem CDN |
 
 Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO` vale ~2 meses:

@@ -40,6 +40,11 @@ const earnedLabel = computed(() => (props.stats?.earned ? `Conquistado em ${form
 // Vídeo: YouTube toca dentro do app; outros links abrem em nova aba
 const videoOpen = ref(false);
 const isYoutubeVideo = computed(() => !!parseYoutube(props.note.video));
+// Nome original em inglês, só quando for diferente do português
+const nameEn = computed(() => {
+  const en = props.trophy.nameEn?.trim();
+  return en && en.toLowerCase() !== props.trophy.name?.trim().toLowerCase() ? en : '';
+});
 const tipLabel = computed(() => (hasTip.value ? 'Editar como conseguir' : 'Como conseguir'));
 // Seção do meio = guia do troféu: só aparece se foi preenchido (ou está sendo editado)
 const hasBody = computed(() => hasTip.value || editingTip.value || editingDetails.value);
@@ -61,7 +66,10 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
       </div>
 
       <div class="trophy__title d-flex flex-column gap-1 min-w-0">
-        <h4 class="trophy__name spoil" @click="reveal">{{ trophy.name || 'Troféu oculto' }}</h4>
+        <h4 class="trophy__name spoil" @click="reveal">
+          {{ trophy.name || 'Troféu oculto' }}
+          <span v-if="nameEn" class="trophy__name-en" lang="en">({{ nameEn }})</span>
+        </h4>
         <p v-if="trophy.detail" class="trophy__detail spoil" @click="reveal">{{ trophy.detail }}</p>
 
         <p v-if="citedBy.length" class="d-flex align-center flex-wrap gap-1 text-xs text-subtle mt-1">
@@ -205,6 +213,11 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
   &__title {
     grid-area: name;
     align-self: center;
+  }
+
+  &__name-en {
+    font-weight: 400;
+    color: var(--text-subtle);
   }
 
   &__name {

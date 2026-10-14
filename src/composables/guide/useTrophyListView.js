@@ -53,8 +53,10 @@ export function useTrophyListView({ list, progress, getNote }) {
   const sorts = computed(() => available(SORTS));
   const activeSort = computed(() => sorts.value.find((s) => s.id === sort.value) ?? SORTS[0]);
 
-  // Texto fixo de cada troféu (nome + descrição) normalizado uma vez por lista
-  const baseText = computed(() => new Map(list.value.trophies.map((t) => [t.id, normalizeName(`${t.name} ${t.detail}`)])));
+  // Texto fixo de cada troféu (nome em PT e EN + descrição) normalizado uma vez por lista
+  const baseText = computed(
+    () => new Map(list.value.trophies.map((t) => [t.id, normalizeName(`${t.name} ${t.nameEn ?? ''} ${t.detail}`)])),
+  );
 
   const query = computed(() => normalizeName(search.value));
   const matches = (t) => {

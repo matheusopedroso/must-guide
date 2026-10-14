@@ -42,15 +42,19 @@ export function createTrophyService(client) {
   async function trophyList(npId, service) {
     if (!NP_ID_PATTERN.test(npId)) throw httpError(400, 'Código inválido. Formato: NPWR12345_00.');
 
-    // Grupos (nomes, ícones, contagem) e troféus de todos os grupos: 2 chamadas em paralelo
+    // Grupos (nomes, ícones, contagem), troféus em português e troféus em inglês (só para os nomes):
+    // 3 chamadas em paralelo — a lista fica 24 h em cache, então isso acontece raramente
+    const trophiesPath = `/npCommunicationIds/${npId}/trophyGroups/all/trophies`;
     const loadAll = (svc) =>
       Promise.all([
         client.get(`/npCommunicationIds/${npId}/trophyGroups`, { npServiceName: svc }),
-        client.get(`/npCommunicationIds/${npId}/trophyGroups/all/trophies`, { npServiceName: svc }),
+        client.get(trophiesPath, { npServiceName: svc }),
+        client.get(trophiesPath, { npServiceName: svc }, { language: 'en-US' }).catch(() => null), // opcional
       ]);
 
     const { service: resolved, data } = await withService(service, loadAll);
-    const [groupsRes, trophiesRes] = data;
+    const [groupsRes, trophiesRes, trophiesEn] = data;
+    const namesEn = new Map((trophiesEn?.trophies ?? []).map((t) => [t.trophyId, t.trophyName ?? '']));
 
     return {
       id: npId,
@@ -70,6 +74,7 @@ export function createTrophyService(client) {
         groupId: t.trophyGroupId,
         type: t.trophyType,
         name: t.trophyName ?? '',
+        nameEn: namesEn.get(t.trophyId) ?? '', // nome original em inglês (busca e referência a guias gringos)
         detail: t.trophyDetail ?? '',
         icon: t.trophyIconUrl ?? null,
         hidden: !!t.trophyHidden,

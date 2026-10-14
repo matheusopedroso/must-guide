@@ -22,7 +22,7 @@ watch(filter, () => rail.value?.reveal());
 <template>
   <div class="d-flex flex-column gap-2">
     <div class="d-flex flex-wrap gap-1">
-      <SearchInput v-model="search" placeholder="Buscar troféu, descrição ou dica" class="toolbar__search flex-1" />
+      <SearchInput v-model="search" placeholder="Buscar troféu (PT ou EN), descrição ou dica" class="toolbar__search flex-1" />
       <select v-model="sort" class="input toolbar__sort" aria-label="Ordenar">
         <option v-for="s in sorts" :key="s.id" :value="s.id">{{ s.label }}</option>
       </select>
