@@ -1,10 +1,18 @@
+import { defineAsyncComponent } from 'vue';
 import { BookOpen, Gem, Lightbulb, PackagePlus, Route, TriangleAlert, Trophy, Wifi } from 'lucide-vue-next';
 
 // Abas do guia. fixed = sempre presente; as demais a pessoa adiciona pelo botão "+ Aba".
 // A ordem aqui é a ordem em que aparecem. Quando uma aba ganhar conteúdo, adicione:
 // component: defineAsyncComponent(() => import('@/components/guide-editor/tabs/XxxTab.vue'))
 export const GUIDE_TABS = [
-  { id: 'trofeus', label: 'Troféus', icon: Trophy, fixed: true, description: 'Lista de troféus do jogo, com dicas de como conseguir cada um.' },
+  {
+    id: 'trofeus',
+    label: 'Troféus',
+    icon: Trophy,
+    fixed: true,
+    description: 'Lista de troféus do jogo, com dicas de como conseguir cada um.',
+    component: defineAsyncComponent(() => import('@/components/guide-editor/tabs/TrophiesTab.vue')),
+  },
   { id: 'guia', label: 'Guia', icon: BookOpen, fixed: true, description: 'Visão geral: dificuldade, tempo estimado, jogadas e roteiro.' },
   { id: 'coletaveis', label: 'Coletáveis', icon: Gem, description: 'Itens colecionáveis por capítulo ou área, com a localização.' },
   { id: 'detonado', label: 'Detonado', icon: Route, description: 'Passo a passo da história, do início ao fim.' },

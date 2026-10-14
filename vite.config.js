@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
-import { gamesApiPlugin } from './vite/gamesApiPlugin.js';
+import { apiPlugin } from './vite/apiPlugin.js';
 
 export default defineConfig({
-  plugins: [vue(), gamesApiPlugin()],
+  plugins: [vue(), apiPlugin()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

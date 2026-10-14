@@ -1,6 +1,6 @@
 # Must Guide
 
-Irmão do Must Watch: jogos (RAWG ou IGDB) + guias de troféus. Construído aos poucos.
+Irmão do Must Watch: jogos (RAWG ou IGDB) + troféus da PSN + guias. Construído aos poucos.
 
 **Stack:** Vue 3 + Vite · Vue Router · SCSS (tokens + utilitárias) · Firebase Hosting + Functions (produção)
 
@@ -9,20 +9,20 @@ Irmão do Must Watch: jogos (RAWG ou IGDB) + guias de troféus. Construído aos 
 ```bash
 npm install
 cd functions && npm install && cd ..
-copy .env.example .env.local   # e coloque a RAWG_API_KEY
+copy .env.example .env.local   # e coloque RAWG_API_KEY e PSN_NPSSO
 npm run dev                    # http://localhost:5173
 npm run dev:host               # idem, acessível pelo celular na mesma rede
 ```
 
-No `npm run dev` não precisa de Firebase: o próprio Vite responde `/api/games/**`
-usando o mesmo código da function (`functions/src/core`). As chaves ficam no `.env.local`
+No `npm run dev` não precisa de Firebase: o próprio Vite responde `/api/games/**` e `/api/trophies/**`
+usando o mesmo código das functions (`functions/src/core`). As chaves ficam no `.env.local`
 sem o prefixo `VITE_`, então nunca vão para o navegador.
 
 ## Estrutura
 
 ```
 must-guide/
-├─ vite/gamesApiPlugin.js      serve /api/games/** no dev (usa functions/src/core)
+├─ vite/apiPlugin.js           serve /api/** no dev (usa functions/src/core)
 ├─ functions/
 │  ├─ .env                     GAMES_PROVIDER=rawg | igdb (vale para dev e produção)
 │  ├─ index.js                 exporta os handlers
@@ -31,23 +31,29 @@ must-guide/
 │     │  ├─ providers/rawg.js  busca, populares e detalhes no RAWG
 │     │  ├─ providers/igdb.js  idem no IGDB (token Twitch em cache)
 │     │  ├─ providers/index.js lista de provedores e os secrets de cada um
-│     │  ├─ gamesApi.js        rotas, validação, cache em memória e Cache-Control
+│     │  ├─ http.js            createApi, parseApiUrl, json, httpError, remember
+│     │  ├─ gamesApi.js        rotas /api/games (popular, search, game)
+│     │  ├─ trophiesApi.js     rotas /api/trophies (titles, list)
+│     │  ├─ psn/auth.js        NPSSO → tokens (refresh automático, login único em paralelo)
+│     │  ├─ psn/client.js      GET autenticado na API de troféus (pt-BR)
+│     │  ├─ psn/trophies.js    jogos da conta + lista de troféus (descobre PS4/PS5)
 │     │  ├─ gameShape.js       formato único de jogo + siglas de plataforma
 │     │  └─ memoryCache.js
 │     ├─ config.js             provedor ativo e opções (região SP)
-│     └─ handlers/games.js     function HTTP (secrets só do provedor ativo)
+│     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
 │  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, GameCover, EmptyState, PageHeader…
 │  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder (abas: componentes por vir)
-│  ├─ composables/             useGameSearch, useGameDetails, useGuideTabs, useQueryParam, useClickOutside, useDebounceFn, useTheme
-│  ├─ services/games.service.js  fetch para /api/games com cache da sessão
-│  ├─ config/                  app, providers, guideTabs (abas fixas e opcionais do guia)
-│  ├─ utils/cover.js           tamanho da capa por provedor
-│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&abas=…&aba=…)
+│  ├─ components/trophies/     PsnTitlePicker, TrophyList, TrophyItem, TrophyCounts
+│  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
+│  ├─ composables/             useAsyncState, useGameSearch, useGameDetails, useGuideTabs, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ services/                api.js (cliente com cache da sessão), games.service, trophies.service
+│  ├─ config/                  app, providers, guideTabs, trophies
+│  ├─ utils/                   cover.js (capa por provedor), text.js (comparar nomes de jogos)
+│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&abas=…&aba=…&psn=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
-└─ firebase.json               Hosting + rewrite /api/games/** → function "games"
+└─ firebase.json               Hosting + rewrites /api/games/** e /api/trophies/** → functions
 ```
 
 ## API de jogos
@@ -60,7 +66,18 @@ must-guide/
 
 Em produção o Hosting guarda as respostas na CDN (`s-maxage`), então a maioria das visitas nem chega à function.
 
-## Trocar de provedor
+## API de troféus (PSN)
+
+| Rota | Retorno | Cache (navegador / CDN) |
+|---|---|---|
+| `GET /api/trophies/titles` | jogos com troféus da conta do NPSSO | 5 min / sem CDN |
+| `GET /api/trophies/list/:npId?service=` | grupos + troféus (pt-BR) de qualquer jogo | 1 h / 24 h |
+
+Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO` vale ~2 meses:
+logado em playstation.com, abra https://ca.account.sony.com/api/v1/ssocookie e copie o `npsso`.
+Em produção: `firebase functions:secrets:set PSN_NPSSO`.
+
+## Trocar de provedor de jogos
 
 | Provedor | Chaves | Observações |
 |---|---|---|

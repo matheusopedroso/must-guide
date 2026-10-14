@@ -2,7 +2,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { BASE_OPTIONS, GAMES_PROVIDER } from '../config.js';
 import { PROVIDERS } from '../core/providers/index.js';
-import { createGamesApi, parseGamesUrl } from '../core/gamesApi.js';
+import { createGamesApi } from '../core/gamesApi.js';
+import { parseApiUrl } from '../core/http.js';
 
 // Só os secrets do provedor ativo são declarados (e exigidos no deploy)
 const { create, secrets: secretNames } = PROVIDERS[GAMES_PROVIDER];
@@ -14,7 +15,7 @@ const api = createGamesApi(create((name) => secrets[name].value()));
 export const games = onRequest({ ...BASE_OPTIONS, secrets: Object.values(secrets) }, async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Método não permitido.' });
 
-  const { route, query } = parseGamesUrl(req.originalUrl ?? req.url);
-  const { status, body, headers } = await api.handle(route, query);
+  const { route, id, query } = parseApiUrl(req.originalUrl ?? req.url, '/api/games');
+  const { status, body, headers } = await api.handle(route, { id, query });
   res.set(headers).status(status).json(body);
 });
