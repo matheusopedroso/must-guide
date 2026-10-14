@@ -53,7 +53,21 @@ export const GUIDE_TABS = [
   { id: 'perdiveis', label: 'Perdíveis', icon: TriangleAlert, description: 'Troféus e itens que deixam de ser possíveis depois de certo ponto.' },
   { id: 'online', label: 'Online', icon: Wifi, description: 'Troféus online: requisitos, dicas e se os servidores ainda funcionam.' },
   { id: 'dlc', label: 'DLCs', icon: PackagePlus, description: 'Troféus e conteúdo das expansões.' },
-  { id: 'dicas', label: 'Dicas', icon: Lightbulb, description: 'Truques, builds e atalhos que facilitam a platina.' },
+  {
+    id: 'dicas',
+    label: 'Dicas',
+    icon: Lightbulb,
+    description: 'Truques, builds e atalhos que facilitam a platina.',
+    component: SectionsTab,
+    sections: {
+      key: 'tips',
+      unit: 'Dica',
+      numbered: false,
+      titlePlaceholder: 'Título (ex.: Melhor build, Farm de dinheiro)',
+      bodyPlaceholder: 'Explique a dica: o que fazer, onde e por que ajuda. Digite @ para citar um troféu…',
+      emptyText: 'Truques, builds e atalhos que facilitam a platina. Cada dica tem um texto e, se quiser, os troféus que ela ajuda a pegar.',
+    },
+  },
 ];
 
 export const DEFAULT_TAB = GUIDE_TABS[0].id;

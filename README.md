@@ -133,7 +133,7 @@ Classes de texto das páginas de detalhe em `src/styles/components/_detail-page.
 No celular (rota com `meta.immersive`): sem a barra de navegação do topo, a imagem do jogo nítida (1280px) na largura
 da tela até o alto, voltar/compartilhar redondos por cima e a PageBar completa só depois de rolar — como no Must Watch.
 
-## Guia e Roadmap (abas de seções)
+## Guia, Roadmap e Dicas (abas de seções)
 
 As duas abas usam o mesmo modelo, configurado em `src/config/guideTabs.js` (`sections`: onde guardar, nome da
 seção, numerada ou não, textos de ajuda) e as mesmas peças (`SectionsTab` no editor, `SectionsView` na leitura,
@@ -143,6 +143,7 @@ seção, numerada ou não, textos de ajuda) e as mesmas peças (`SectionsTab` no
 |---|---|---|---|
 | **Guia** (fixa) | `guide` | Seção (Introdução, Dicas gerais…) | só o título |
 | **Roadmap** (opcional) | `roadmap` | Etapa | "Etapa 1: título" |
+| **Dicas** (opcional) | `tips` | Dica (Melhor build, Farm de dinheiro…) | só o título |
 
 Roadmap: a platina dividida em **etapas** (como o roadmap do PSNProfiles):
 cada etapa tem título, texto corrido (mesmo editor do "Como conseguir": negrito, listas, links e `@` para citar
@@ -163,7 +164,7 @@ Formato (`src/utils/guideDraft.js`):
 { gameId, game, status: 'draft' | 'published', publishedAt, tabs: [], versions: [{ id, name, platform, service }],
   trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } },
   stats: { difficulty, playthroughs, hours },
-  guide: [{ id, title, body, trophies }], roadmap: [{ id, title, body, trophies }], updatedAt }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
+  guide: [{ id, title, body, trophies }], roadmap: […], tips: […], updatedAt }   // mesmo formato nas 3   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
 ```
 
 - `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).

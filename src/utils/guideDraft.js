@@ -16,6 +16,7 @@ export const createDraft = (game) => ({
   stats: { difficulty: 0, playthroughs: 0, hours: 0 }, // visão geral do guia (0 = não informado) — config/guide
   guide: [], // aba Guia: seções [{ id, title, body (HTML), trophies: [trophyId] }] — utils/sections
   roadmap: [], // aba Roadmap: etapas no mesmo formato
+  tips: [], // aba Dicas: dicas no mesmo formato
   updatedAt: null, // ISO da última edição (decide entre a cópia do navegador e a da nuvem)
 });
 
@@ -36,7 +37,8 @@ export const isBlankDraft = (d) =>
   !Object.keys(d.trophies).length &&
   !Object.values(d.stats).some(Boolean) &&
   !d.guide?.length &&
-  !d.roadmap?.length;
+  !d.roadmap?.length &&
+  !d.tips?.length;
 
 // Mais recente entre duas cópias (pelo updatedAt)
 export const editedAt = (d) => (d?.updatedAt ? Date.parse(d.updatedAt) || 0 : 0);
