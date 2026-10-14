@@ -1,28 +1,24 @@
 <script setup>
-import { computed, watch } from 'vue';
-import { TriangleAlert } from 'lucide-vue-next';
+import { watch } from 'vue';
+import { Trash2, TriangleAlert } from 'lucide-vue-next';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import GamePicker from '@/components/games/GamePicker.vue';
 import SelectedGameCard from '@/components/guide-editor/SelectedGameCard.vue';
+import AddTabMenu from '@/components/guide-editor/AddTabMenu.vue';
 import TabPlaceholder from '@/components/guide-editor/TabPlaceholder.vue';
 import { useQueryParam } from '@/composables/useQueryParam';
 import { useGameDetails } from '@/composables/useGameDetails';
-import { DEFAULT_TAB, GUIDE_TABS } from '@/config/guideTabs';
+import { useGuideTabs } from '@/composables/useGuideTabs';
 import { APP_NAME } from '@/config/app';
 
-// Jogo e aba ficam na URL (?jogo=rawg-123&aba=coletaveis): recarregar ou voltar mantém o estado
+// Jogo e abas ficam na URL (?jogo=rawg-123&abas=coletaveis&aba=coletaveis):
+// recarregar ou voltar mantém o estado
 const gameId = useQueryParam('jogo');
-const tabParam = useQueryParam('aba');
 const { game, loading, error, set: setGame } = useGameDetails(gameId);
-
-const activeTab = computed(() => GUIDE_TABS.find((t) => t.id === tabParam.value) ?? GUIDE_TABS[0]);
-const tab = computed({
-  get: () => activeTab.value.id,
-  set: (id) => (tabParam.value = id === DEFAULT_TAB ? '' : id), // aba padrão não polui a URL
-});
+const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = useGuideTabs();
 
 function selectGame(selected) {
   setGame(selected); // já temos os dados: evita buscar de novo
@@ -52,8 +48,9 @@ watch(game, (g) => {
       <SelectedGameCard :game="game" :loading="loading" class="mb-2" @change="changeGame" />
 
       <template v-if="game">
-        <div class="tabs-bar mb-3">
-          <BaseTabs v-model="tab" :tabs="GUIDE_TABS" label="Seções do guia" id-prefix="guide-tab" />
+        <div class="tabs-bar d-flex align-center gap-1 mb-3">
+          <BaseTabs v-model="active" :tabs="tabs" label="Seções do guia" id-prefix="guide-tab" class="flex-1" />
+          <AddTabMenu v-if="available.length" :tabs="available" class="shrink-0" @add="addTab" />
         </div>
 
         <section
@@ -61,6 +58,12 @@ watch(game, (g) => {
           role="tabpanel"
           :aria-labelledby="`guide-tab-${activeTab.id}`"
         >
+          <div v-if="!activeTab.fixed" class="d-flex justify-end mb-1">
+            <BaseButton :icon="Trash2" size="sm" variant="danger" @click="removeTab(activeTab.id)">
+              Remover aba
+            </BaseButton>
+          </div>
+
           <component :is="activeTab.component" v-if="activeTab.component" :game="game" />
           <TabPlaceholder v-else :tab="activeTab" />
         </section>
@@ -80,5 +83,6 @@ watch(game, (g) => {
   top: $header-height;
   z-index: 10;
   background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
 </style>

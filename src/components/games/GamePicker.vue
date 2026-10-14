@@ -1,10 +1,11 @@
 <script setup>
-import { nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
+import { nextTick, ref, useTemplateRef, watch } from 'vue';
 import { LoaderCircle } from 'lucide-vue-next';
 import SearchInput from '@/components/ui/SearchInput.vue';
 import GameCover from '@/components/ui/GameCover.vue';
 import ProviderCredit from '@/components/ui/ProviderCredit.vue';
 import { useGameSearch } from '@/composables/useGameSearch';
+import { useClickOutside } from '@/composables/useClickOutside';
 
 // "Select" de jogo com pesquisa: abre com os populares e filtra ao digitar
 defineProps({ autofocus: Boolean });
@@ -59,10 +60,7 @@ function onKeydown(e) {
   }
 }
 
-// Fecha ao tocar fora (listener só existe enquanto a lista está aberta)
-const onOutside = (e) => !root.value?.contains(e.target) && close();
-watch(open, (v) => document[v ? 'addEventListener' : 'removeEventListener']('pointerdown', onOutside));
-onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside));
+useClickOutside(root, open, close);
 
 const meta = (g) => [g.year, g.platforms.slice(0, 3).join(' · ')].filter(Boolean).join(' · ');
 </script>

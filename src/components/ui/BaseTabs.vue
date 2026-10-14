@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, useTemplateRef } from 'vue';
+import { nextTick, useTemplateRef, watch } from 'vue';
 
 const model = defineModel({ type: String, required: true });
 const props = defineProps({
@@ -9,6 +9,13 @@ const props = defineProps({
 });
 
 const buttons = useTemplateRef('buttons');
+
+// Aba ativa sempre visível na barra (ex.: aba recém-adicionada no fim da lista)
+watch(model, async (id) => {
+  await nextTick();
+  const i = props.tabs.findIndex((t) => t.id === id);
+  buttons.value?.[i]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+});
 
 // Setas ←/→, Home e End trocam de aba (padrão de acessibilidade de tablist)
 async function onKeydown(e, index) {
@@ -48,8 +55,6 @@ async function onKeydown(e, index) {
 
 <style lang="scss" scoped>
 .tabs {
-  border-bottom: 1px solid var(--border);
-
   &__item {
     position: relative;
     height: 48px;
@@ -61,21 +66,10 @@ async function onKeydown(e, index) {
     white-space: nowrap;
     transition: color 0.15s;
 
-    // Celular: abas dividem a largura, ícone em cima do texto (cabem as 4 sem rolar)
-    @include down(sm) {
-      flex: 1 1 0;
-      flex-direction: column;
-      justify-content: center;
-      gap: $space-half;
-      height: 56px;
-      padding-inline: 0;
-      font-size: 12px;
-    }
-
     &::after {
       content: '';
       position: absolute;
-      inset: auto space(1) -1px;
+      inset: auto space(1) 0;
       height: 2px;
       border-radius: $r-full;
       background: transparent;

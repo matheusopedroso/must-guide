@@ -40,12 +40,12 @@ must-guide/
 │  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, GameCover, EmptyState, PageHeader…
 │  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/guide-editor/ SelectedGameCard, TabPlaceholder (abas: componentes por vir)
-│  ├─ composables/             useGameSearch, useGameDetails, useQueryParam, useDebounceFn, useTheme
+│  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder (abas: componentes por vir)
+│  ├─ composables/             useGameSearch, useGameDetails, useGuideTabs, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/games.service.js  fetch para /api/games com cache da sessão
-│  ├─ config/                  app, providers, guideTabs (abas do editor)
+│  ├─ config/                  app, providers, guideTabs (abas fixas e opcionais do guia)
 │  ├─ utils/cover.js           tamanho da capa por provedor
-│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
+│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&abas=…&aba=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
 └─ firebase.json               Hosting + rewrite /api/games/** → function "games"
 ```
