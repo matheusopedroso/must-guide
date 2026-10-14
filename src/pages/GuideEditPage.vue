@@ -86,7 +86,7 @@ watch(game, (g) => {
             </BaseButton>
           </div>
 
-          <component :is="activeTab.component" v-if="activeTab.component" :game="game" />
+          <component :is="activeTab.component" v-if="activeTab.component" :key="activeTab.id" :tab="activeTab" :game="game" />
           <TabPlaceholder v-else :tab="activeTab" />
         </section>
       </template>

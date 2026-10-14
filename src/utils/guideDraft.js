@@ -14,7 +14,8 @@ export const createDraft = (game) => ({
   versions: [], // listas de troféus da PSN: [{ id, name, platform, service }] — a 1ª é a principal
   trophies: {}, // anotações por trophyId no formato de EMPTY_NOTE (config/trophies), só as preenchidas
   stats: { difficulty: 0, playthroughs: 0, hours: 0 }, // visão geral do guia (0 = não informado) — config/guide
-  roadmap: [], // etapas da platina: [{ id, title, body (HTML), trophies: [trophyId] }] — utils/roadmap
+  guide: [], // aba Guia: seções [{ id, title, body (HTML), trophies: [trophyId] }] — utils/sections
+  roadmap: [], // aba Roadmap: etapas no mesmo formato
   updatedAt: null, // ISO da última edição (decide entre a cópia do navegador e a da nuvem)
 });
 
@@ -34,6 +35,7 @@ export const isBlankDraft = (d) =>
   !d.tabs.length &&
   !Object.keys(d.trophies).length &&
   !Object.values(d.stats).some(Boolean) &&
+  !d.guide?.length &&
   !d.roadmap?.length;
 
 // Mais recente entre duas cópias (pelo updatedAt)

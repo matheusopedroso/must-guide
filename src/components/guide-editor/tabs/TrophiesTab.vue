@@ -15,7 +15,7 @@ import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
 import { fetchTrophyList } from '@/services/trophies.service';
 import { compareVersions } from '@/utils/trophies';
 
-defineProps({ game: { type: Object, required: true } });
+defineProps({ game: { type: Object, required: true }, tab: { type: Object, default: null } });
 
 const { draft } = useGuideDraft();
 const { getNote, updateNote, backlinks } = useTrophyNotes(draft);
