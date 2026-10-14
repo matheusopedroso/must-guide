@@ -1,7 +1,6 @@
 <script setup>
 import { Moon, Plus, Sun } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import AppLogo from './AppLogo.vue';
 import { useTheme } from '@/composables/useTheme';
 
 const { theme, toggle } = useTheme();
@@ -10,8 +9,9 @@ const { theme, toggle } = useTheme();
 <template>
   <header class="header">
     <div class="container container-header d-flex align-center gap-2 h-100">
-      <RouterLink to="/" class="shrink-0" aria-label="Must Guide — início">
-        <AppLogo :height="48" />
+      <RouterLink to="/" class="d-flex align-center gap-1 shrink-0">
+        <img src="/favicon.svg" alt="" width="28" height="28" />
+        <span class="logo serif">Must Guide</span>
       </RouterLink>
 
       <div class="d-flex align-center gap-1 ml-auto">
@@ -37,5 +37,9 @@ const { theme, toggle } = useTheme();
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-size: 19px;
 }
 </style>

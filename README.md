@@ -43,7 +43,7 @@ must-guide/
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
 │  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, GameCover, EmptyState…
-│  ├─ components/layout/       AppHeader, AppLogo
+│  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyToolbar, TrophyGuideSummary, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
@@ -52,7 +52,6 @@ must-guide/
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (rascunho no navegador)
 │  ├─ config/                  app, providers, guideTabs, trophies, editor (botões do Pell)
 │  ├─ utils/                   cover, text, trophies, guideDraft, html (filtro de HTML do editor), trophyRef, url
-│  ├─ assets/brand/logo.js     paths do logo (usados pelo AppLogo)
 │  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
 └─ firebase.json               Hosting + rewrites /api/games/** e /api/trophies/** → functions
@@ -106,19 +105,6 @@ para um botão novo, informe `result()` e, se tiver estado ligado/desligado, `st
 `<a href="#trofeu-ID" data-trophy="ID" data-type="gold" class="trophy-ref" contenteditable="false">Nome</a>`.
 Na leitura, tocar no chip rola até o troféu (tira o filtro) e destaca. Vale nas versões PS4/PS5 (mesmo `trophyId`).
 Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado das anotações em `useTrophyNotes` → `backlinks`).
-
-## Marca (logo, ícones, compartilhamento)
-
-| Arquivo | Uso |
-|---|---|
-| `public/brand/logo.svg` · `logo-dark.svg` · `logo-mono.svg` | logo vetorizado (cores · fundo escuro · uma cor) |
-| `public/brand/mark.svg` | símbolo (só o "G") |
-| `public/favicon.svg` · `favicon.ico` (16/32/48) | favicon |
-| `public/apple-touch-icon.png` (180) · `public/icons/*` (192, 512, maskable) | tela inicial / app instalado (`manifest.webmanifest`) |
-| `public/og-image.jpg` (1200×630) | prévia ao compartilhar o link (`og:image`) |
-| `src/components/layout/AppLogo.vue` | logo no app, cores pelo tema (`--logo-primary`, `--logo-accent`) |
-
-Cores: terracota `#C96442` (escuro: `#D97757`) e laranja `#FF914D`. A URL do site para as tags de compartilhamento fica em `.env` (`VITE_SITE_URL`).
 
 ## Dica ao passar o mouse
 
