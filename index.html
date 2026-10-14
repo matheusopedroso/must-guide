@@ -3,9 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Must Guide — guias de troféus para a sua platina</title>
+    <meta name="description" content="Guias de troféus da PSN: dicas de como conseguir, perdíveis, online e roteiro para a sua platina." />
     <meta name="theme-color" content="#FAF9F5" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#262624" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Ícones (gerados do logo — public/brand) -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Compartilhamento (WhatsApp, redes sociais). URL do site em .env (VITE_SITE_URL) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Must Guide" />
+    <meta property="og:title" content="Must Guide — guias de troféus para a sua platina" />
+    <meta property="og:description" content="Troféus da PSN, dicas, perdíveis e roteiro — num só lugar." />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Logo do Must Guide" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.jpg" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://media.rawg.io" />
@@ -13,7 +35,6 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap"
     />
-    <title>Must Guide</title>
     <script>
       // Aplica o tema salvo antes do primeiro paint (evita piscar)
       try { const t = localStorage.getItem('mg-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
