@@ -1,10 +1,9 @@
 <script setup>
 import { computed } from 'vue';
-import { CirclePlay, Link as LinkIcon, Trophy } from 'lucide-vue-next';
+import { Trophy } from 'lucide-vue-next';
 import RatingInput from '@/components/ui/RatingInput.vue';
 import { DIFFICULTY_LABELS, DIFFICULTY_MAX, RARITY_LABELS, TROPHY_MOMENT_MAP, TROPHY_TYPE_MAP } from '@/config/trophies';
 import { formatRate } from '@/utils/trophies';
-import { isYoutube } from '@/utils/url';
 
 // Rodapé do card: etiquetas "Rótulo: valor" (só o que existe). Slot "before": itens no começo (ex.: badges)
 const props = defineProps({
@@ -40,23 +39,11 @@ const moment = computed(() => TROPHY_MOMENT_MAP[props.note.when]?.label ?? '');
       <span class="tag__label">Dificuldade:</span>
       <RatingInput :model-value="note.difficulty" :max="DIFFICULTY_MAX" readonly label="Dificuldade" />
     </span>
-    <a v-if="note.video" :href="note.video" target="_blank" rel="noopener noreferrer" class="tag tag--link">
-      <component :is="isYoutube(note.video) ? CirclePlay : LinkIcon" :size="14" :stroke-width="1.75" />
-      {{ isYoutube(note.video) ? 'Ver vídeo' : 'Abrir link' }}
-    </a>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .tag--chapter {
   max-width: 260px;
-}
-
-.tag--link {
-  color: var(--accent);
-
-  &:hover {
-    background: var(--surface-hover);
-  }
 }
 </style>

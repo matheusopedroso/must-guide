@@ -3,6 +3,7 @@ import { onBeforeUnmount, watch } from 'vue';
 import { X } from 'lucide-vue-next';
 import BaseButton from './BaseButton.vue';
 
+// Janela sobre a página (no celular sobe de baixo). Fecha no X, no Esc ou tocando fora.
 const open = defineModel({ type: Boolean, default: false });
 defineProps({
   title: { type: String, default: '' },

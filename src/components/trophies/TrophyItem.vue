@@ -1,14 +1,16 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { Check, EyeOff, MessageSquareText, SlidersHorizontal } from 'lucide-vue-next';
+import { Check, CirclePlay, EyeOff, Link as LinkIcon, MessageSquareText, SlidersHorizontal } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import TrophyMetaTags from './TrophyMetaTags.vue';
 import TrophyDetailsEditor from './TrophyDetailsEditor.vue';
 import TrophyTip from './TrophyTip.vue';
+import VideoModal from '@/components/ui/VideoModal.vue';
 import { TROPHY_FLAGS } from '@/config/trophies';
 import { formatEarnedAt, formatEarnedAtFull } from '@/utils/trophies';
 import { hasRichContent } from '@/utils/html';
 import { trophyAnchorId } from '@/utils/trophyRef';
+import { parseYoutube } from '@/utils/url';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 
 // Card do troféu em 3 partes: topo (ícone, nome, descrição, ações) · meio (guia, se preenchido) · rodapé (badges e etiquetas)
@@ -35,6 +37,9 @@ const reveal = () => blurred.value && (revealed.value = true);
 const hasTip = computed(() => hasRichContent(props.note.tip));
 const flags = computed(() => TROPHY_FLAGS.filter((f) => props.note[f.id]));
 const earnedLabel = computed(() => (props.stats?.earned ? `Conquistado em ${formatEarnedAtFull(props.stats.earnedAt)}` : ''));
+// Vídeo: YouTube toca dentro do app; outros links abrem em nova aba
+const videoOpen = ref(false);
+const isYoutubeVideo = computed(() => !!parseYoutube(props.note.video));
 const tipLabel = computed(() => (hasTip.value ? 'Editar como conseguir' : 'Como conseguir'));
 // Seção do meio = guia do troféu: só aparece se foi preenchido (ou está sendo editado)
 const hasBody = computed(() => hasTip.value || editingTip.value || editingDetails.value);
@@ -75,6 +80,28 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
       </div>
 
       <div class="trophy__actions d-flex gap-1">
+        <template v-if="note.video">
+          <BaseButton
+            v-if="isYoutubeVideo"
+            :icon="CirclePlay"
+            icon-only
+            size="sm"
+            class="trophy__action is-filled"
+            aria-label="Ver vídeo"
+            data-tooltip="Ver vídeo"
+            @click="videoOpen = true"
+          />
+          <BaseButton
+            v-else
+            :icon="LinkIcon"
+            icon-only
+            size="sm"
+            :href="note.video"
+            class="trophy__action is-filled"
+            aria-label="Abrir link de referência"
+            data-tooltip="Abrir link"
+          />
+        </template>
         <BaseButton
           :icon="SlidersHorizontal"
           icon-only
@@ -98,6 +125,8 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
         />
       </div>
     </header>
+
+    <VideoModal v-if="videoOpen" v-model="videoOpen" :url="note.video" :title="trophy.name || 'Vídeo'" />
 
     <!-- Meio: o guia do troféu (só quando preenchido ou em edição) -->
     <div v-if="hasBody" class="trophy__body p-2 border-top d-flex flex-column gap-2">
