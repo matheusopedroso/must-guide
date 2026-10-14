@@ -43,7 +43,7 @@ const PLAY_ROWS = [
 </script>
 
 <template>
-  <div class="overview d-flex flex-column gap-5">
+  <div class="overview d-flex flex-column gap-3">
     <div class="overview__grid">
       <!-- Sobre o jogo + ficha -->
       <div class="d-flex flex-column gap-3 min-w-0">
@@ -118,8 +118,8 @@ const PLAY_ROWS = [
       </aside>
     </div>
 
-    <!-- Troféus que pedem atenção -->
-    <section v-for="f in summary.flags" :key="f.id" class="d-flex flex-column gap-2">
+    <!-- Troféus que pedem atenção: um cartão por marcação, no mesmo fundo do "Para platinar" -->
+    <section v-for="f in summary.flags" :key="f.id" class="surface radius-2 p-2 d-flex flex-column gap-2">
       <h2 class="section-heading d-flex align-center gap-1">
         <span class="badge" :class="`badge--${f.tone}`"><component :is="f.icon" :size="14" :stroke-width="2" /></span>
         {{ f.label }} <span class="text-subtle fw-500">{{ f.trophies.length }}</span>
@@ -143,6 +143,7 @@ const PLAY_ROWS = [
 <style lang="scss" scoped>
 .overview {
   &__grid {
+    margin-bottom: space(2);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: space(3);
