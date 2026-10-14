@@ -118,9 +118,14 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
       </TrophyMetaTags>
 
       <!-- Conquistado: separado, no canto direito -->
-      <span v-if="stats?.earned" class="tag trophy__earned shrink-0">
-        <Check :size="14" :stroke-width="2.5" />
-        <span class="tag__label">Conquistado:</span> {{ formatEarnedAt(stats.earnedAt) }}
+      <span
+        v-if="stats?.earned"
+        class="tag trophy__earned shrink-0 tooltip-left"
+        tabindex="0"
+        data-tooltip="Conquistado"
+        :aria-label="`Conquistado em ${formatEarnedAt(stats.earnedAt)}`"
+      >
+        <Check :size="14" :stroke-width="2.5" /> {{ formatEarnedAt(stats.earnedAt) }}
       </span>
     </footer>
   </li>

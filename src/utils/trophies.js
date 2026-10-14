@@ -1,7 +1,8 @@
 import { normalizeName } from './text';
 
 const rateFmt = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
-const dateFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+// Data curta (09/10/2026): o rodapé do troféu tem pouco espaço
+const dateFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 export const formatRate = (rate) => `${rateFmt.format(rate)}%`;
 export const formatEarnedAt = (iso) => (iso ? dateFmt.format(new Date(iso)) : '');
