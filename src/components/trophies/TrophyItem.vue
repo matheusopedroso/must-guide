@@ -6,7 +6,7 @@ import TrophyMetaTags from './TrophyMetaTags.vue';
 import TrophyDetailsEditor from './TrophyDetailsEditor.vue';
 import TrophyTip from './TrophyTip.vue';
 import { TROPHY_FLAGS } from '@/config/trophies';
-import { formatEarnedAt } from '@/utils/trophies';
+import { formatEarnedAt, formatEarnedAtFull } from '@/utils/trophies';
 import { hasRichContent } from '@/utils/html';
 import { trophyAnchorId } from '@/utils/trophyRef';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
@@ -34,6 +34,7 @@ const reveal = () => blurred.value && (revealed.value = true);
 
 const hasTip = computed(() => hasRichContent(props.note.tip));
 const flags = computed(() => TROPHY_FLAGS.filter((f) => props.note[f.id]));
+const earnedLabel = computed(() => (props.stats?.earned ? `Conquistado em ${formatEarnedAtFull(props.stats.earnedAt)}` : ''));
 const tipLabel = computed(() => (hasTip.value ? 'Editar como conseguir' : 'Como conseguir'));
 // Seção do meio = guia do troféu: só aparece se foi preenchido (ou está sendo editado)
 const hasBody = computed(() => hasTip.value || editingTip.value || editingDetails.value);
@@ -45,7 +46,7 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
     <header class="trophy__head p-2">
       <div
         class="trophy__icon radius-1"
-        :title="stats?.earned ? `Conquistado em ${formatEarnedAt(stats.earnedAt)}` : ''"
+        :title="earnedLabel"
         @click="reveal"
       >
         <img v-if="trophy.icon" :src="trophy.icon" alt="" loading="lazy" decoding="async" class="spoil" />
@@ -122,8 +123,8 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
         v-if="stats?.earned"
         class="tag trophy__earned shrink-0 tooltip-left"
         tabindex="0"
-        data-tooltip="Conquistado"
-        :aria-label="`Conquistado em ${formatEarnedAt(stats.earnedAt)}`"
+        :data-tooltip="earnedLabel"
+        :aria-label="earnedLabel"
       >
         <Check :size="14" :stroke-width="2.5" /> {{ formatEarnedAt(stats.earnedAt) }}
       </span>
