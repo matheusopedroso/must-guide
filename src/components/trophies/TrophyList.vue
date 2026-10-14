@@ -44,6 +44,7 @@ async function goTo(id) {
 }
 
 provideTrophyContext({ trophies: computed(() => props.list.trophies), goTo });
+defineExpose({ goTo }); // ex.: a Visão geral do guia leva até um troféu
 
 const showGroups = computed(() => props.list.groups.length > 1);
 const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);

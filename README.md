@@ -44,14 +44,14 @@ must-guide/
 │     ├─ auth.js               requireAdmin (token do Firebase com a claim admin)
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
-│  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), DropdownMenu, IconSelect, NumberStepper, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal (pilha, foco, arrastar p/ fechar), VideoModal (YouTube no app), GameCover, EmptyState…
+│  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), PageBar (barra flutuante: voltar · título · compartilhar), PillTabs (abas em pílula), ActionIcon (ação em círculo), DropdownMenu, IconSelect, NumberStepper, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal (pilha, foco, arrastar p/ fechar), VideoModal (YouTube no app), GameCover, EmptyState…
 │  ├─ components/layout/       AppNav (barra flutuante do topo), MobileTabBar (barra de baixo no celular), AccountMenu, AccountSummary, AccountAvatar, AppLogo
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
-│  ├─ components/guides/       GuideCard (Meus guias), GuideTrophiesView (troféus em modo leitura)
+│  ├─ components/guides/       GuideCard (Meus guias), GuideHero, GuideOverview (aba Visão geral), GuideTrophiesView (aba Troféus, leitura)
 │  ├─ components/guide-editor/ PublishControl (Publicar / voltar para rascunho), SaveStatus, GuideStatsSummary, SelectedGameCard, GuideStats (resumo) + GuideStatsModal (edição), DifficultyPicker, DifficultyBadge, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
 │  ├─ composables/guide/       useGuideDraft (rascunho + nuvem, publicar), useGuide (leitura), useMyGuides (lista), useTrophyData (lista/progresso da versão), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
-│  ├─ composables/             useNavVisibility (barras somem ao rolar), useIsStuck (sticky grudado), useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ composables/             useNavVisibility (barras somem ao rolar), useIsStuck (sticky grudado), useScrolledPast, useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (navegador), guides (Firestore), firebase/ (app, auth)
 │  ├─ config/                  app, navigation (abas da navegação), firebase, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
 │  ├─ utils/                   cover, date, share (link/copiar), text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
@@ -120,6 +120,16 @@ O SDK só é baixado se o aparelho já teve login ou ao clicar em **Entrar** (qu
 
 Publicar exige o admin logado e a lista de troféus vinculada. Depois de publicado, as edições continuam
 salvando sozinhas e aparecem na hora para quem lê. O progresso da conta (conquistados) só aparece para o admin.
+
+### Página de leitura (mesmo formato da página de título do Must Watch)
+
+`GuideViewPage` = `PageBar` (gruda abaixo da navegação; no celular entra só depois de rolar) → `GuideHero`
+(fundo do jogo desfocado atrás da navegação, capa, selos, título, meta, visão geral na linha das "notas",
+ações em círculo e o seu progresso) → `PillTabs` (Visão geral · Troféus, em `?aba=`).
+**Visão geral** (`GuideOverview`): sobre o jogo + ficha (`.facts`) à esquerda, cartão "Para platinar" à direita
+(lugar do "Onde assistir") e os troféus que pedem atenção (Perdíveis, História, Online) — tocar leva ao troféu.
+Classes de texto das páginas de detalhe em `src/styles/components/_detail-page.scss` (`.kicker`, `.section-heading`, `.facts`, `.label-row`, `.pill`).
+No celular: sem capa, fundo nítido no alto e texto centralizado.
 
 ## Rascunho do guia
 

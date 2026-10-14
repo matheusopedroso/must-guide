@@ -1,0 +1,190 @@
+<script setup>
+import { computed, ref } from 'vue';
+import { Clock, Gauge, Repeat, Trophy } from 'lucide-vue-next';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import ProgressBar from '@/components/ui/ProgressBar.vue';
+import TrophyCounts from '@/components/trophies/TrophyCounts.vue';
+import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
+import { TROPHY_FLAGS } from '@/config/trophies';
+import { hasRichContent } from '@/utils/html';
+import { formatDate } from '@/utils/date';
+
+// Aba "Visão geral" da leitura (como a aba Detalhes do Must Watch):
+// sobre o jogo + ficha à esquerda, cartão "Para platinar" à direita e, embaixo,
+// os troféus que pedem atenção (Perdíveis, História, Online). Tocar num troféu abre a aba Troféus nele.
+const props = defineProps({
+  guide: { type: Object, required: true },
+  game: { type: Object, default: null },
+  list: { type: Object, default: null }, // lista de troféus da versão aberta (pode estar carregando)
+  getNote: { type: Function, required: true },
+});
+defineEmits(['open-trophy', 'open-trophies']);
+
+const expanded = ref(false);
+const stats = computed(() => props.guide.stats ?? {});
+
+// Uma passada: dicas escritas + troféus de cada marcação
+const summary = computed(() => {
+  const trophies = props.list?.trophies ?? [];
+  const byFlag = Object.fromEntries(TROPHY_FLAGS.map((f) => [f.id, []]));
+  let tips = 0;
+  for (const t of trophies) {
+    const note = props.getNote(t.id);
+    if (hasRichContent(note.tip)) tips++;
+    for (const f of TROPHY_FLAGS) if (note[f.id]) byFlag[f.id].push(t);
+  }
+  return { total: trophies.length, tips, flags: TROPHY_FLAGS.map((f) => ({ ...f, trophies: byFlag[f.id] })).filter((f) => f.trophies.length) };
+});
+
+const PLAY_ROWS = [
+  { id: 'playthroughs', icon: Repeat, label: 'Jogadas', format: (n) => `${n} ${n > 1 ? 'jogadas' : 'jogada'}` },
+  { id: 'hours', icon: Clock, label: 'Tempo', format: (n) => `~${n} h` },
+];
+</script>
+
+<template>
+  <div class="overview d-flex flex-column gap-5">
+    <div class="overview__grid">
+      <!-- Sobre o jogo + ficha -->
+      <div class="d-flex flex-column gap-3 min-w-0">
+        <div class="d-flex flex-column gap-2">
+          <p class="kicker">Sobre o jogo</p>
+          <div v-if="game?.genres?.length" class="d-flex flex-wrap gap-1">
+            <span v-for="g in game.genres.slice(0, 4)" :key="g" class="pill">{{ g }}</span>
+          </div>
+          <template v-if="game?.summary">
+            <p class="overview__summary" :class="{ 'line-clamp-5': !expanded }">{{ game.summary }}</p>
+            <button v-if="game.summary.length > 360" type="button" class="link-btn text-sm fw-600 align-self-start" @click="expanded = !expanded">
+              {{ expanded ? 'Mostrar menos' : 'Ler mais' }}
+            </button>
+          </template>
+          <p v-else-if="game" class="text-muted text-sm">Sem descrição do jogo.</p>
+        </div>
+
+        <div class="label-row">
+          <span class="kicker">Versões</span>
+          <div class="d-flex flex-wrap gap-1">
+            <span v-for="(v, i) in guide.versions" :key="v.id" class="pill" :title="v.name">
+              <strong>{{ v.platform || v.id }}</strong> {{ i === 0 && guide.versions.length > 1 ? '· principal' : '' }}
+            </span>
+          </div>
+        </div>
+
+        <dl class="facts">
+          <div v-if="list">
+            <dt>Troféus</dt>
+            <dd class="d-flex align-center flex-wrap gap-2">{{ summary.total }} <TrophyCounts :counts="list.counts" /></dd>
+          </div>
+          <div v-if="list">
+            <dt>Dicas escritas</dt>
+            <dd>{{ summary.tips }} de {{ summary.total }}</dd>
+          </div>
+          <div v-if="game?.year">
+            <dt>Lançamento</dt>
+            <dd>{{ game.year }}</dd>
+          </div>
+          <div v-if="game?.platforms?.length">
+            <dt>Plataformas do jogo</dt>
+            <dd>{{ game.platforms.join(' · ') }}</dd>
+          </div>
+          <div v-if="guide.publishedAt && guide.status === 'published'">
+            <dt>Publicado em</dt>
+            <dd>{{ formatDate(guide.publishedAt) }}</dd>
+          </div>
+          <div v-if="guide.updatedAt">
+            <dt>Atualizado em</dt>
+            <dd>{{ formatDate(guide.updatedAt) }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Para platinar (lugar do "Onde assistir") -->
+      <aside class="card surface radius-2 p-2 d-flex flex-column gap-2">
+        <p class="kicker">Para platinar</p>
+        <div class="card__row d-flex align-center justify-between gap-1">
+          <span class="d-inline-flex align-center gap-1 text-sm text-muted"><Gauge :size="16" /> Dificuldade</span>
+          <DifficultyBadge v-if="stats.difficulty" :value="stats.difficulty" show-label />
+          <span v-else class="text-sm text-subtle">—</span>
+        </div>
+        <div v-for="r in PLAY_ROWS" :key="r.id" class="card__row d-flex align-center justify-between gap-1">
+          <span class="d-inline-flex align-center gap-1 text-sm text-muted"><component :is="r.icon" :size="16" /> {{ r.label }}</span>
+          <span class="text-sm fw-600">{{ stats[r.id] ? r.format(stats[r.id]) : '—' }}</span>
+        </div>
+        <div v-if="list" class="d-flex flex-column gap-1">
+          <span class="text-xs text-muted">Guia: {{ summary.tips }} de {{ summary.total }} troféus com dica</span>
+          <ProgressBar :value="summary.tips" :max="summary.total || 1" />
+        </div>
+        <BaseButton :icon="Trophy" variant="primary" class="w-100" @click="$emit('open-trophies')">Ver troféus</BaseButton>
+      </aside>
+    </div>
+
+    <!-- Troféus que pedem atenção -->
+    <section v-for="f in summary.flags" :key="f.id" class="d-flex flex-column gap-2">
+      <h2 class="section-heading d-flex align-center gap-1">
+        <span class="badge" :class="`badge--${f.tone}`"><component :is="f.icon" :size="14" :stroke-width="2" /></span>
+        {{ f.label }} <span class="text-subtle fw-500">{{ f.trophies.length }}</span>
+      </h2>
+      <div class="d-flex flex-wrap gap-1 text-sm">
+        <a
+          v-for="t in f.trophies"
+          :key="t.id"
+          href="#"
+          class="trophy-ref"
+          :data-type="t.type"
+          @click.prevent="$emit('open-trophy', t.id)"
+        >
+          {{ t.name || 'Troféu oculto' }}
+        </a>
+      </div>
+    </section>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.overview {
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: space(3);
+
+    @include up(md) {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: space(5);
+      align-items: start;
+    }
+  }
+
+  &__summary {
+    color: var(--text-muted);
+    line-height: 1.65;
+    white-space: pre-line;
+  }
+}
+
+.line-clamp-5 {
+  @include clamp-lines(5);
+}
+
+.card {
+  @include up(md) {
+    position: sticky;
+    top: calc(var(--nav-offset) + 160px); // abaixo da PageBar e das abas
+  }
+
+  &__row {
+    min-height: 32px;
+  }
+}
+
+.link-btn {
+  color: var(--accent);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.align-self-start {
+  align-self: flex-start;
+}
+</style>

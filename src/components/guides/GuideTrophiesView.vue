@@ -1,24 +1,35 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { useTemplateRef, watch } from 'vue';
 import { TriangleAlert } from 'lucide-vue-next';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import TrophyHeader from '@/components/trophies/TrophyHeader.vue';
 import TrophyList from '@/components/trophies/TrophyList.vue';
-import { useTrophyData } from '@/composables/guide/useTrophyData';
-import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
-import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
-import { useAuth } from '@/composables/useAuth';
 
-// Troféus do guia em modo leitura: troca de versão (PS4/PS5), busca/filtros e as dicas, sem edição.
-// O progresso da conta (conquistados) só aparece para o admin (rota privada).
-const props = defineProps({ guide: { type: Object, required: true } });
+// Aba "Troféus" da leitura: troca de versão (PS4/PS5), busca/filtros e as dicas, sem edição.
+// Os dados vêm da página (compartilhados com a Visão geral). focus = troféu para rolar até ele.
+const props = defineProps({
+  versions: { type: Array, required: true },
+  active: { type: Object, default: null },
+  list: { type: Object, default: null },
+  progress: { type: Object, default: null },
+  loading: Boolean,
+  error: { type: String, default: '' },
+  getNote: { type: Function, required: true },
+  backlinks: { type: Map, required: true },
+  focus: { type: Number, default: null },
+});
+const emit = defineEmits(['select-version', 'focused']);
 
-const guideRef = computed(() => props.guide);
-const { getNote, backlinks } = useTrophyNotes(guideRef);
-const { versions, active, activeId } = useTrophyVersions(guideRef);
-const { enabled, isAdmin } = useAuth();
-const withProgress = computed(() => !enabled || isAdmin.value);
-const { list, progress, loading, error } = useTrophyData(active, { withProgress });
+const listRef = useTemplateRef('trophyList');
+watch(
+  () => [props.focus, listRef.value],
+  ([id, list]) => {
+    if (id == null || !list) return;
+    list.goTo(id);
+    emit('focused');
+  },
+  { immediate: true, flush: 'post' },
+);
 </script>
 
 <template>
@@ -32,10 +43,10 @@ const { list, progress, loading, error } = useTrophyData(active, { withProgress 
       :progress="progress"
       :loading="loading"
       readonly
-      @select="activeId = $event"
+      @select="$emit('select-version', $event)"
     />
 
     <EmptyState v-if="error" :icon="TriangleAlert" title="Não deu para carregar os troféus" :text="error" />
-    <TrophyList v-else-if="list" :list="list" :progress="progress" :get-note="getNote" :backlinks="backlinks" readonly />
+    <TrophyList v-else-if="list" ref="trophyList" :list="list" :progress="progress" :get-note="getNote" :backlinks="backlinks" readonly />
   </div>
 </template>

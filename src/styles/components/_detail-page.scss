@@ -1,0 +1,78 @@
+@use '../abstracts' as *;
+
+// Peças de texto das páginas de detalhe (mesmos papéis do Must Watch: section-kicker,
+// titulo-secao, ficha-tecnica, credito-linha). Usadas na leitura do guia.
+
+// Rótulo pequeno acima de um bloco ("SOBRE O JOGO", "PARA PLATINAR")
+.kicker {
+  color: var(--text-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+// Título de seção ("Perdíveis", "História"…)
+.section-heading {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+// Ficha: pares rótulo/valor em 2 colunas (1 no celular)
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: space(2) space(3);
+  padding-top: space(2);
+  border-top: 1px solid var(--border);
+
+  @include down(sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  > div {
+    min-width: 0;
+  }
+
+  dt {
+    @extend .kicker;
+    font-size: 10.5px;
+  }
+
+  dd {
+    margin-top: $space-half;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+}
+
+// Linha rótulo + chips ("PLATAFORMAS  PS5 · PS4")
+.label-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: start;
+  gap: space(1) space(2);
+
+  @include down(sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  > .kicker {
+    padding-top: 6px;
+    font-size: 10.5px;
+  }
+}
+
+// Chip de texto neutro (gêneros, plataformas)
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-half;
+  height: 28px;
+  padding-inline: space(1);
+  border: 1px solid var(--border);
+  border-radius: $r-full;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
