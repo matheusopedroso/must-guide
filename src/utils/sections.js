@@ -21,3 +21,11 @@ export function sectionLabel(s, index, cfg) {
 
 // Seções preenchidas de uma aba no guia (a leitura só mostra estas)
 export const filledSections = (guide, key) => (guide?.[key] ?? []).filter(sectionHasContent);
+
+// Palavras para os textos da interface conforme o nome da seção (cfg.unit) e o gênero (cfg.masc):
+// "Troféus desta etapa" / "deste capítulo" · siglas ficam em maiúsculas ("desta DLC")
+export function sectionWords(cfg) {
+  const m = !!cfg.masc;
+  const name = cfg.unit === cfg.unit.toUpperCase() ? cfg.unit : cfg.unit.toLowerCase();
+  return { name, this: m ? 'deste' : 'desta', thisOne: m ? 'este' : 'esta', some: m ? 'algum' : 'alguma', in: m ? 'no' : 'na', of: m ? 'do' : 'da' };
+}

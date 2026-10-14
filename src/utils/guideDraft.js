@@ -1,4 +1,5 @@
 import { EMPTY_NOTE } from '@/config/trophies';
+import { GUIDE_TABS } from '@/config/guideTabs';
 import { hasRichContent } from './html';
 
 // Formato do guia. É o mesmo documento do Firestore (guides/{gameId}) e do rascunho no navegador.
@@ -17,6 +18,11 @@ export const createDraft = (game) => ({
   guide: [], // aba Guia: seções [{ id, title, body (HTML), trophies: [trophyId] }] — utils/sections
   roadmap: [], // aba Roadmap: etapas no mesmo formato
   tips: [], // aba Dicas: dicas no mesmo formato
+  collectibles: [], // Coletáveis · walkthrough: Detonado · missables: Perdíveis · online: Online · dlcs: DLCs (mesmo formato)
+  walkthrough: [],
+  missables: [],
+  online: [],
+  dlcs: [],
   updatedAt: null, // ISO da última edição (decide entre a cópia do navegador e a da nuvem)
 });
 
@@ -30,15 +36,16 @@ export function normalizeDraft(raw, game) {
 export const isEmptyNote = (n) =>
   !n || Object.keys(EMPTY_NOTE).every((key) => (key === 'tip' ? !hasRichContent(n.tip) : !n[key]));
 
+// Campos das abas de seções (config/guideTabs → sections.key)
+const SECTION_KEYS = GUIDE_TABS.filter((t) => t.sections).map((t) => t.sections.key);
+
 // Guia sem nada além do jogo: não vale a pena gravar na nuvem
 export const isBlankDraft = (d) =>
   !d.versions.length &&
   !d.tabs.length &&
   !Object.keys(d.trophies).length &&
   !Object.values(d.stats).some(Boolean) &&
-  !d.guide?.length &&
-  !d.roadmap?.length &&
-  !d.tips?.length;
+  !SECTION_KEYS.some((k) => d[k]?.length);
 
 // Mais recente entre duas cópias (pelo updatedAt)
 export const editedAt = (d) => (d?.updatedAt ? Date.parse(d.updatedAt) || 0 : 0);

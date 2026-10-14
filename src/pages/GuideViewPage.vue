@@ -46,10 +46,12 @@ const { list, progress, loading: listLoading, error: listError } = useTrophyData
 const canEdit = computed(() => !enabled || isAdmin.value || source.value === 'local');
 
 // Abas de seções (Guia, Roadmap…): aparecem se estiverem no guia e tiverem alguma seção preenchida
+// (Perdíveis/Online também aparecem só com troféus marcados na aba Troféus)
+const flaggedBy = (flag) => (flag && list.value ? list.value.trophies.filter((t) => getNote(t.id)[flag]) : []);
 const sectionTabs = computed(() =>
   sectionTabsOf(guide.value)
-    .map((t) => ({ ...t, filled: filledSections(guide.value, t.sections.key) }))
-    .filter((t) => t.filled.length),
+    .map((t) => ({ ...t, filled: filledSections(guide.value, t.sections.key), flagged: flaggedBy(t.sections.flag) }))
+    .filter((t) => t.filled.length || t.flagged.length),
 );
 const activeSectionTab = computed(() => sectionTabs.value.find((t) => t.id === tab.value) ?? null);
 
@@ -144,6 +146,7 @@ async function share() {
           :key="activeSectionTab.id"
           :sections="activeSectionTab.filled"
           :cfg="activeSectionTab.sections"
+          :flagged="activeSectionTab.flagged"
           :list="list"
           :progress="progress"
           @open-trophy="openTrophy"

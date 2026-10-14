@@ -12,7 +12,8 @@ import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useToast } from '@/composables/useToast';
-import { sectionHasContent } from '@/utils/sections';
+import { sectionHasContent, sectionWords } from '@/utils/sections';
+import { TROPHY_FLAGS } from '@/config/trophies';
 
 // Aba de texto em seções no editor (Guia, Roadmap — como o roadmap do PSNProfiles): cada seção tem
 // título, texto corrido e os troféus ligados a ela. A aba diz onde guardar e os textos (config/guideTabs → sections).
@@ -23,7 +24,7 @@ const props = defineProps({
 });
 
 const cfg = computed(() => props.tab.sections);
-const unit = computed(() => cfg.value.unit.toLowerCase());
+const w = computed(() => sectionWords(cfg.value));
 const { draft } = useGuideDraft();
 const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered } = useSections(draft, props.tab.sections.key);
 const { principal } = useTrophyVersions(draft);
@@ -33,6 +34,12 @@ const toast = useToast();
 const trophies = computed(() => list.value?.trophies ?? []);
 const byId = computed(() => new Map(trophies.value.map((t) => [t.id, t])));
 provideTrophyContext({ trophies, goTo: () => {} }); // o "@" do editor cita troféus desta lista
+
+// Abas com marcação (Perdíveis, Online): quantos troféus marcados aparecem sozinhos no topo da leitura
+const flag = computed(() => TROPHY_FLAGS.find((f) => f.id === cfg.value.flag) ?? null);
+const flaggedCount = computed(() =>
+  flag.value ? Object.values(draft.value?.trophies ?? {}).filter((n) => n[flag.value.id]).length : 0,
+);
 
 const coveredCount = computed(() => trophies.value.filter((t) => covered.value.has(t.id)).length);
 
@@ -44,7 +51,7 @@ async function addSection() {
 
 function addMany(id, ids) {
   const n = addTrophies(id, ids);
-  if (ids.length > 1) toast.show(n ? `${n} troféu(s) adicionados.` : `Eles já estavam na ${unit.value}.`, 'success');
+  if (ids.length > 1) toast.show(n ? `${n} troféu(s) adicionados.` : `Eles já estavam ${w.value.in} ${w.value.name}.`, 'success');
 }
 
 // Remover: pede confirmação só se a seção tiver conteúdo
@@ -62,16 +69,24 @@ function confirmRemove() {
 <template>
   <div class="d-flex flex-column gap-2">
     <p v-if="!principal" class="notice text-sm radius-1 p-2">
-      Vincule a lista de troféus na aba Troféus para poder citar e escolher os troféus de cada {{ unit }}.
+      Vincule a lista de troféus na aba Troféus para poder citar e escolher os troféus de cada {{ w.name }}.
+    </p>
+
+    <p v-if="flag" class="notice d-flex align-center flex-wrap gap-1 text-sm radius-1 p-2">
+      <span class="badge" :class="`badge--${flag.tone}`"><component :is="flag.icon" :size="14" /> {{ flag.label }}</span>
+      <span v-if="flaggedCount">
+        {{ flaggedCount }} troféu(s) marcado(s) como {{ flag.label }} aparecem sozinhos no topo desta aba na leitura.
+      </span>
+      <span v-else>Marque os troféus como {{ flag.label }} na aba Troféus (Detalhes) e eles aparecem sozinhos no topo desta aba.</span>
     </p>
 
     <EmptyState v-if="!sections.length" :icon="tab.icon" :title="tab.label" :text="cfg.emptyText">
-      <BaseButton :icon="Plus" variant="primary" @click="addSection">Adicionar {{ unit }}</BaseButton>
+      <BaseButton :icon="Plus" variant="primary" @click="addSection">Adicionar {{ w.name }}</BaseButton>
     </EmptyState>
 
     <template v-else>
       <div v-if="trophies.length" class="d-flex flex-column gap-1">
-        <p class="text-xs text-muted">{{ coveredCount }} de {{ trophies.length }} troféus em alguma {{ unit }}</p>
+        <p class="text-xs text-muted">{{ coveredCount }} de {{ trophies.length }} troféus em {{ w.some }} {{ w.name }}</p>
         <ProgressBar :value="coveredCount" :max="trophies.length" />
       </div>
 
@@ -93,11 +108,11 @@ function confirmRemove() {
         @remove-trophy="removeTrophy(s.id, $event)"
       />
 
-      <BaseButton :icon="Plus" class="align-self-start" @click="addSection">Adicionar {{ unit }}</BaseButton>
+      <BaseButton :icon="Plus" class="align-self-start" @click="addSection">Adicionar {{ w.name }}</BaseButton>
     </template>
 
-    <BaseModal :model-value="!!removing" :title="`Remover ${unit}`" @update:model-value="(v) => !v && (removing = null)">
-      <p class="text-muted">O texto e a lista de troféus desta {{ unit }} serão apagados.</p>
+    <BaseModal :model-value="!!removing" :title="`Remover ${w.name}`" @update:model-value="(v) => !v && (removing = null)">
+      <p class="text-muted">O texto e a lista de troféus {{ w.this }} {{ w.name }} serão apagados.</p>
       <template #footer>
         <span class="flex-1" />
         <BaseButton @click="removing = null">Cancelar</BaseButton>

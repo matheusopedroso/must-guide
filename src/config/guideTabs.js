@@ -6,7 +6,9 @@ import { BookOpen, Gem, Lightbulb, Milestone, PackagePlus, Route, TriangleAlert,
 // component: defineAsyncComponent(() => import('@/components/guide-editor/tabs/XxxTab.vue'))
 //
 // Abas de texto em seções (Guia, Roadmap): `sections` configura o mesmo editor/leitura (SectionsTab/SectionsView).
-//   key: onde ficam no rascunho · unit: nome de cada seção · numbered: "Etapa 1: …" ou só o título
+//   key: onde ficam no rascunho · unit: nome de cada seção · masc: palavra masculina ("deste capítulo")
+//   numbered: "Etapa 1: …" ou só o título · flag: marcação dos troféus (config/trophies → TROPHY_FLAGS) cujos
+//   troféus aparecem sozinhos no topo da aba (Perdíveis, Online)
 const SectionsTab = defineAsyncComponent(() => import('@/components/guide-editor/tabs/SectionsTab.vue'));
 export const GUIDE_TABS = [
   {
@@ -48,11 +50,84 @@ export const GUIDE_TABS = [
       emptyText: 'Divida a platina em etapas (ex.: jogada da história, limpeza, troféus diversos). Cada etapa tem um texto e os troféus que saem nela.',
     },
   },
-  { id: 'coletaveis', label: 'Coletáveis', icon: Gem, description: 'Itens colecionáveis por capítulo ou área, com a localização.' },
-  { id: 'detonado', label: 'Detonado', icon: Route, description: 'Passo a passo da história, do início ao fim.' },
-  { id: 'perdiveis', label: 'Perdíveis', icon: TriangleAlert, description: 'Troféus e itens que deixam de ser possíveis depois de certo ponto.' },
-  { id: 'online', label: 'Online', icon: Wifi, description: 'Troféus online: requisitos, dicas e se os servidores ainda funcionam.' },
-  { id: 'dlc', label: 'DLCs', icon: PackagePlus, description: 'Troféus e conteúdo das expansões.' },
+  {
+    id: 'coletaveis',
+    label: 'Coletáveis',
+    icon: Gem,
+    description: 'Itens colecionáveis por capítulo ou área, com a localização.',
+    component: SectionsTab,
+    sections: {
+      key: 'collectibles',
+      unit: 'Área',
+      numbered: false,
+      titlePlaceholder: 'Área ou capítulo (ex.: Capítulo 3, Floresta de Ezo)',
+      bodyPlaceholder: 'Liste os coletáveis desta área e onde ficam (use a lista numerada). Digite @ para citar um troféu…',
+      emptyText: 'Organize os coletáveis por área ou capítulo, com a localização de cada um e os troféus ligados a eles.',
+    },
+  },
+  {
+    id: 'detonado',
+    label: 'Detonado',
+    icon: Route,
+    description: 'Passo a passo da história, do início ao fim.',
+    component: SectionsTab,
+    sections: {
+      key: 'walkthrough',
+      unit: 'Capítulo',
+      masc: true,
+      numbered: true,
+      titlePlaceholder: 'Nome do capítulo ou missão',
+      bodyPlaceholder: 'Passo a passo deste capítulo: o que fazer, segredos e troféus pelo caminho. Digite @ para citar um troféu…',
+      emptyText: 'O passo a passo da história, capítulo por capítulo, com os troféus que saem em cada um.',
+    },
+  },
+  {
+    id: 'perdiveis',
+    label: 'Perdíveis',
+    icon: TriangleAlert,
+    description: 'Troféus e itens que deixam de ser possíveis depois de certo ponto.',
+    component: SectionsTab,
+    sections: {
+      key: 'missables',
+      unit: 'Seção',
+      numbered: false,
+      flag: 'missable',
+      titlePlaceholder: 'Título (ex.: Antes do capítulo 5, Ponto sem volta)',
+      bodyPlaceholder: 'O que pode ser perdido e até quando dá para pegar. Digite @ para citar um troféu…',
+      emptyText: 'Explique o que pode ser perdido e até quando. Os troféus marcados como Perdível na aba Troféus já aparecem sozinhos no topo.',
+    },
+  },
+  {
+    id: 'online',
+    label: 'Online',
+    icon: Wifi,
+    description: 'Troféus online: requisitos, dicas e se os servidores ainda funcionam.',
+    component: SectionsTab,
+    sections: {
+      key: 'online',
+      unit: 'Seção',
+      numbered: false,
+      flag: 'online',
+      titlePlaceholder: 'Título (ex.: Servidores, Como achar partida)',
+      bodyPlaceholder: 'Requisitos, se os servidores ainda funcionam e como pegar os troféus online. Digite @ para citar um troféu…',
+      emptyText: 'Requisitos e dicas dos troféus online. Os troféus marcados como Online na aba Troféus já aparecem sozinhos no topo.',
+    },
+  },
+  {
+    id: 'dlc',
+    label: 'DLCs',
+    icon: PackagePlus,
+    description: 'Troféus e conteúdo das expansões.',
+    component: SectionsTab,
+    sections: {
+      key: 'dlcs',
+      unit: 'DLC',
+      numbered: false,
+      titlePlaceholder: 'Nome da DLC',
+      bodyPlaceholder: 'Como liberar a DLC, ordem recomendada e dicas dos troféus dela. Digite @ para citar um troféu…',
+      emptyText: 'Uma seção por expansão, com o texto e os troféus dela.',
+    },
+  },
   {
     id: 'dicas',
     label: 'Dicas',

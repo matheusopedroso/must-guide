@@ -5,6 +5,7 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import RefTextEditor from '@/components/trophies/RefTextEditor.vue';
 import TrophyRefPicker from '@/components/trophies/TrophyRefPicker.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
+import { sectionWords } from '@/utils/sections';
 import { useClickOutside } from '@/composables/useClickOutside';
 
 // Uma seção no editor (etapa do Roadmap, seção do Guia): título, texto corrido (cita troféus com @)
@@ -21,7 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['update', 'move', 'remove', 'add-trophies', 'remove-trophy', 'open-trophy']);
 
 const sectionTrophies = computed(() => props.section.trophies.map((id) => props.byId.get(id)).filter(Boolean));
-const unit = computed(() => props.cfg.unit.toLowerCase());
+const w = computed(() => sectionWords(props.cfg));
 
 // Seletor "Adicionar troféu": fica aberto para escolher vários seguidos
 const picking = ref(false);
@@ -38,13 +39,13 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
         :value="section.title"
         class="input section__title"
         :placeholder="cfg.titlePlaceholder"
-        :aria-label="`Título da ${unit}`"
+        :aria-label="`Título ${w.of} ${w.name}`"
         @input="emit('update', { title: $event.target.value })"
       />
       <div class="d-flex gap-1 ml-auto">
-        <BaseButton :icon="ArrowUp" icon-only size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Subir ${unit}`" data-tooltip="Subir" @click="emit('move', -1)" />
-        <BaseButton :icon="ArrowDown" icon-only size="sm" variant="ghost" :disabled="index === total - 1" :aria-label="`Descer ${unit}`" data-tooltip="Descer" @click="emit('move', 1)" />
-        <BaseButton :icon="Trash2" icon-only size="sm" variant="danger" class="tooltip-left" :aria-label="`Remover ${unit}`" :data-tooltip="`Remover ${unit}`" @click="emit('remove')" />
+        <BaseButton :icon="ArrowUp" icon-only size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Subir ${w.name}`" data-tooltip="Subir" @click="emit('move', -1)" />
+        <BaseButton :icon="ArrowDown" icon-only size="sm" variant="ghost" :disabled="index === total - 1" :aria-label="`Descer ${w.name}`" data-tooltip="Descer" @click="emit('move', 1)" />
+        <BaseButton :icon="Trash2" icon-only size="sm" variant="danger" class="tooltip-left" :aria-label="`Remover ${w.name}`" :data-tooltip="`Remover ${w.name}`" @click="emit('remove')" />
       </div>
     </header>
 
@@ -56,7 +57,7 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
 
     <section class="d-flex flex-column gap-1">
       <div class="d-flex align-center justify-between flex-wrap gap-1">
-        <h4 class="text-sm fw-600">Troféus desta {{ unit }} <span class="text-subtle">{{ sectionTrophies.length }}</span></h4>
+        <h4 class="text-sm fw-600">Troféus {{ w.this }} {{ w.name }} <span class="text-subtle">{{ sectionTrophies.length }}</span></h4>
         <div class="d-flex flex-wrap gap-1">
           <BaseButton v-if="cited.length" :icon="Quote" size="sm" variant="ghost" @click="emit('add-trophies', cited)">
             {{ cited.length > 1 ? `Adicionar os ${cited.length} citados no texto` : 'Adicionar o citado no texto' }}
@@ -76,7 +77,7 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
       </div>
 
       <SectionTrophyGrid v-if="sectionTrophies.length" :trophies="sectionTrophies" removable @remove="emit('remove-trophy', $event)" @open="emit('open-trophy', $event)" />
-      <p v-else class="text-xs text-subtle">Nenhum troféu ainda. Adicione os ligados a esta {{ unit }} (opcional).</p>
+      <p v-else class="text-xs text-subtle">Nenhum troféu ainda. Adicione os ligados a {{ w.thisOne }} {{ w.name }} (opcional).</p>
     </section>
   </article>
 </template>
