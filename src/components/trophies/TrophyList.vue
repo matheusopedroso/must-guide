@@ -12,6 +12,7 @@ const props = defineProps({
   list: { type: Object, required: true },
   progress: { type: Object, default: null }, // { trophies: { [id]: stats } } da conta, se tiver o jogo
   getNote: { type: Function, required: true },
+  backlinks: { type: Map, default: () => new Map() }, // troféu citado → ids de quem cita
 });
 defineEmits(['update-note']);
 
@@ -27,6 +28,10 @@ const FILTERS = [
 ];
 
 const statsOf = (id) => props.progress?.trophies[id] ?? null;
+
+const byId = computed(() => new Map(props.list.trophies.map((t) => [t.id, t])));
+// Troféus que citam este (só os que existem na lista aberta)
+const citedBy = (id) => (props.backlinks.get(id) ?? []).map((src) => byId.value.get(src)).filter(Boolean);
 
 const filters = computed(() =>
   FILTERS.filter((f) => !f.needsProgress || props.progress)
@@ -90,6 +95,7 @@ const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);
           :trophy="t"
           :note="getNote(t.id)"
           :stats="statsOf(t.id)"
+          :cited-by="citedBy(t.id)"
           @update-note="(id, patch) => $emit('update-note', id, patch)"
         />
       </ul>

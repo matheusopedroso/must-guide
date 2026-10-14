@@ -8,12 +8,16 @@ import { RARITY_LABELS, TROPHY_TYPE_MAP } from '@/config/trophies';
 import { formatEarnedAt, formatRate } from '@/utils/trophies';
 import { hasRichContent } from '@/utils/html';
 import { trophyAnchorId } from '@/utils/trophyRef';
+import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 
 const props = defineProps({
   trophy: { type: Object, required: true },
   note: { type: Object, required: true },
   stats: { type: Object, default: null }, // progresso da conta: { earned, earnedAt, rate, rarity }
+  citedBy: { type: Array, default: () => [] }, // troféus cujo "Como conseguir" cita este
 });
+
+const ctx = useTrophyContext();
 const emit = defineEmits(['update-note']);
 const update = (patch) => emit('update-note', props.trophy.id, patch);
 
@@ -61,6 +65,20 @@ const rarity = computed(() => {
         </div>
         <p v-if="trophy.detail" class="text-sm text-muted">{{ trophy.detail }}</p>
         <p v-if="rarity" class="text-xs text-subtle">{{ rarity }}</p>
+
+        <p v-if="citedBy.length" class="cited d-flex align-center flex-wrap gap-1 text-xs text-subtle">
+          <span>Citado em:</span>
+          <a
+            v-for="src in citedBy"
+            :key="src.id"
+            :href="`#${trophyAnchorId(src.id)}`"
+            class="trophy-ref"
+            :data-type="src.type"
+            @click.prevent="ctx?.goTo(src.id)"
+          >
+            {{ src.name || 'Troféu oculto' }}
+          </a>
+        </p>
 
         <TrophyFlags :note="note" class="mt-1" @update="update" />
       </div>

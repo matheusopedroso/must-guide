@@ -101,6 +101,7 @@ para um botão novo, informe `result()` e, se tiver estado ligado/desligado, `st
 **Referência a troféu:** botão de troféu na barra ou digitar `@` no texto → escolhe o troféu → entra um chip
 `<a href="#trofeu-ID" data-trophy="ID" data-type="gold" class="trophy-ref" contenteditable="false">Nome</a>`.
 Na leitura, tocar no chip rola até o troféu (tira o filtro) e destaca. Vale nas versões PS4/PS5 (mesmo `trophyId`).
+Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado das anotações em `useTrophyNotes` → `backlinks`).
 
 ## Trocar de provedor de jogos
 

@@ -16,7 +16,7 @@ import { compareVersions } from '@/utils/trophies';
 defineProps({ game: { type: Object, required: true } });
 
 const { draft } = useGuideDraft();
-const { getNote, updateNote } = useTrophyNotes(draft);
+const { getNote, updateNote, backlinks } = useTrophyNotes(draft);
 const { versions, principal, active, activeId, add, sync, remove, makePrincipal } = useTrophyVersions(draft);
 
 const adding = ref(false);
@@ -82,7 +82,14 @@ function link(title) {
         <BaseButton size="sm" @click="remove(active.id)">Remover esta versão</BaseButton>
       </EmptyState>
 
-      <TrophyList v-else-if="list" :list="list" :progress="progress" :get-note="getNote" @update-note="updateNote" />
+      <TrophyList
+        v-else-if="list"
+        :list="list"
+        :progress="progress"
+        :get-note="getNote"
+        :backlinks="backlinks"
+        @update-note="updateNote"
+      />
     </template>
   </div>
 </template>
