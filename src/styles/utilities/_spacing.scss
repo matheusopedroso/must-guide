@@ -1,0 +1,38 @@
+@use 'sass:map';
+@use '../abstracts' as *;
+
+// p-*, px-*, py-*, pt-*…, m-*, mx-*…, gap-*, gap-x-*, gap-y-*  (1 = 8px)
+$props: (
+  p: (padding),
+  px: (padding-left, padding-right),
+  py: (padding-top, padding-bottom),
+  pt: (padding-top),
+  pr: (padding-right),
+  pb: (padding-bottom),
+  pl: (padding-left),
+  m: (margin),
+  mx: (margin-left, margin-right),
+  my: (margin-top, margin-bottom),
+  mt: (margin-top),
+  mr: (margin-right),
+  mb: (margin-bottom),
+  ml: (margin-left),
+  gap: (gap),
+  gap-x: (column-gap),
+  gap-y: (row-gap),
+);
+
+@each $prefix, $list in $props {
+  @each $key, $value in $spacing {
+    .#{$prefix}-#{$key} {
+      @each $prop in $list {
+        #{$prop}: $value !important;
+      }
+    }
+  }
+}
+
+.mx-auto { margin-inline: auto !important; }
+.ml-auto { margin-left: auto !important; }
+.mr-auto { margin-right: auto !important; }
+.mt-auto { margin-top: auto !important; }

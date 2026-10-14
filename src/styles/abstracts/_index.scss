@@ -1,0 +1,3 @@
+// Só variáveis e mixins — nada aqui pode gerar CSS (é injetado em todo componente)
+@forward 'tokens';
+@forward 'mixins';

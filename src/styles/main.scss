@@ -1,0 +1,11 @@
+// Ponto de entrada global. Tokens/mixins vêm via additionalData (vite.config.js)
+@use 'base/theme';
+@use 'base/reset';
+@use 'base/typography';
+@use 'layout/container';
+@use 'components/controls';
+@use 'utilities/layout';
+@use 'utilities/spacing';
+@use 'utilities/radius';
+@use 'utilities/text';
+@use 'utilities/surface';

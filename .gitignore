@@ -1,0 +1,10 @@
+node_modules
+dist
+.env.local
+.env.*.local
+.firebase
+*.log
+functions/node_modules
+functions/.secret.local
+ROADMAP.md
+.DS_Store

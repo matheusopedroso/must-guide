@@ -1,0 +1,25 @@
+@use '../abstracts' as *;
+
+.container {
+  width: 100%;
+  max-width: $container-content;
+  margin-inline: auto;
+  padding-inline: space(2);
+
+  @include up(md) {
+    padding-inline: space(3);
+  }
+}
+
+.container-header {
+  max-width: $container-header;
+}
+
+.page {
+  padding-block: space(3) space(6);
+  @include safe-bottom(space(6));
+
+  @include up(md) {
+    padding-block: space(4) space(8);
+  }
+}

@@ -1,0 +1,38 @@
+// Escala de espaçamento: múltiplos de 8px (4px só em casos extremos → $space-half)
+$space-half: 4px;
+$spacing: (
+  0: 0,
+  1: 8px,
+  2: 16px,
+  3: 24px,
+  4: 32px,
+  5: 40px,
+  6: 48px,
+  8: 64px,
+);
+
+$r1: 8px;
+$r2: 16px;
+$r3: 24px;
+$r-full: 999px;
+$radius: (
+  1: $r1,
+  2: $r2,
+  3: $r3,
+  full: $r-full,
+);
+
+$breakpoints: (
+  sm: 560px,
+  md: 768px,
+  lg: 1080px,
+);
+
+$container-header: 1180px;
+$container-content: 1072px;
+$header-height: 64px;
+
+$font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+$font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+$ease: cubic-bezier(0.2, 0.8, 0.2, 1);

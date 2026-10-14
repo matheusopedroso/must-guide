@@ -1,0 +1,62 @@
+// Paleta inspirada no Claude: marfim/argila no claro, grafite quente no escuro
+@mixin light-tokens {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --surface-2: #f0eee6;
+  --surface-hover: #e8e6dc;
+  --border: #e3e1d7;
+  --border-strong: #cfccc0;
+  --text: #141413;
+  --text-muted: #6b6a64;
+  --text-subtle: #8f8d85;
+  --accent: #c96442;
+  --accent-hover: #b0552f;
+  --accent-soft: rgba(201, 100, 66, 0.12);
+  --on-accent: #ffffff;
+  --success: #5e7d48;
+  --warning: #b8862f;
+  --danger: #b54a3a;
+  --info: #4f7cad;
+  --platinum: #6d82a3;
+  --shadow: 0 1px 2px rgba(20, 20, 19, 0.06), 0 8px 24px rgba(20, 20, 19, 0.06);
+  --overlay: rgba(20, 20, 19, 0.4);
+  color-scheme: light;
+}
+
+@mixin dark-tokens {
+  --bg: #262624;
+  --surface: #30302e;
+  --surface-2: #1f1e1d;
+  --surface-hover: #3a3a37;
+  --border: #3e3d39;
+  --border-strong: #55534d;
+  --text: #faf9f5;
+  --text-muted: #b5b3aa;
+  --text-subtle: #8a887f;
+  --accent: #d97757;
+  --accent-hover: #e48a6c;
+  --accent-soft: rgba(217, 119, 87, 0.16);
+  --on-accent: #1f1e1d;
+  --success: #8fb07a;
+  --warning: #d9ae5f;
+  --danger: #e07a68;
+  --info: #7ea6d4;
+  --platinum: #a9bbd6;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --overlay: rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+
+:root {
+  @include light-tokens;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-tokens;
+  }
+}
+
+:root[data-theme='dark'] {
+  @include dark-tokens;
+}
