@@ -6,6 +6,7 @@ import TrophyFlags from './TrophyFlags.vue';
 import TrophyTip from './TrophyTip.vue';
 import { RARITY_LABELS, TROPHY_TYPE_MAP } from '@/config/trophies';
 import { formatEarnedAt, formatRate } from '@/utils/trophies';
+import { hasRichContent } from '@/utils/html';
 
 const props = defineProps({
   trophy: { type: Object, required: true },
@@ -16,6 +17,7 @@ const emit = defineEmits(['update-note']);
 const update = (patch) => emit('update-note', props.trophy.id, patch);
 
 const editingTip = ref(false);
+const hasTip = computed(() => hasRichContent(props.note.tip));
 
 const type = computed(() => TROPHY_TYPE_MAP[props.trophy.type] ?? TROPHY_TYPE_MAP.bronze);
 const rarity = computed(() => {
@@ -47,10 +49,10 @@ const rarity = computed(() => {
           <BaseButton
             :icon="MessageSquareText"
             size="sm"
-            :variant="note.tip ? 'ghost' : 'secondary'"
+            :variant="hasTip ? 'ghost' : 'secondary'"
             class="trophy__how shrink-0"
-            :class="{ 'is-filled': note.tip }"
-            :aria-label="note.tip ? 'Editar como conseguir' : 'Escrever como conseguir'"
+            :class="{ 'is-filled': hasTip }"
+            :aria-label="hasTip ? 'Editar como conseguir' : 'Escrever como conseguir'"
             @click="editingTip = true"
           >
             Como conseguir

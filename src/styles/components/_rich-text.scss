@@ -1,0 +1,63 @@
+@use '../abstracts' as *;
+
+// Conteúdo formatado (editor e leitura) — mesmo visual nos dois
+.rich-text {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+
+  > * + * {
+    margin-top: space(1);
+  }
+
+  h3,
+  h4 {
+    font-family: $font-sans;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  h3 {
+    font-size: 16px;
+    margin-top: space(2);
+  }
+
+  h4 {
+    font-size: 15px;
+  }
+
+  ul,
+  ol {
+    padding-left: space(3);
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+
+  li + li {
+    margin-top: $space-half;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  blockquote {
+    padding-left: space(2);
+    border-left: 2px solid var(--border-strong);
+    color: var(--text-muted);
+  }
+
+  code {
+    padding: 0 $space-half;
+    border-radius: 4px;
+    background: var(--surface-hover);
+    font-size: 0.9em;
+  }
+}

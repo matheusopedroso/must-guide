@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import TrophyItem from './TrophyItem.vue';
 import TrophyCounts from './TrophyCounts.vue';
 import { TROPHY_FLAGS, TROPHY_TYPES } from '@/config/trophies';
+import { hasRichContent } from '@/utils/html';
 
 // Lista de troféus por grupo (jogo base + DLCs), com filtros e anotações do guia
 const props = defineProps({
@@ -19,7 +20,7 @@ const FILTERS = [
   { id: 'all', label: 'Todos', test: () => true },
   ...TROPHY_TYPES.map((t) => ({ id: t.id, label: t.label, test: (tr) => tr.type === t.id })),
   ...TROPHY_FLAGS.map((f) => ({ id: f.id, label: f.label, test: (tr, note) => note[f.id] })),
-  { id: 'tip', label: 'Com explicação', test: (tr, note) => !!note.tip?.trim() },
+  { id: 'tip', label: 'Com explicação', test: (tr, note) => hasRichContent(note.tip) },
   { id: 'pending', label: 'Faltam', test: (tr, note, stats) => stats && !stats.earned, needsProgress: true },
 ];
 
