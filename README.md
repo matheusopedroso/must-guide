@@ -85,10 +85,11 @@ Enquanto não há banco, o guia em edição fica no navegador (`localStorage`, c
 já no formato do futuro documento do Firestore (`src/utils/guideDraft.js`):
 
 ```js
-{ gameId, game, tabs: [], versions: [{ id, name, platform, service }], trophies: { [trophyId]: { tip, missable, online } } }
+{ gameId, game, tabs: [], versions: [{ id, name, platform, service }], trophies: { [trophyId]: { tip, story, missable, online } } }
 ```
 
 - `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).
+- `tip` = texto "Como conseguir". As marcações (História, Perdível, Online) vêm de `TROPHY_FLAGS` em `src/config/trophies.js`: para criar outra, basta adicionar lá (botão e filtro aparecem sozinhos).
 - Gravação agrupada (600 ms) e ao minimizar/sair da página.
 
 ## Trocar de provedor de jogos

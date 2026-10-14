@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue';
-import { Check, EyeOff, Trophy } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
+import { Check, EyeOff, MessageSquareText, Trophy } from 'lucide-vue-next';
+import BaseButton from '@/components/ui/BaseButton.vue';
 import TrophyNoteEditor from './TrophyNoteEditor.vue';
 import { RARITY_LABELS, TROPHY_TYPE_MAP } from '@/config/trophies';
 import { formatEarnedAt, formatRate } from '@/utils/trophies';
@@ -11,6 +12,8 @@ const props = defineProps({
   stats: { type: Object, default: null }, // progresso da conta: { earned, earnedAt, rate, rarity }
 });
 defineEmits(['update-note']);
+
+const editingTip = ref(false);
 
 const type = computed(() => TROPHY_TYPE_MAP[props.trophy.type] ?? TROPHY_TYPE_MAP.bronze);
 const rarity = computed(() => {
@@ -30,17 +33,30 @@ const rarity = computed(() => {
     </div>
 
     <div class="d-flex flex-column gap-1 min-w-0 flex-1">
-      <div class="d-flex align-center flex-wrap gap-1">
-        <h4 class="trophy__name">{{ trophy.name || 'Troféu oculto' }}</h4>
-        <span class="tag" :style="{ color: type.color }">
-          <Trophy :size="14" :stroke-width="2" /> {{ type.label }}
-        </span>
-        <span v-if="trophy.hidden" class="tag"><EyeOff :size="14" :stroke-width="1.75" /> Oculto</span>
+      <div class="d-flex align-start gap-1">
+        <div class="d-flex align-center flex-wrap gap-1 flex-1 min-w-0">
+          <h4 class="trophy__name">{{ trophy.name || 'Troféu oculto' }}</h4>
+          <span class="tag" :style="{ color: type.color }">
+            <Trophy :size="14" :stroke-width="2" /> {{ type.label }}
+          </span>
+          <span v-if="trophy.hidden" class="tag"><EyeOff :size="14" :stroke-width="1.75" /> Oculto</span>
+        </div>
+        <BaseButton
+          :icon="MessageSquareText"
+          size="sm"
+          :variant="note.tip ? 'ghost' : 'secondary'"
+          class="trophy__how shrink-0"
+          :class="{ 'is-filled': note.tip }"
+          :aria-label="note.tip ? 'Editar como conseguir' : 'Escrever como conseguir'"
+          @click="editingTip = true"
+        >
+          Como conseguir
+        </BaseButton>
       </div>
       <p v-if="trophy.detail" class="text-sm text-muted">{{ trophy.detail }}</p>
       <p v-if="rarity" class="text-xs text-subtle">{{ rarity }}</p>
 
-      <TrophyNoteEditor :note="note" class="mt-1" @update="$emit('update-note', trophy.id, $event)" />
+      <TrophyNoteEditor v-model:editing="editingTip" :note="note" class="mt-1" @update="$emit('update-note', trophy.id, $event)" />
     </div>
   </li>
 </template>
@@ -80,6 +96,18 @@ const rarity = computed(() => {
     background: var(--success);
     color: var(--surface);
     border: 2px solid var(--surface);
+  }
+
+  // Já preenchido: discreto, na cor de destaque
+  &__how.is-filled {
+    color: var(--accent);
+  }
+
+  // No celular só o ícone, para não espremer o nome do troféu
+  &__how :deep(span) {
+    @include down(sm) {
+      display: none;
+    }
   }
 
   &__name {

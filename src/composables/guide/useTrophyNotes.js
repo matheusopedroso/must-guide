@@ -1,8 +1,9 @@
 import { isEmptyNote } from '@/utils/guideDraft';
+import { TROPHY_FLAGS } from '@/config/trophies';
 
-const EMPTY = Object.freeze({ tip: '', missable: false, online: false });
+const EMPTY = Object.freeze({ tip: '', ...Object.fromEntries(TROPHY_FLAGS.map((f) => [f.id, false])) });
 
-// Anotações do guia por troféu (dica, perdível, online). Valem para todas as versões
+// Anotações do guia por troféu (como conseguir + marcações de config/trophies). Valem para todas as versões
 // (PS4/PS5): a chave é o trophyId, que é o mesmo nas listas equivalentes.
 export function useTrophyNotes(draft) {
   const notes = () => draft.value?.trophies ?? {};
