@@ -1,21 +1,15 @@
-import { deleteField, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { getFirestore } from './firebase/app';
 
-const progressRef = (uid, guideId) => doc(db, 'users', uid, 'progress', guideId);
-
-export async function fetchProgress(uid, guideId) {
-  const snap = await getDoc(progressRef(uid, guideId));
-  return snap.exists() ? snap.data().done ?? {} : {};
+// Progresso pessoal num guia (coletáveis marcados): users/{uid}/progress/{gameId} = { collected: [ids], editedAt, savedAt }.
+// editedAt (hora do aparelho) decide entre a cópia do navegador e a da nuvem.
+// Só a própria pessoa lê e grava (firestore.rules).
+export async function fetchProgress(uid, gameId) {
+  const { db, fs } = await getFirestore();
+  const snap = await fs.getDoc(fs.doc(db, 'users', uid, 'progress', gameId));
+  return snap.exists() ? snap.data() : null;
 }
 
-// changes: { stepId: true|false } → uma única gravação para vários cliques
-export function saveProgress(uid, guideId, changes) {
-  const done = {};
-  for (const [stepId, checked] of Object.entries(changes)) {
-    done[stepId] = checked ? true : deleteField();
-  }
-  return setDoc(progressRef(uid, guideId), { done, updatedAt: serverTimestamp() }, { merge: true });
+export async function saveProgress(uid, gameId, { collected, editedAt }) {
+  const { db, fs } = await getFirestore();
+  await fs.setDoc(fs.doc(db, 'users', uid, 'progress', gameId), { collected, editedAt, savedAt: fs.serverTimestamp() });
 }
-
-export const resetProgress = (uid, guideId) =>
-  setDoc(progressRef(uid, guideId), { done: {}, updatedAt: serverTimestamp() });

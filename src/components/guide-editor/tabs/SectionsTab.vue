@@ -26,7 +26,11 @@ const props = defineProps({
 const cfg = computed(() => props.tab.sections);
 const w = computed(() => sectionWords(cfg.value));
 const { draft } = useGuideDraft();
-const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered } = useSections(draft, props.tab.sections.key);
+const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered, addItem, updateItem, removeItem, moveItem } =
+  useSections(draft, props.tab.sections.key);
+
+// Coletáveis: tipos já usados viram sugestão no campo "Tipo"
+const types = computed(() => [...new Set(sections.value.flatMap((s) => (s.items ?? []).map((i) => i.type).filter(Boolean)))]);
 const { principal } = useTrophyVersions(draft);
 const { list } = useTrophyData(principal, { withProgress: false });
 const toast = useToast();
@@ -106,6 +110,11 @@ function confirmRemove() {
         @remove="askRemove(s)"
         @add-trophies="addMany(s.id, $event)"
         @remove-trophy="removeTrophy(s.id, $event)"
+        :types="types"
+        @add-item="addItem(s.id, $event)"
+        @update-item="(itemId, patch) => updateItem(s.id, itemId, patch)"
+        @remove-item="removeItem(s.id, $event)"
+        @move-item="(itemId, dir) => moveItem(s.id, itemId, dir)"
       />
 
       <BaseButton :icon="Plus" class="align-self-start" @click="addSection">Adicionar {{ w.name }}</BaseButton>

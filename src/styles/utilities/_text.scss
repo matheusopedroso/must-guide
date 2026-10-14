@@ -24,3 +24,13 @@
 
 .line-clamp-2 { @include clamp-lines(2); }
 .line-clamp-3 { @include clamp-lines(3); }
+
+// Só para leitor de tela (ex.: checkbox nativo atrás de uma caixa desenhada)
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -37,3 +37,53 @@ a.trophy-ref {
     }
   }
 }
+
+// Coletável citado no texto: chip com caixinha. Na leitura a caixinha marca (is-collected);
+// apagado da aba Coletáveis (is-missing) fica riscado e apagado.
+a.collectible-ref {
+  padding: 1px space(1) 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: $r1;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    vertical-align: -2px;
+    border: 2px solid var(--border-strong);
+    border-radius: 4px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  &:hover {
+    border-color: var(--border-strong);
+  }
+
+  &.is-collected {
+    border-color: color-mix(in srgb, var(--earned) 45%, transparent);
+    background: color-mix(in srgb, var(--earned) 12%, var(--surface));
+
+    &::before {
+      border-color: var(--earned);
+      background: var(--earned)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+        center / 10px no-repeat;
+    }
+  }
+
+  &.is-missing {
+    opacity: 0.5;
+    text-decoration: line-through;
+    cursor: default;
+  }
+}

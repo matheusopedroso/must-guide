@@ -8,7 +8,7 @@ import { BookOpen, Gem, Lightbulb, Milestone, PackagePlus, Route, TriangleAlert,
 // Abas de texto em seções (Guia, Roadmap): `sections` configura o mesmo editor/leitura (SectionsTab/SectionsView).
 //   key: onde ficam no rascunho · unit: nome de cada seção · masc: palavra masculina ("deste capítulo")
 //   numbered: "Etapa 1: …" ou só o título · flag: marcação dos troféus (config/trophies → TROPHY_FLAGS) cujos
-//   troféus aparecem sozinhos no topo da aba (Perdíveis, Online)
+//   troféus aparecem sozinhos no topo da aba (Perdíveis, Online) · items: cada seção tem coletáveis (Coletáveis)
 const SectionsTab = defineAsyncComponent(() => import('@/components/guide-editor/tabs/SectionsTab.vue'));
 export const GUIDE_TABS = [
   {
@@ -58,11 +58,13 @@ export const GUIDE_TABS = [
     component: SectionsTab,
     sections: {
       key: 'collectibles',
-      unit: 'Área',
+      unit: 'Região',
       numbered: false,
-      titlePlaceholder: 'Área ou capítulo (ex.: Capítulo 3, Floresta de Ezo)',
-      bodyPlaceholder: 'Liste os coletáveis desta área e onde ficam (use a lista numerada). Digite @ para citar um troféu…',
-      emptyText: 'Organize os coletáveis por área ou capítulo, com a localização de cada um e os troféus ligados a eles.',
+      items: true, // cada região tem a lista de coletáveis (cartões com caixa de marcar)
+      titlePlaceholder: 'Região ou capítulo (ex.: Capítulo 3, Floresta de Ezo)',
+      bodyPlaceholder: 'Introdução da região (opcional): o que tem aqui, ordem para pegar. Digite @ para citar um troféu…',
+      emptyText:
+        'Separe os coletáveis por região ou capítulo. Cada coletável tem tipo, local, como achar e imagens, e quem lê vai marcando o que já pegou — também direto no Detonado e no Roadmap, citando o coletável no texto (botão da joia).',
     },
   },
   {

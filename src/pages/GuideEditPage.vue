@@ -16,6 +16,8 @@ import { useGameDetails } from '@/composables/useGameDetails';
 import { useGuideTabs } from '@/composables/guide/useGuideTabs';
 import { provideGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useIsStuck } from '@/composables/useIsStuck';
+import { provideCollectibleContext } from '@/composables/guide/useCollectibles';
+import { collectiblesOf } from '@/utils/collectibles';
 import { APP_NAME } from '@/config/app';
 
 // /guia/novo → escolher o jogo · /guia/:id/editar → editor (aba aberta em ?aba=).
@@ -26,6 +28,10 @@ const gameId = computed(() => String(route.params.id ?? ''));
 const { game, loading, error, set: setGame } = useGameDetails(gameId);
 const { draft, status: saveStatus, syncing, cloud } = provideGuideDraft(game);
 const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = useGuideTabs(draft);
+
+// Coletáveis do guia para citar em qualquer aba de texto (botão da joia no editor)
+const collectibleItems = computed(() => collectiblesOf(draft.value));
+provideCollectibleContext({ items: collectibleItems, byId: computed(() => new Map(collectibleItems.value.map((c) => [c.id, c]))) });
 
 function selectGame(selected) {
   setGame(selected); // já temos os dados: evita buscar de novo

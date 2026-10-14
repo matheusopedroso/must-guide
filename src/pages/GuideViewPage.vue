@@ -12,6 +12,9 @@ import GuideHero from '@/components/guides/GuideHero.vue';
 import GuideOverview from '@/components/guides/GuideOverview.vue';
 import GuideTrophiesView from '@/components/guides/GuideTrophiesView.vue';
 import SectionsView from '@/components/sections/SectionsView.vue';
+import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailModal.vue';
+import { provideCollectibleContext, useCollected } from '@/composables/guide/useCollectibles';
+import { collectiblesOf } from '@/utils/collectibles';
 import { useGuide } from '@/composables/guide/useGuide';
 import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
@@ -42,6 +45,19 @@ const { getNote, backlinks } = useTrophyNotes(guide);
 const { versions, active, activeId } = useTrophyVersions(guide);
 const withProgress = computed(() => !enabled || isAdmin.value); // progresso da conta: só o admin
 const { list, progress, loading: listLoading, error: listError } = useTrophyData(active, { withProgress });
+
+// Coletáveis: progresso pessoal compartilhado por todas as abas (marcar no Detonado marca na aba Coletáveis)
+const { collected, toggle: toggleCollected } = useCollected(gameId);
+const collectibleItems = computed(() => collectiblesOf(guide.value));
+const collectibleById = computed(() => new Map(collectibleItems.value.map((c) => [c.id, c])));
+const openCollectible = ref(null);
+provideCollectibleContext({
+  items: collectibleItems,
+  byId: collectibleById,
+  collected,
+  toggle: toggleCollected,
+  open: (id) => (openCollectible.value = id),
+});
 
 const canEdit = computed(() => !enabled || isAdmin.value || source.value === 'local');
 
@@ -166,6 +182,8 @@ async function share() {
           @focused="focus = null"
         />
       </div>
+
+      <CollectibleDetailModal v-model="openCollectible" />
     </template>
   </div>
 </template>

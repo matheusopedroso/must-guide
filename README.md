@@ -105,7 +105,7 @@ o app continua funcionando só com o rascunho no navegador.
 | Login Google (popup; redirect se bloqueado) | `src/services/firebase/auth.js` · estado em `src/composables/useAuth.js` |
 | Guias (ler/gravar) | `src/services/guides.service.js` |
 | Sincronização navegador ↔ nuvem | `src/composables/guide/useGuideDraft.js` |
-| Regras | `firestore.rules` (admin grava; publicado qualquer um lê) |
+| Regras | `firestore.rules` (admin grava guias; publicado qualquer um lê; progresso só o dono) |
 | Rotas pessoais da PSN | `/api/trophies/titles` e `progress` exigem token de admin em produção (`functions/src/auth.js`); no `npm run dev` ficam abertas |
 
 O SDK só é baixado se o aparelho já teve login ou ao clicar em **Entrar** (quem só visita não carrega nada).
@@ -143,7 +143,7 @@ seção, numerada ou não, textos de ajuda) e as mesmas peças (`SectionsTab` no
 |---|---|---|---|
 | **Guia** (fixa) | `guide` | Seção (Introdução, Dicas gerais…) | só o título |
 | **Roadmap** (opcional) | `roadmap` | Etapa | "Etapa 1: título" |
-| **Coletáveis** | `collectibles` | Área (Capítulo 3, Floresta…) | só o título |
+| **Coletáveis** | `collectibles` | Região (Capítulo 3, Floresta…) + **coletáveis** com caixa de marcar | só o título |
 | **Detonado** | `walkthrough` | Capítulo (masculino) | "Capítulo 1: título" |
 | **Perdíveis** | `missables` | Seção · + troféus marcados como Perdível no topo | só o título |
 | **Online** | `online` | Seção · + troféus marcados como Online no topo | só o título |
@@ -160,6 +160,22 @@ citados. No editor: subir/descer/remover etapa e quantos troféus já estão em 
 Na leitura (`/guia/:id?aba=roadmap`): índice das etapas, texto e grade (conquistados em verde); tocar num troféu
 abre a aba Troféus nele. Formato (as duas abas): `[{ id, title, body, trophies: [trophyId] }]` (`src/utils/sections.js`).
 A leitura mostra a aba só se ela tiver alguma seção preenchida.
+
+## Coletáveis (modelo do IGN)
+
+Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar e
+até 4 imagens (links). No editor: digite o nome + Enter para adicionar rápido e complete os detalhes no lápis.
+Na leitura: cartão com Tipo | Local, descrição, imagens e a caixa **para marcar** (verde = coletado), progresso
+geral e por região e "Esconder coletados".
+
+**Marcar no meio do guia:** em qualquer texto (Detonado, Roadmap, Guia…) o botão da **joia** cita um coletável
+(com o nome selecionado, o trecho vira o link). Na leitura o chip tem uma caixinha: tocar nela marca/desmarca e vale
+para o guia todo (a aba Coletáveis mostra igual); tocar no nome abre os detalhes.
+
+**Progresso por pessoa:** sempre no navegador (`mg:collected:<jogo>`) e, logado, também em
+`users/{uid}/progress/{jogo}` (só a própria pessoa lê/grava — `firestore.rules`), agrupado em 1,5 s; vale a cópia
+editada por último. Peças: `src/components/collectibles/`, `useCollectibles.js` (contexto + `useCollected`),
+`src/utils/collectibles.js`, `src/services/progress.service.js`.
 
 ## Rascunho do guia
 

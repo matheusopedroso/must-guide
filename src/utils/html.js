@@ -2,16 +2,20 @@
 
 // Tags permitidas → atributos permitidos (com validação do valor). O resto é removido (o texto de dentro é mantido).
 const TROPHY_REF = /^#trofeu-\d+$/;
+const COLLECTIBLE_REF = /^#coletavel-[a-z0-9]{4,16}$/;
+const INTERNAL_REF = (v) => TROPHY_REF.test(v) || COLLECTIBLE_REF.test(v);
 const ALLOWED = {
   P: {}, BR: {}, DIV: {}, SPAN: {},
   B: {}, STRONG: {}, I: {}, EM: {}, U: {}, S: {}, STRIKE: {}, CODE: {},
   H3: {}, H4: {}, UL: {}, OL: {}, LI: {}, BLOCKQUOTE: {}, HR: {},
-  // Link externo ou referência a troféu (<a href="#trofeu-12" data-trophy="12" data-type="gold" class="trophy-ref">)
+  // Link externo, referência a troféu (<a href="#trofeu-12" data-trophy="12" data-type="gold" class="trophy-ref">)
+  // ou a coletável (<a href="#coletavel-ab12cd" data-collectible="ab12cd" class="collectible-ref">)
   A: {
-    href: (v) => /^(https?:|mailto:)/i.test(v) || TROPHY_REF.test(v),
+    href: (v) => /^(https?:|mailto:)/i.test(v) || INTERNAL_REF(v),
     'data-trophy': (v) => /^\d+$/.test(v),
     'data-type': (v) => ['platinum', 'gold', 'silver', 'bronze'].includes(v),
-    class: (v) => v === 'trophy-ref',
+    'data-collectible': (v) => /^[a-z0-9]{4,16}$/.test(v),
+    class: (v) => v === 'trophy-ref' || v === 'collectible-ref',
     contenteditable: (v) => v === 'false',
   },
 };
@@ -55,8 +59,8 @@ function clean(node, doc) {
         el.replaceWith(...el.childNodes); // link inseguro vira texto comum
         continue;
       }
-      // Referência a troféu é interna; link externo abre em nova aba
-      if (!TROPHY_REF.test(el.getAttribute('href'))) {
+      // Referência a troféu/coletável é interna; link externo abre em nova aba
+      if (!INTERNAL_REF(el.getAttribute('href'))) {
         el.setAttribute('target', '_blank');
         el.setAttribute('rel', 'noopener noreferrer');
       }

@@ -5,6 +5,7 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import RefTextEditor from '@/components/trophies/RefTextEditor.vue';
 import TrophyRefPicker from '@/components/trophies/TrophyRefPicker.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
+import CollectibleListEditor from '@/components/collectibles/CollectibleListEditor.vue';
 import { sectionWords } from '@/utils/sections';
 import { useClickOutside } from '@/composables/useClickOutside';
 
@@ -18,8 +19,12 @@ const props = defineProps({
   trophies: { type: Array, default: () => [] }, // lista completa (para o seletor)
   byId: { type: Map, required: true },
   cited: { type: Array, default: () => [] }, // ids citados no texto e fora da lista
+  types: { type: Array, default: () => [] }, // tipos de coletável já usados (sugestões)
 });
-const emit = defineEmits(['update', 'move', 'remove', 'add-trophies', 'remove-trophy', 'open-trophy']);
+const emit = defineEmits([
+  'update', 'move', 'remove', 'add-trophies', 'remove-trophy', 'open-trophy',
+  'add-item', 'update-item', 'remove-item', 'move-item', // coletáveis (cfg.items)
+]);
 
 const sectionTrophies = computed(() => props.section.trophies.map((id) => props.byId.get(id)).filter(Boolean));
 const w = computed(() => sectionWords(props.cfg));
@@ -53,6 +58,18 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
       :model-value="section.body"
       :placeholder="cfg.bodyPlaceholder"
       @update:model-value="emit('update', { body: $event })"
+    />
+
+    <!-- Coletáveis da região (aba Coletáveis) -->
+    <CollectibleListEditor
+      v-if="cfg.items"
+      :items="section.items ?? []"
+      :types="types"
+      :region-name="`${w.this} ${w.name}`"
+      @add="emit('add-item', $event)"
+      @update="(itemId, patch) => emit('update-item', itemId, patch)"
+      @remove="emit('remove-item', $event)"
+      @move="(itemId, dir) => emit('move-item', itemId, dir)"
     />
 
     <section class="d-flex flex-column gap-1">

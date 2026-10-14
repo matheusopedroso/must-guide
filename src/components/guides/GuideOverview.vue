@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Clock, Gauge, Repeat, Trophy } from 'lucide-vue-next';
+import { Clock, Gauge, Gem, Repeat, Trophy } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import TrophyCounts from '@/components/trophies/TrophyCounts.vue';
@@ -8,6 +8,7 @@ import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
 import { TROPHY_FLAGS } from '@/config/trophies';
 import { hasRichContent } from '@/utils/html';
 import { formatDate } from '@/utils/date';
+import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 
 // Aba "Visão geral" da leitura (como a aba Detalhes do Must Watch):
 // sobre o jogo + ficha à esquerda, cartão "Para platinar" à direita e, embaixo,
@@ -34,6 +35,13 @@ const summary = computed(() => {
     for (const f of TROPHY_FLAGS) if (note[f.id]) byFlag[f.id].push(t);
   }
   return { total: trophies.length, tips, flags: TROPHY_FLAGS.map((f) => ({ ...f, trophies: byFlag[f.id] })).filter((f) => f.trophies.length) };
+});
+
+// Coletáveis do guia e quantos você já marcou
+const col = useCollectibleContext();
+const collectibles = computed(() => {
+  const items = col?.items.value ?? [];
+  return items.length ? { total: items.length, done: items.filter((i) => col.collected?.value.has(i.id)).length } : null;
 });
 
 const PLAY_ROWS = [
@@ -109,6 +117,10 @@ const PLAY_ROWS = [
         <div v-for="r in PLAY_ROWS" :key="r.id" class="card__row d-flex align-center justify-between gap-1">
           <span class="d-inline-flex align-center gap-1 text-sm text-muted"><component :is="r.icon" :size="16" /> {{ r.label }}</span>
           <span class="text-sm fw-600">{{ stats[r.id] ? r.format(stats[r.id]) : '—' }}</span>
+        </div>
+        <div v-if="collectibles" class="card__row d-flex align-center justify-between gap-1">
+          <span class="d-inline-flex align-center gap-1 text-sm text-muted"><Gem :size="16" /> Coletáveis</span>
+          <span class="text-sm fw-600">{{ collectibles.done }}/{{ collectibles.total }}</span>
         </div>
         <div v-if="list" class="d-flex flex-column gap-1">
           <span class="text-xs text-muted">Guia: {{ summary.tips }} de {{ summary.total }} troféus com dica</span>
