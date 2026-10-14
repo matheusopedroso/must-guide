@@ -1,13 +1,15 @@
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, toRef } from 'vue';
 import TrophyItem from './TrophyItem.vue';
 import TrophyCounts from './TrophyCounts.vue';
-import { TROPHY_FLAGS, TROPHY_TYPES } from '@/config/trophies';
-import { hasRichContent } from '@/utils/html';
+import TrophyToolbar from './TrophyToolbar.vue';
+import TrophyGuideSummary from './TrophyGuideSummary.vue';
 import { trophyAnchorId } from '@/utils/trophyRef';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
+import { useTrophyListView } from '@/composables/guide/useTrophyListView';
+import { useStoredRef } from '@/composables/useStoredRef';
 
-// Lista de troféus por grupo (jogo base + DLCs), com filtros e anotações do guia
+// Lista de troféus: resumo do guia, barra (busca/ordem/filtros) e grupos (jogo base + DLCs)
 const props = defineProps({
   list: { type: Object, required: true },
   progress: { type: Object, default: null }, // { trophies: { [id]: stats } } da conta, se tiver o jogo
@@ -16,42 +18,22 @@ const props = defineProps({
 });
 defineEmits(['update-note']);
 
-const filter = ref('all');
+const { search, filter, sort, sorts, filters, sections, visibleCount, stats, reset } = useTrophyListView({
+  list: toRef(props, 'list'),
+  progress: toRef(props, 'progress'),
+  getNote: props.getNote,
+});
 
-// Filtros: todos, por tipo e pelas marcações do guia / progresso
-const FILTERS = [
-  { id: 'all', label: 'Todos', test: () => true },
-  ...TROPHY_TYPES.map((t) => ({ id: t.id, label: t.label, test: (tr) => tr.type === t.id })),
-  ...TROPHY_FLAGS.map((f) => ({ id: f.id, label: f.label, test: (tr, note) => note[f.id] })),
-  { id: 'tip', label: 'Com explicação', test: (tr, note) => hasRichContent(note.tip) },
-  { id: 'pending', label: 'Faltam', test: (tr, note, stats) => stats && !stats.earned, needsProgress: true },
-];
-
-const statsOf = (id) => props.progress?.trophies[id] ?? null;
+// Spoiler: por padrão os ocultos ficam borrados (preferência guardada no navegador)
+const showHidden = useStoredRef('mg:show-hidden-trophies', false);
 
 const byId = computed(() => new Map(props.list.trophies.map((t) => [t.id, t])));
 // Troféus que citam este (só os que existem na lista aberta)
 const citedBy = (id) => (props.backlinks.get(id) ?? []).map((src) => byId.value.get(src)).filter(Boolean);
 
-const filters = computed(() =>
-  FILTERS.filter((f) => !f.needsProgress || props.progress)
-    .map((f) => ({ ...f, count: props.list.trophies.filter((t) => f.test(t, props.getNote(t.id), statsOf(t.id))).length }))
-    .filter((f) => f.id === 'all' || f.count),
-);
-
-// Uma passada só: agrupa os troféus já filtrados por grupo
-const sections = computed(() => {
-  const f = FILTERS.find((x) => x.id === filter.value) ?? FILTERS[0];
-  const byGroup = new Map(props.list.groups.map((g) => [g.id, { ...g, trophies: [] }]));
-  for (const t of props.list.trophies) {
-    if (f.test(t, props.getNote(t.id), statsOf(t.id))) byGroup.get(t.groupId)?.trophies.push(t);
-  }
-  return [...byGroup.values()].filter((g) => g.trophies.length);
-});
-
-// Ir até um troféu referenciado no texto: tira o filtro (senão ele pode estar escondido) e destaca
+// Ir até um troféu (referência no texto): limpa busca/filtro para ele aparecer e destaca
 async function goTo(id) {
-  filter.value = 'all';
+  reset();
   await nextTick();
   const el = document.getElementById(trophyAnchorId(id));
   if (!el) return;
@@ -65,23 +47,27 @@ provideTrophyContext({ trophies: computed(() => props.list.trophies), goTo });
 
 const showGroups = computed(() => props.list.groups.length > 1);
 const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);
+
+function applyFilter(id) {
+  search.value = '';
+  filter.value = id;
+}
 </script>
 
 <template>
   <div class="d-flex flex-column gap-2">
-    <div class="scroll-x gap-1" role="group" aria-label="Filtrar troféus">
-      <button
-        v-for="f in filters"
-        :key="f.id"
-        type="button"
-        class="chip"
-        :class="{ 'is-active': filter === f.id }"
-        :aria-pressed="filter === f.id"
-        @click="filter = f.id"
-      >
-        {{ f.label }} <span class="chip__count">{{ f.count }}</span>
-      </button>
-    </div>
+    <TrophyGuideSummary :trophies="list.trophies" :get-note="getNote" @filter="applyFilter" />
+
+    <TrophyToolbar
+      v-model:search="search"
+      v-model:filter="filter"
+      v-model:sort="sort"
+      v-model:show-hidden="showHidden"
+      :sorts="sorts"
+      :filters="filters"
+    />
+
+    <p v-if="search" class="text-xs text-subtle">{{ visibleCount }} troféu(s) encontrado(s)</p>
 
     <section v-for="g in sections" :key="g.id" class="surface radius-2 px-2 pt-1 pb-1">
       <header v-if="showGroups" class="d-flex align-center justify-between flex-wrap gap-1 py-1 border-bottom">
@@ -94,14 +80,18 @@ const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);
           :key="t.id"
           :trophy="t"
           :note="getNote(t.id)"
-          :stats="statsOf(t.id)"
+          :stats="stats(t.id)"
           :cited-by="citedBy(t.id)"
+          :spoiler="t.hidden && !showHidden"
           @update-note="(id, patch) => $emit('update-note', id, patch)"
         />
       </ul>
     </section>
 
-    <p v-if="!sections.length" class="text-sm text-muted py-2">Nenhum troféu neste filtro.</p>
+    <div v-if="!sections.length" class="d-flex align-center gap-2 text-sm text-muted py-2">
+      Nenhum troféu {{ search ? `com “${search}”` : 'neste filtro' }}.
+      <button type="button" class="text-accent fw-500" @click="reset">Limpar</button>
+    </div>
   </div>
 </template>
 

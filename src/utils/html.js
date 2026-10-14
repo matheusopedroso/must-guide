@@ -90,3 +90,7 @@ export function textToHtml(text = '') {
 // Tem texto de verdade? (o editor deixa "<p><br></p>" quando apagado). Rápido: sem DOMParser.
 export const hasRichContent = (html = '') =>
   !!html && html.replace(/<[^>]*>/g, '').replace(/&nbsp;|\s/g, '').length > 0;
+
+// Texto puro de um HTML (para busca). Rápido: regex, sem montar DOM.
+export const htmlToPlain = (html = '') =>
+  html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();

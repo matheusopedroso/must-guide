@@ -1,4 +1,4 @@
-import { TROPHY_FLAGS } from '@/config/trophies';
+import { EMPTY_NOTE } from '@/config/trophies';
 import { hasRichContent } from './html';
 
 // Formato do guia em edição. É o mesmo documento que irá para o Firestore quando houver salvamento.
@@ -10,7 +10,7 @@ export const createDraft = (game) => ({
   game: { id: game.id, title: game.title, cover: game.cover ?? null },
   tabs: [], // abas opcionais ativadas (ids de config/guideTabs)
   versions: [], // listas de troféus da PSN: [{ id, name, platform, service }] — a 1ª é a principal
-  trophies: {}, // anotações por trophyId: { tip (HTML "como conseguir"), story, missable, online } (só as preenchidas)
+  trophies: {}, // anotações por trophyId no formato de EMPTY_NOTE (config/trophies), só as preenchidas
   updatedAt: null,
 });
 
@@ -20,4 +20,6 @@ export function normalizeDraft(raw, game) {
   return { ...base, ...raw, game: base.game };
 }
 
-export const isEmptyNote = (n) => !n || (!hasRichContent(n.tip) && !TROPHY_FLAGS.some((f) => n[f.id]));
+// Vazia = nenhum campo preenchido (texto sem conteúdo real também conta como vazio)
+export const isEmptyNote = (n) =>
+  !n || Object.keys(EMPTY_NOTE).every((key) => (key === 'tip' ? !hasRichContent(n.tip) : !n[key]));

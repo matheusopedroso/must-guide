@@ -1,22 +1,29 @@
 import { computed } from 'vue';
 import { isEmptyNote } from '@/utils/guideDraft';
 import { extractTrophyRefs } from '@/utils/trophyRef';
-import { TROPHY_FLAGS } from '@/config/trophies';
+import { EMPTY_NOTE } from '@/config/trophies';
 
-const EMPTY = Object.freeze({ tip: '', ...Object.fromEntries(TROPHY_FLAGS.map((f) => [f.id, false])) });
-
-// Anotações do guia por troféu (como conseguir + marcações de config/trophies). Valem para todas as versões
+// Anotações do guia por troféu (formato em EMPTY_NOTE de config/trophies). Valem para todas as versões
 // (PS4/PS5): a chave é o trophyId, que é o mesmo nas listas equivalentes.
 export function useTrophyNotes(draft) {
   const notes = () => draft.value?.trophies ?? {};
 
-  const getNote = (trophyId) => notes()[trophyId] ?? EMPTY;
+  // Sempre no formato completo (anotações antigas ganham os campos novos vazios).
+  // Memorizado por anotação: o mesmo objeto volta enquanto ela não muda → só o troféu editado redesenha.
+  const merged = new WeakMap();
+  const getNote = (trophyId) => {
+    const note = notes()[trophyId];
+    if (!note) return EMPTY_NOTE;
+    if (!merged.has(note)) merged.set(note, Object.freeze({ ...EMPTY_NOTE, ...note }));
+    return merged.get(note);
+  };
 
   function updateNote(trophyId, patch) {
     if (!draft.value) return;
     const next = { ...getNote(trophyId), ...patch };
-    if (isEmptyNote(next)) delete draft.value.trophies[trophyId]; // guarda só o que foi preenchido
-    else draft.value.trophies[trophyId] = next;
+    if (isEmptyNote(next)) return void delete draft.value.trophies[trophyId];
+    // Guarda só os campos preenchidos (rascunho e futuro documento menores)
+    draft.value.trophies[trophyId] = Object.fromEntries(Object.entries(next).filter(([, v]) => v));
   }
 
   // Quem cita quem: Map(troféu citado → [troféus cujo "Como conseguir" o menciona]).

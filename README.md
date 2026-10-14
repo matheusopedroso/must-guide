@@ -42,16 +42,16 @@ must-guide/
 │     ├─ config.js             provedor ativo e opções (região SP)
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
-│  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, RichTextEditor (Pell), GameCover, EmptyState…
+│  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, GameCover, EmptyState…
 │  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyItem, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
+│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyToolbar, TrophyGuideSummary, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
-│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext
-│  ├─ composables/             useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem)
+│  ├─ composables/             useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (rascunho no navegador)
 │  ├─ config/                  app, providers, guideTabs, trophies, editor (botões do Pell)
-│  ├─ utils/                   cover, text, trophies, guideDraft, html (filtro de HTML do editor), trophyRef
+│  ├─ utils/                   cover, text, trophies, guideDraft, html (filtro de HTML do editor), trophyRef, url
 │  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
 └─ firebase.json               Hosting + rewrites /api/games/** e /api/trophies/** → functions
@@ -85,10 +85,13 @@ Enquanto não há banco, o guia em edição fica no navegador (`localStorage`, c
 já no formato do futuro documento do Firestore (`src/utils/guideDraft.js`):
 
 ```js
-{ gameId, game, tabs: [], versions: [{ id, name, platform, service }], trophies: { [trophyId]: { tip, story, missable, online } } }
+{ gameId, game, tabs: [], versions: [{ id, name, platform, service }],
+  trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } } }
 ```
 
 - `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).
+- Formato completo da anotação em `EMPTY_NOTE` (`src/config/trophies.js`); só os campos preenchidos são gravados.
+- `when` = momento (`TROPHY_MOMENTS`), `difficulty` = 1–5, `chapter` = capítulo/missão, `video` = link.
 - `tip` = HTML do "Como conseguir" (editor Pell; filtrado ao colar, ao fechar e ao exibir — `src/utils/html.js`). As marcações (História, Perdível, Online) vêm de `TROPHY_FLAGS` em `src/config/trophies.js`: para criar outra, basta adicionar lá (botão e filtro aparecem sozinhos).
 - Gravação agrupada (600 ms) e ao minimizar/sair da página.
 

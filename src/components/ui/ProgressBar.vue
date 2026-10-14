@@ -1,21 +1,17 @@
 <script setup>
 import { computed } from 'vue';
 
+// Barra de progresso (verde quando completa)
 const props = defineProps({
   value: { type: Number, default: 0 },
   max: { type: Number, default: 100 },
-  showLabel: Boolean,
 });
-
-const pct = computed(() => (props.max ? Math.round((props.value / props.max) * 100) : 0));
+const percent = computed(() => (props.max ? Math.round((props.value / props.max) * 100) : 0));
 </script>
 
 <template>
-  <div class="d-flex align-center gap-2">
-    <div class="bar flex-1" role="progressbar" :aria-valuenow="pct" aria-valuemin="0" aria-valuemax="100">
-      <div class="bar__fill" :class="{ 'is-full': pct === 100 }" :style="{ width: `${pct}%` }" />
-    </div>
-    <span v-if="showLabel" class="text-sm text-muted fw-500">{{ value }}/{{ max }}</span>
+  <div class="bar" role="progressbar" :aria-valuenow="percent" aria-valuemin="0" aria-valuemax="100">
+    <div class="bar__fill" :class="{ 'is-full': percent === 100 }" :style="{ width: `${percent}%` }" />
   </div>
 </template>
 

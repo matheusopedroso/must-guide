@@ -1,8 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Check, EyeOff, MessageSquareText, Trophy } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import { Check, EyeOff, MessageSquareText, SlidersHorizontal, Trophy } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import TrophyFlags from './TrophyFlags.vue';
+import TrophyMetaTags from './TrophyMetaTags.vue';
+import TrophyDetailsEditor from './TrophyDetailsEditor.vue';
 import TrophyTip from './TrophyTip.vue';
 import { RARITY_LABELS, TROPHY_TYPE_MAP } from '@/config/trophies';
 import { formatEarnedAt, formatRate } from '@/utils/trophies';
@@ -15,15 +16,21 @@ const props = defineProps({
   note: { type: Object, required: true },
   stats: { type: Object, default: null }, // progresso da conta: { earned, earnedAt, rate, rarity }
   citedBy: { type: Array, default: () => [] }, // troféus cujo "Como conseguir" cita este
+  spoiler: Boolean, // troféu oculto com nomes escondidos (até tocar)
 });
-
-const ctx = useTrophyContext();
 const emit = defineEmits(['update-note']);
 const update = (patch) => emit('update-note', props.trophy.id, patch);
 
+const ctx = useTrophyContext();
 const editingTip = ref(false);
-const hasTip = computed(() => hasRichContent(props.note.tip));
+const editingDetails = ref(false);
+const revealed = ref(false);
 
+// Borrado só enquanto for spoiler e ninguém revelou/editou
+const blurred = computed(() => props.spoiler && !revealed.value);
+watch([editingTip, editingDetails], ([a, b]) => (a || b) && (revealed.value = true));
+
+const hasTip = computed(() => hasRichContent(props.note.tip));
 const type = computed(() => TROPHY_TYPE_MAP[props.trophy.type] ?? TROPHY_TYPE_MAP.bronze);
 const rarity = computed(() => {
   const s = props.stats;
@@ -33,10 +40,14 @@ const rarity = computed(() => {
 </script>
 
 <template>
-  <li :id="trophyAnchorId(trophy.id)" class="trophy d-flex flex-column gap-2 py-2" :class="{ 'is-earned': stats?.earned }">
+  <li :id="trophyAnchorId(trophy.id)" class="trophy d-flex flex-column gap-2 py-2" :class="{ 'is-blurred': blurred }">
     <div class="d-flex gap-2">
-      <div class="trophy__icon radius-1 shrink-0" :title="stats?.earned ? `Conquistado em ${formatEarnedAt(stats.earnedAt)}` : ''">
-        <img v-if="trophy.icon" :src="trophy.icon" alt="" loading="lazy" decoding="async" />
+      <div
+        class="trophy__icon radius-1 shrink-0"
+        :title="stats?.earned ? `Conquistado em ${formatEarnedAt(stats.earnedAt)}` : ''"
+        @click="blurred && (revealed = true)"
+      >
+        <img v-if="trophy.icon" :src="trophy.icon" alt="" loading="lazy" decoding="async" class="spoil" />
         <span v-if="stats?.earned" class="trophy__check d-flex align-center justify-center" aria-label="Conquistado">
           <Check :size="12" :stroke-width="3" />
         </span>
@@ -45,26 +56,45 @@ const rarity = computed(() => {
       <div class="d-flex flex-column gap-1 min-w-0 flex-1">
         <div class="d-flex align-start gap-1">
           <div class="d-flex align-center flex-wrap gap-1 flex-1 min-w-0">
-            <h4 class="trophy__name">{{ trophy.name || 'Troféu oculto' }}</h4>
+            <h4 class="trophy__name spoil" @click="blurred && (revealed = true)">{{ trophy.name || 'Troféu oculto' }}</h4>
             <span class="tag" :style="{ color: type.color }">
               <Trophy :size="14" :stroke-width="2" /> {{ type.label }}
             </span>
-            <span v-if="trophy.hidden" class="tag"><EyeOff :size="14" :stroke-width="1.75" /> Oculto</span>
+            <button v-if="trophy.hidden" type="button" class="tag" :title="blurred ? 'Tocar para ver' : ''" @click="revealed = true">
+              <EyeOff :size="14" :stroke-width="1.75" /> {{ blurred ? 'Oculto · ver' : 'Oculto' }}
+            </button>
           </div>
-          <BaseButton
-            :icon="MessageSquareText"
-            size="sm"
-            :variant="hasTip ? 'ghost' : 'secondary'"
-            class="trophy__how shrink-0"
-            :class="{ 'is-filled': hasTip }"
-            :aria-label="hasTip ? 'Editar como conseguir' : 'Escrever como conseguir'"
-            @click="editingTip = true"
-          >
-            Como conseguir
-          </BaseButton>
+
+          <div class="d-flex gap-1 shrink-0">
+            <BaseButton
+              :icon="SlidersHorizontal"
+              size="sm"
+              :variant="editingDetails ? 'secondary' : 'ghost'"
+              class="trophy__action"
+              :aria-pressed="editingDetails"
+              aria-label="Detalhes do troféu"
+              @click="editingDetails = !editingDetails"
+            >
+              Detalhes
+            </BaseButton>
+            <BaseButton
+              :icon="MessageSquareText"
+              size="sm"
+              :variant="hasTip ? 'ghost' : 'secondary'"
+              class="trophy__action"
+              :class="{ 'is-filled': hasTip }"
+              :aria-label="hasTip ? 'Editar como conseguir' : 'Escrever como conseguir'"
+              @click="editingTip = true"
+            >
+              Como conseguir
+            </BaseButton>
+          </div>
         </div>
-        <p v-if="trophy.detail" class="text-sm text-muted">{{ trophy.detail }}</p>
+
+        <p v-if="trophy.detail" class="text-sm text-muted spoil" @click="blurred && (revealed = true)">{{ trophy.detail }}</p>
         <p v-if="rarity" class="text-xs text-subtle">{{ rarity }}</p>
+
+        <TrophyMetaTags :note="note" />
 
         <p v-if="citedBy.length" class="cited d-flex align-center flex-wrap gap-1 text-xs text-subtle">
           <span>Citado em:</span>
@@ -79,12 +109,11 @@ const rarity = computed(() => {
             {{ src.name || 'Troféu oculto' }}
           </a>
         </p>
-
-        <TrophyFlags :note="note" class="mt-1" @update="update" />
       </div>
     </div>
 
-    <!-- Largura total do troféu (texto longo fica mais fácil de ler) -->
+    <!-- Largura total do troféu -->
+    <TrophyDetailsEditor v-if="editingDetails" :note="note" @update="update" @close="editingDetails = false" />
     <TrophyTip v-model:editing="editingTip" :tip="note.tip" :trophy-id="trophy.id" @update="update" />
   </li>
 </template>
@@ -109,6 +138,8 @@ const rarity = computed(() => {
     width: 48px;
     height: 48px;
     background: var(--surface-2);
+    border-radius: $r1;
+    overflow: visible;
 
     @include up(md) {
       width: 56px;
@@ -135,22 +166,28 @@ const rarity = computed(() => {
     border: 2px solid var(--surface);
   }
 
-  // Já preenchido: discreto, na cor de destaque
-  &__how.is-filled {
+  &__name {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  &__action.is-filled {
     color: var(--accent);
   }
 
   // No celular só o ícone, para não espremer o nome do troféu
-  &__how :deep(span) {
+  &__action :deep(span) {
     @include down(sm) {
       display: none;
     }
   }
 
-  &__name {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.3;
+  // Spoiler: nome, descrição e ícone borrados até tocar
+  &.is-blurred .spoil {
+    filter: blur(6px);
+    user-select: none;
+    cursor: pointer;
   }
 }
 

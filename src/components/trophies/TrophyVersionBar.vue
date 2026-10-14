@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Plus, Star, Trash2 } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import TrophyCounts from './TrophyCounts.vue';
+import ProgressBar from '@/components/ui/ProgressBar.vue';
 
 // Cabeçalho da aba Troféus: versão aberta (PS4/PS5…), progresso da conta e troca de versão
 const props = defineProps({
@@ -15,7 +16,6 @@ const props = defineProps({
 defineEmits(['select', 'add', 'remove', 'make-principal']);
 
 const isPrincipal = computed(() => props.versions[0]?.id === props.activeId);
-const percent = computed(() => (props.progress ? Math.round((props.progress.earned / props.progress.total) * 100) : 0));
 const label = (v) => v.platform || v.id;
 </script>
 
@@ -35,9 +35,7 @@ const label = (v) => v.platform || v.id;
     </div>
 
     <div v-if="progress" class="d-flex align-center gap-2 px-2 pb-2">
-      <div class="bar flex-1" role="progressbar" :aria-valuenow="percent" aria-valuemin="0" aria-valuemax="100">
-        <div class="bar__fill" :class="{ 'is-full': percent === 100 }" :style="{ width: `${percent}%` }" />
-      </div>
+      <ProgressBar :value="progress.earned" :max="progress.total" class="flex-1" />
       <span class="text-xs text-muted fw-500 shrink-0">Você: {{ progress.earned }}/{{ progress.total }}</span>
     </div>
 
@@ -76,21 +74,4 @@ const label = (v) => v.platform || v.id;
   background: var(--surface-2);
 }
 
-.bar {
-  height: 8px;
-  border-radius: $r-full;
-  background: var(--surface-2);
-  overflow: hidden;
-
-  &__fill {
-    height: 100%;
-    border-radius: inherit;
-    background: var(--accent);
-    transition: width 0.3s $ease;
-
-    &.is-full {
-      background: var(--success);
-    }
-  }
-}
 </style>
