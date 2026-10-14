@@ -1,8 +1,9 @@
 node_modules
 dist
+# Variáveis de ambiente: nunca versionar (vale também para functions/). Modelos em .env.example
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 .firebase
 *.log
 functions/node_modules

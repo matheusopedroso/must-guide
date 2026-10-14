@@ -16,7 +16,7 @@ npm run dev:host               # idem, acessível pelo celular na mesma rede
 
 No `npm run dev` não precisa de Firebase: o próprio Vite responde `/api/games/**` e `/api/trophies/**`
 usando o mesmo código das functions (`functions/src/core`). As chaves ficam no `.env.local`
-sem o prefixo `VITE_`, então nunca vão para o navegador.
+sem o prefixo `VITE_`, então nunca vão para o navegador. Nenhum `.env` vai para o git (só os `.env.example`).
 
 ## Estrutura
 
@@ -24,7 +24,7 @@ sem o prefixo `VITE_`, então nunca vão para o navegador.
 must-guide/
 ├─ vite/apiPlugin.js           serve /api/** no dev (usa functions/src/core)
 ├─ functions/
-│  ├─ .env                     GAMES_PROVIDER=rawg | igdb (vale para dev e produção)
+│  ├─ .env.example             modelo do functions/.env (GAMES_PROVIDER=rawg | igdb; sem o arquivo usa rawg)
 │  ├─ index.js                 exporta os handlers
 │  └─ src/
 │     ├─ core/                 código puro, sem Firebase (roda no Vite e na function)
@@ -118,7 +118,7 @@ Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado 
 | `public/og-image.jpg` (1200×630) | prévia ao compartilhar o link (`og:image`) |
 | `src/components/layout/AppLogo.vue` | logo no app, cores pelo tema (`--logo-primary`, `--logo-accent`) |
 
-Cores: terracota `#C96442` (escuro: `#D97757`) e laranja `#FF914D`. A URL do site para as tags de compartilhamento fica em `.env` (`VITE_SITE_URL`).
+Cores: terracota `#C96442` (escuro: `#D97757`) e laranja `#FF914D`. A URL do site para as tags de compartilhamento tem padrão no `vite.config.js` (`DEFAULT_SITE_URL`) e pode ser trocada por `VITE_SITE_URL` no `.env.local`.
 
 ## Dica ao passar o mouse
 
@@ -133,7 +133,7 @@ Estilo em `src/styles/components/_tooltip.scss` (só CSS; não aparece em telas 
 | IGDB | `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | app em dev.twitch.tv (exige 2FA) · capas verticais |
 
 1. Coloque as chaves no `.env.local` (dev) e no Secret Manager (`firebase functions:secrets:set NOME`).
-2. Mude `GAMES_PROVIDER` em `functions/.env`.
+2. Crie `functions/.env` a partir do `functions/.env.example` e mude `GAMES_PROVIDER`.
 3. Reinicie o `npm run dev` / rode `npm run deploy:functions`.
 
 ## Utilitárias SCSS
