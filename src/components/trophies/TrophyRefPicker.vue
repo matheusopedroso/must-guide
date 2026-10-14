@@ -8,7 +8,7 @@ import { normalizeName } from '@/utils/text';
 // Lista para escolher o troféu a referenciar (abre por cima do editor)
 const props = defineProps({
   trophies: { type: Array, required: true },
-  exclude: { type: [Number, String], default: null }, // o próprio troféu
+  exclude: { type: [Number, String, Array], default: null }, // o próprio troféu (ou vários: já escolhidos)
 });
 const emit = defineEmits(['select', 'cancel']);
 
@@ -17,11 +17,13 @@ const active = ref(0);
 const search = useTemplateRef('search');
 const list = useTemplateRef('list');
 
+const excluded = computed(() => new Set([props.exclude ?? []].flat()));
+
 const results = computed(() => {
   const q = normalizeName(term.value);
   // Acha também pelo nome em inglês (útil seguindo guias gringos)
   return props.trophies.filter(
-    (t) => t.id !== props.exclude && (!q || normalizeName(`${t.name} ${t.nameEn ?? ''}`).includes(q)),
+    (t) => !excluded.value.has(t.id) && (!q || normalizeName(`${t.name} ${t.nameEn ?? ''}`).includes(q)),
   );
 });
 

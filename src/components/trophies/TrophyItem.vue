@@ -142,7 +142,7 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
     <!-- Meio: o guia do troféu (só quando preenchido ou em edição) -->
     <div v-if="hasBody" class="trophy__body p-2 border-top d-flex flex-column gap-2">
       <TrophyDetailsEditor v-if="editingDetails" :note="note" @update="update" @close="editingDetails = false" />
-      <TrophyTip v-model:editing="editingTip" :tip="note.tip" :trophy-id="trophy.id" @update="update" />
+      <TrophyTip v-model:editing="editingTip" :tip="note.tip" :trophy-id="trophy.id" :readonly="readonly" @update="update" />
     </div>
 
     <!-- Rodapé: etiquetas -->

@@ -47,14 +47,15 @@ must-guide/
 │  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), PageBar (barra flutuante: voltar · título · compartilhar), PillTabs (abas em pílula), ActionIcon (ação em círculo), DropdownMenu, IconSelect, NumberStepper, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal (pilha, foco, arrastar p/ fechar), VideoModal (YouTube no app), GameCover, EmptyState…
 │  ├─ components/layout/       AppNav (barra flutuante do topo), MobileTabBar (barra de baixo no celular), AccountMenu, AccountSummary, AccountAvatar, AppLogo
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/trophies/     PsnTitlePicker, TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
+│  ├─ components/trophies/     PsnTitlePicker, RefTextEditor (editor que cita troféus com @), RefText (leitura do texto), TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
+│  ├─ components/roadmap/      RoadmapStageEditor (etapa no editor), RoadmapTrophyGrid (troféus da etapa), GuideRoadmapView (leitura)
 │  ├─ components/guides/       GuideCard (Meus guias), GuideHero, GuideOverview (aba Visão geral), GuideTrophiesView (aba Troféus, leitura)
 │  ├─ components/guide-editor/ PublishControl (Publicar / voltar para rascunho), SaveStatus, GuideStatsSummary, SelectedGameCard, GuideStats (resumo) + GuideStatsModal (edição), DifficultyPicker, DifficultyBadge, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
-│  ├─ composables/guide/       useGuideDraft (rascunho + nuvem, publicar), useGuide (leitura), useMyGuides (lista), useTrophyData (lista/progresso da versão), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
+│  ├─ composables/guide/       useGuideDraft (rascunho + nuvem, publicar), useGuide (leitura), useMyGuides (lista), useTrophyData (lista/progresso da versão), useRoadmap (etapas), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
 │  ├─ composables/             useNavVisibility (barras somem ao rolar), useIsStuck (sticky grudado), useScrolledPast, useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (navegador), guides (Firestore), firebase/ (app, auth)
 │  ├─ config/                  app, navigation (abas da navegação), firebase, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
-│  ├─ utils/                   cover, date, share (link/copiar), text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
+│  ├─ utils/                   cover, date, roadmap (etapas), share (link/copiar), text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
 │  ├─ assets/brand/logo.js     paths do logo (usados pelo AppLogo)
 │  ├─ pages/                   HomePage (/), MyGuidesPage (/guias), GuideEditPage (/guia/novo · /guia/:id/editar?aba=…), GuideViewPage (/guia/:id)
 │  └─ styles/                  abstracts · base · layout · components · utilities
@@ -132,6 +133,15 @@ Classes de texto das páginas de detalhe em `src/styles/components/_detail-page.
 No celular (rota com `meta.immersive`): sem a barra de navegação do topo, a imagem do jogo nítida (1280px) na largura
 da tela até o alto, voltar/compartilhar redondos por cima e a PageBar completa só depois de rolar — como no Must Watch.
 
+## Roadmap
+
+Aba opcional (adicionada pelo "+ Aba"). A platina dividida em **etapas** (como o roadmap do PSNProfiles):
+cada etapa tem título, texto corrido (mesmo editor do "Como conseguir": negrito, listas, links e `@` para citar
+troféus) e os **troféus desta etapa** em grade. "Adicionar os N citados no texto" puxa para a lista os troféus
+citados. No editor: subir/descer/remover etapa e quantos troféus já estão em alguma etapa.
+Na leitura (`/guia/:id?aba=roadmap`): índice das etapas, texto e grade (conquistados em verde); tocar num troféu
+abre a aba Troféus nele. Formato: `roadmap: [{ id, title, body, trophies: [trophyId] }]` (`src/utils/roadmap.js`).
+
 ## Rascunho do guia
 
 O guia em edição fica sempre no navegador (`localStorage`, chave `mg:guide-draft:<jogo>`) e, com o admin logado,
@@ -142,7 +152,7 @@ Formato (`src/utils/guideDraft.js`):
 ```js
 { gameId, game, status: 'draft' | 'published', publishedAt, tabs: [], versions: [{ id, name, platform, service }],
   trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } },
-  stats: { difficulty, playthroughs, hours }, updatedAt }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
+  stats: { difficulty, playthroughs, hours }, roadmap: [{ id, title, body, trophies }], updatedAt }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
 ```
 
 - `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).

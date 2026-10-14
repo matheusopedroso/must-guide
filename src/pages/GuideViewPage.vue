@@ -11,6 +11,7 @@ import ProgressBar from '@/components/ui/ProgressBar.vue';
 import GuideHero from '@/components/guides/GuideHero.vue';
 import GuideOverview from '@/components/guides/GuideOverview.vue';
 import GuideTrophiesView from '@/components/guides/GuideTrophiesView.vue';
+import GuideRoadmapView from '@/components/roadmap/GuideRoadmapView.vue';
 import { useGuide } from '@/composables/guide/useGuide';
 import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
@@ -21,6 +22,7 @@ import { useAuth } from '@/composables/useAuth';
 import { useToast } from '@/composables/useToast';
 import { APP_NAME } from '@/config/app';
 import { absoluteUrl, copyText } from '@/utils/share';
+import { stageHasContent } from '@/utils/roadmap';
 
 // Leitura do guia (/guia/:id), no formato da página de título do Must Watch:
 // PageBar (voltar · título · compartilhar) → hero (fundo do jogo, capa, título, visão geral, ações)
@@ -42,14 +44,18 @@ const { list, progress, loading: listLoading, error: listError } = useTrophyData
 
 const canEdit = computed(() => !enabled || isAdmin.value || source.value === 'local');
 
-// Abas na URL (?aba=trofeus); a Visão geral é a padrão
+// Roadmap aparece se a aba estiver ativa no guia e tiver alguma etapa preenchida
+const roadmap = computed(() => (guide.value?.tabs?.includes('roadmap') ? (guide.value.roadmap ?? []).filter(stageHasContent) : []));
+
+// Abas na URL (?aba=roadmap|trofeus); a Visão geral é a padrão
 const tabParam = useQueryParam('aba');
 const TABS = computed(() => [
   { id: 'geral', label: 'Visão geral' },
+  ...(roadmap.value.length ? [{ id: 'roadmap', label: 'Roadmap' }] : []),
   { id: 'trofeus', label: 'Troféus', count: list.value?.trophies.length },
 ]);
 const tab = computed({
-  get: () => (tabParam.value === 'trofeus' ? 'trofeus' : 'geral'),
+  get: () => (TABS.value.some((t) => t.id === tabParam.value) ? tabParam.value : 'geral'),
   set: (id) => (tabParam.value = id === 'geral' ? '' : id),
 });
 
@@ -127,6 +133,7 @@ async function share() {
           @open-trophy="openTrophy"
           @open-trophies="tab = 'trofeus'"
         />
+        <GuideRoadmapView v-else-if="tab === 'roadmap'" :stages="roadmap" :list="list" :progress="progress" @open-trophy="openTrophy" />
         <GuideTrophiesView
           v-else
           :versions="versions"
