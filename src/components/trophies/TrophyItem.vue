@@ -42,7 +42,7 @@ const hasBody = computed(
 </script>
 
 <template>
-  <li :id="trophyAnchorId(trophy.id)" class="trophy surface radius-2" :class="{ 'is-blurred': blurred }">
+  <li :id="trophyAnchorId(trophy.id)" class="trophy surface radius-2" :class="{ 'is-blurred': blurred, 'is-earned': stats?.earned }">
     <!-- Topo -->
     <header class="trophy__head p-2">
       <div
@@ -157,7 +157,7 @@ const hasBody = computed(
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: var(--success);
+    background: var(--earned);
     color: var(--surface);
     border: 2px solid var(--surface);
   }
@@ -188,6 +188,12 @@ const hasBody = computed(
   &__detail {
     font-size: 14px;
     color: var(--text-muted);
+  }
+
+  // Conquistado na conta (progresso da PSN): borda + anel no tom teal
+  &.is-earned {
+    border-color: var(--earned);
+    box-shadow: 0 0 0 4px var(--earned-ring);
   }
 
   // Destaque ao chegar por uma referência no texto

@@ -11,6 +11,8 @@
   --text-subtle: #8f8d85;
   --accent: #c96442;
   --logo-primary: #c96442;
+  --earned: hsl(176deg 95% 23%); // troféu conquistado
+  --earned-ring: hsl(176deg 95% 23% / 30%);
   --logo-accent: #ff914d;
   --accent-hover: #b0552f;
   --accent-soft: rgba(201, 100, 66, 0.12);
@@ -40,6 +42,8 @@
   --text-subtle: #8a887f;
   --accent: #d97757;
   --logo-primary: #d97757;
+  --earned: hsl(176deg 55% 45%); // mais claro: o teal escuro some no fundo escuro
+  --earned-ring: hsl(176deg 55% 45% / 30%);
   --logo-accent: #ff914d;
   --accent-hover: #e48a6c;
   --accent-soft: rgba(217, 119, 87, 0.16);
