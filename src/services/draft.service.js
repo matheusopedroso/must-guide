@@ -1,11 +1,13 @@
-// Rascunho do guia guardado no navegador (localStorage), 1 chave por jogo.
+import { guideIdOf } from '@/utils/guideIds';
+
+// Rascunho do guia guardado no navegador (localStorage), 1 chave por guia (jogo ou DLC).
 // É a cópia local (offline/sem login); a da nuvem fica em guides.service.js (sincronia em useGuideDraft).
 const PREFIX = 'mg:guide-draft:';
-const key = (gameId) => `${PREFIX}${gameId}`;
+const key = (guideId) => `${PREFIX}${guideId}`;
 
-export function loadDraft(gameId) {
+export function loadDraft(guideId) {
   try {
-    const raw = localStorage.getItem(key(gameId));
+    const raw = localStorage.getItem(key(guideId));
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null; // modo privado / armazenamento bloqueado
@@ -14,7 +16,7 @@ export function loadDraft(gameId) {
 
 export function saveDraft(draft) {
   try {
-    localStorage.setItem(key(draft.gameId), JSON.stringify(draft));
+    localStorage.setItem(key(guideIdOf(draft)), JSON.stringify(draft));
     return true;
   } catch {
     return false;
@@ -29,7 +31,7 @@ export function listDrafts() {
       const k = localStorage.key(i);
       if (!k?.startsWith(PREFIX)) continue;
       const d = JSON.parse(localStorage.getItem(k));
-      if (d?.gameId) drafts.push(d);
+      if (guideIdOf(d)) drafts.push(d);
     }
   } catch {
     /* armazenamento bloqueado ou item corrompido */

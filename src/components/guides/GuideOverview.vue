@@ -56,7 +56,7 @@ const PLAY_ROWS = [
       <!-- Sobre o jogo + ficha -->
       <div class="d-flex flex-column gap-3 min-w-0">
         <div class="d-flex flex-column gap-2">
-          <p class="kicker">Sobre o jogo</p>
+          <p class="kicker">{{ guide.dlc ? 'Sobre o jogo base' : 'Sobre o jogo' }}</p>
           <div v-if="game?.genres?.length" class="d-flex flex-wrap gap-1">
             <span v-for="g in game.genres.slice(0, 4)" :key="g" class="pill">{{ g }}</span>
           </div>
@@ -108,7 +108,7 @@ const PLAY_ROWS = [
 
       <!-- Para platinar (lugar do "Onde assistir") -->
       <aside class="card surface radius-2 p-2 d-flex flex-column gap-2">
-        <p class="kicker">Para platinar</p>
+        <p class="kicker">{{ guide.dlc ? 'Para completar a DLC' : 'Para platinar' }}</p>
         <div class="card__row d-flex align-center justify-between gap-1">
           <span class="d-inline-flex align-center gap-1 text-sm text-muted"><Gauge :size="16" /> Dificuldade</span>
           <DifficultyBadge v-if="stats.difficulty" :value="stats.difficulty" show-label />

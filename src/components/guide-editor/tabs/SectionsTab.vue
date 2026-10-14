@@ -32,7 +32,7 @@ const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMis
 // Coletáveis: tipos já usados viram sugestão no campo "Tipo"
 const types = computed(() => [...new Set(sections.value.flatMap((s) => (s.items ?? []).map((i) => i.type).filter(Boolean)))]);
 const { principal } = useTrophyVersions(draft);
-const { list } = useTrophyData(principal, { withProgress: false });
+const { list } = useTrophyData(principal, { withProgress: false, scope: draft }); // só os troféus deste guia (jogo base ou DLC)
 const toast = useToast();
 
 const trophies = computed(() => list.value?.trophies ?? []);

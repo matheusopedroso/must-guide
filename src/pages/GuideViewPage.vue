@@ -15,6 +15,9 @@ import SectionsView from '@/components/sections/SectionsView.vue';
 import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailModal.vue';
 import { provideCollectibleContext, useCollected } from '@/composables/guide/useCollectibles';
 import { collectiblesOf } from '@/utils/collectibles';
+import { parseGuideId } from '@/utils/guideIds';
+import DlcGuideList from '@/components/guides/DlcGuideList.vue';
+import { useDlcGuides } from '@/composables/guide/useDlcGuides';
 import { useGuide } from '@/composables/guide/useGuide';
 import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
@@ -34,20 +37,25 @@ import { sectionTabsOf } from '@/config/guideTabs';
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
-const gameId = computed(() => String(route.params.id ?? ''));
+// :id = guia do jogo ("rawg-123") ou de uma DLC ("rawg-123~001")
+const guideId = computed(() => String(route.params.id ?? ''));
+const gameId = computed(() => parseGuideId(guideId.value).gameId ?? '');
+const isDlc = computed(() => !!guide.value?.dlc);
 
-const { guide, source, loading, error } = useGuide(gameId);
+const { guide, source, loading, error } = useGuide(guideId);
 const { game } = useGameDetails(computed(() => (guide.value ? gameId.value : ''))); // ano, gêneros, resumo
+// Guia do jogo: os guias das DLCs (cada DLC é um guia separado)
+const { items: dlcGuides } = useDlcGuides(computed(() => (guide.value && !guide.value.dlc ? gameId.value : '')));
 const { enabled, isAdmin } = useAuth();
 
 // Troféus (compartilhados pelas duas abas)
 const { getNote, backlinks } = useTrophyNotes(guide);
 const { versions, active, activeId } = useTrophyVersions(guide);
 const withProgress = computed(() => !enabled || isAdmin.value); // progresso da conta: só o admin
-const { list, progress, loading: listLoading, error: listError } = useTrophyData(active, { withProgress });
+const { list, progress, loading: listLoading, error: listError } = useTrophyData(active, { withProgress, scope: guide }); // jogo base ou a DLC
 
 // Coletáveis: progresso pessoal compartilhado por todas as abas (marcar no Detonado marca na aba Coletáveis)
-const { collected, toggle: toggleCollected } = useCollected(gameId);
+const { collected, toggle: toggleCollected } = useCollected(guideId);
 const collectibleItems = computed(() => collectiblesOf(guide.value));
 const collectibleById = computed(() => new Map(collectibleItems.value.map((c) => [c.id, c])));
 const openCollectible = ref(null);
@@ -96,15 +104,18 @@ const myProgress = computed(() => {
   return { ...p, pct: Math.round((p.earned / p.total) * 100) };
 });
 
-watch(guide, (g) => {
-  if (g) document.title = `Guia: ${g.game?.title ?? ''} · ${APP_NAME}`;
-});
+const pageTitle = computed(() => (guide.value?.dlc ? guide.value.dlc.name || 'DLC' : (guide.value?.game?.title ?? 'Guia')));
+watch(pageTitle, (t) => guide.value && (document.title = `Guia: ${t} · ${APP_NAME}`));
 
-const back = () => (window.history.state?.back ? router.back() : router.push({ name: 'my-guides' }));
+// Voltar: de onde veio; aberto direto → DLC volta ao guia do jogo, jogo volta a Meus guias
+const back = () => {
+  if (window.history.state?.back) return router.back();
+  router.push(isDlc.value ? { name: 'guide-view', params: { id: gameId.value } } : { name: 'my-guides' });
+};
 
 async function share() {
-  const url = absoluteUrl(router, { name: 'guide-view', params: { id: gameId.value } });
-  const title = `Guia de troféus: ${guide.value?.game?.title ?? ''}`;
+  const url = absoluteUrl(router, { name: 'guide-view', params: { id: guideId.value } });
+  const title = `Guia de troféus: ${pageTitle.value}`;
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {
     return navigator.share({ title, url }).catch(() => {}); // fechar a folha não é erro
   }
@@ -115,7 +126,7 @@ async function share() {
 
 <template>
   <div class="guide-page">
-    <PageBar :title="guide?.game?.title ?? 'Guia'" :share="guide?.status === 'published'" class="guide-page__bar" @back="back" @share="share" />
+    <PageBar :title="pageTitle" :share="guide?.status === 'published'" class="guide-page__bar" @back="back" @share="share" />
 
     <div v-if="loading" class="guide-page__skeleton" aria-busy="true" />
 
@@ -128,7 +139,7 @@ async function share() {
     <template v-else>
       <GuideHero :guide="guide" :game="game" :source="source">
         <template #actions>
-          <ActionIcon v-if="canEdit" :icon="Pencil" label="Editar" :to="{ name: 'guide-edit', params: { id: gameId } }" />
+          <ActionIcon v-if="canEdit" :icon="Pencil" label="Editar" :to="{ name: 'guide-edit', params: { id: guideId } }" />
           <ActionIcon :icon="Share2" label="Compartilhar" @click="share" />
         </template>
         <template #extra>
@@ -148,15 +159,17 @@ async function share() {
       <div class="container guide-page__content">
         <PillTabs v-model="tab" :tabs="TABS" label="Seções do guia" />
 
-        <GuideOverview
-          v-if="tab === 'geral'"
-          :guide="guide"
-          :game="game"
-          :list="list"
-          :get-note="getNote"
-          @open-trophy="openTrophy"
-          @open-trophies="tab = 'trofeus'"
-        />
+        <div v-if="tab === 'geral'" class="d-flex flex-column gap-5">
+          <GuideOverview
+            :guide="guide"
+            :game="game"
+            :list="list"
+            :get-note="getNote"
+            @open-trophy="openTrophy"
+            @open-trophies="tab = 'trofeus'"
+          />
+          <DlcGuideList v-if="dlcGuides.length" :items="dlcGuides" />
+        </div>
         <SectionsView
           v-else-if="activeSectionTab"
           :key="activeSectionTab.id"
@@ -167,20 +180,23 @@ async function share() {
           :progress="progress"
           @open-trophy="openTrophy"
         />
-        <GuideTrophiesView
-          v-else
-          :versions="versions"
-          :active="active"
-          :list="list"
-          :progress="progress"
-          :loading="listLoading"
-          :error="listError"
-          :get-note="getNote"
-          :backlinks="backlinks"
-          :focus="focus"
-          @select-version="activeId = $event"
-          @focused="focus = null"
-        />
+        <div v-else class="d-flex flex-column gap-5">
+          <GuideTrophiesView
+            :versions="versions"
+            :active="active"
+            :list="list"
+            :progress="progress"
+            :loading="listLoading"
+            :error="listError"
+            :get-note="getNote"
+            :backlinks="backlinks"
+            :focus="focus"
+            @select-version="activeId = $event"
+            @focused="focus = null"
+          />
+          <!-- As DLCs têm guia próprio: os troféus delas ficam lá -->
+          <DlcGuideList v-if="dlcGuides.length" :items="dlcGuides" />
+        </div>
       </div>
 
       <CollectibleDetailModal v-model="openCollectible" />

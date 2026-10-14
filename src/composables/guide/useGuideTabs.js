@@ -3,13 +3,15 @@ import { DEFAULT_TAB, GUIDE_TABS } from '@/config/guideTabs';
 import { useQueryParam } from '@/composables/useQueryParam';
 
 // Abas do guia: fixas + opcionais ativadas no rascunho. A aba aberta fica na URL (?aba=).
+// Guia de DLC não tem as abas só de jogo (gameOnly: a aba DLCs).
 export function useGuideTabs(draft) {
   const activeParam = useQueryParam('aba');
 
   const enabled = computed(() => new Set(draft.value?.tabs ?? []));
+  const allowed = computed(() => GUIDE_TABS.filter((t) => !(t.gameOnly && draft.value?.dlc)));
 
-  const tabs = computed(() => GUIDE_TABS.filter((t) => t.fixed || enabled.value.has(t.id)));
-  const available = computed(() => GUIDE_TABS.filter((t) => !t.fixed && !enabled.value.has(t.id)));
+  const tabs = computed(() => allowed.value.filter((t) => t.fixed || enabled.value.has(t.id)));
+  const available = computed(() => allowed.value.filter((t) => !t.fixed && !enabled.value.has(t.id)));
 
   const activeTab = computed(() => tabs.value.find((t) => t.id === activeParam.value) ?? tabs.value[0]);
   const active = computed({

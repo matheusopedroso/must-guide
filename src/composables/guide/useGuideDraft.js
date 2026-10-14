@@ -3,6 +3,7 @@ import { loadDraft, saveDraft } from '@/services/draft.service';
 import { fetchGuide, saveGuide } from '@/services/guides.service';
 import { useAuth } from '@/composables/useAuth';
 import { createDraft, editedAt, isBlankDraft, normalizeDraft } from '@/utils/guideDraft';
+import { guideIdOf, parseGuideId } from '@/utils/guideIds';
 
 const KEY = Symbol('guide-draft');
 const LOCAL_DELAY = 600; // navegador: barato, grava logo
@@ -12,7 +13,8 @@ const CLOUD_DELAY = 2500; // Firestore: agrupa mais edições numa escrita só
 // Duas cópias: navegador (sempre) e Firestore (admin logado). Ao abrir, fica a mais recente:
 // a da nuvem substitui a local, ou a local (editada sem internet / antes do login) sobe para a nuvem.
 // status: idle | pending | local (só no navegador) | cloud (na nuvem) | error
-export function provideGuideDraft(game) {
+// guideId: jogo ("rawg-123") ou DLC ("rawg-123~001"); game: o jogo (para criar o rascunho)
+export function provideGuideDraft(game, guideId) {
   const { user, isAdmin } = useAuth();
   const cloud = computed(() => !!user.value && isAdmin.value);
 
@@ -67,12 +69,12 @@ export function provideGuideDraft(game) {
 
   // Busca a cópia da nuvem e fica com a mais recente
   async function syncFromCloud() {
-    const id = draft.value?.gameId;
+    const id = guideIdOf(draft.value);
     if (!id || !cloud.value) return;
     syncing.value = true;
     try {
       const remote = await fetchGuide(id);
-      if (draft.value?.gameId !== id) return; // trocou de jogo no meio
+      if (guideIdOf(draft.value) !== id) return; // trocou de guia no meio
       if (remote && editedAt(remote) >= editedAt(draft.value) && !localDirty) {
         replace(normalizeDraft(remote, game.value));
         saveDraft(draft.value);
@@ -82,6 +84,11 @@ export function provideGuideDraft(game) {
       } else if (remote) {
         status.value = 'cloud';
       }
+      // DLC nova aberta direto (sem o guia do jogo neste navegador): pega as versões do guia do jogo na nuvem
+      if (!remote && draft.value.dlc && !draft.value.versions.length) {
+        const parent = await fetchGuide(draft.value.parentId);
+        if (parent?.versions?.length && guideIdOf(draft.value) === id) draft.value.versions = parent.versions;
+      }
     } catch (e) {
       console.error('[guia] Falha ao ler da nuvem', e);
       status.value = 'error';
@@ -90,23 +97,8 @@ export function provideGuideDraft(game) {
     }
   }
 
-  // Troca de jogo: grava o anterior e abre o novo (navegador na hora, nuvem em seguida)
-  watch(
-    () => game.value?.id,
-    (id) => {
-      flushLocal();
-      flushCloud();
-      localDirty = cloudDirty = false;
-      status.value = 'idle';
-      replace(id ? normalizeDraft(loadDraft(id) ?? createDraft(game.value), game.value) : null);
-      if (id) syncFromCloud();
-    },
-    { immediate: true },
-  );
-
-  // Entrou (ou virou admin) com o guia aberto: sincroniza
-  watch(cloud, (on) => on && syncFromCloud());
-
+  // Edição no rascunho → grava agrupado. Registrado ANTES do watch que carrega o guia: assim a troca feita
+  // ao carregar (replace) é consumida aqui e não engole a primeira edição de verdade.
   watch(
     draft,
     () => {
@@ -119,13 +111,41 @@ export function provideGuideDraft(game) {
     { deep: true },
   );
 
+  // Rascunho novo. DLC aberta direto pelo endereço: usa as versões (listas da PSN) do guia do jogo
+  function freshDraft(id) {
+    const { groupId } = parseGuideId(id);
+    const fresh = createDraft(game.value, { dlc: groupId ? { groupId } : null });
+    if (groupId) fresh.versions = loadDraft(game.value.id)?.versions ?? []; // já vem do JSON do navegador (cópia nova)
+    return fresh;
+  }
+
+  // Troca de guia: grava o anterior e abre o novo (navegador na hora, nuvem em seguida).
+  // Espera o jogo carregar (o rascunho guarda título e capa dele).
+  watch(
+    () => (game.value && guideId.value && parseGuideId(guideId.value).gameId === game.value.id ? guideId.value : ''),
+    (id) => {
+      flushLocal();
+      flushCloud();
+      localDirty = cloudDirty = false;
+      status.value = 'idle';
+      replace(id ? normalizeDraft(loadDraft(id) ?? freshDraft(id), game.value) : null);
+      if (id) syncFromCloud();
+    },
+    { immediate: true },
+  );
+
+  // Entrou (ou virou admin) com o guia aberto: sincroniza
+  watch(cloud, (on) => on && syncFromCloud());
+
+
   // Publicar / voltar para rascunho: grava na nuvem na hora (não espera o agrupamento).
   // true = ficou salvo na nuvem
   async function setStatus(next) {
     if (!draft.value || !cloud.value || draft.value.status === next) return false;
     draft.value.status = next;
     if (next === 'published' && !draft.value.publishedAt) draft.value.publishedAt = new Date().toISOString();
-    await nextTick(); // o watch marca a edição
+    await nextTick();
+    localDirty = true; // garante a gravação mesmo que o watch não tenha marcado
     flushLocal();
     await flushCloud();
     return status.value === 'cloud';

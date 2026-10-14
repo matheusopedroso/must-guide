@@ -18,15 +18,25 @@ import { provideGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useIsStuck } from '@/composables/useIsStuck';
 import { provideCollectibleContext } from '@/composables/guide/useCollectibles';
 import { collectiblesOf } from '@/utils/collectibles';
+import { parseGuideId } from '@/utils/guideIds';
 import { APP_NAME } from '@/config/app';
 
 // /guia/novo → escolher o jogo · /guia/:id/editar → editor (aba aberta em ?aba=).
+// :id = guia do jogo ("rawg-123") ou de uma DLC ("rawg-123~001", guia separado ligado ao do jogo).
 // O conteúdo do guia (abas, versões, dicas) fica no rascunho: navegador + nuvem (useGuideDraft).
 const route = useRoute();
 const router = useRouter();
-const gameId = computed(() => String(route.params.id ?? ''));
+const guideId = computed(() => String(route.params.id ?? ''));
+const parsed = computed(() => parseGuideId(guideId.value));
+const gameId = computed(() => parsed.value.gameId ?? '');
+const isDlc = computed(() => !!parsed.value.groupId);
 const { game, loading, error, set: setGame } = useGameDetails(gameId);
-const { draft, status: saveStatus, syncing, cloud } = provideGuideDraft(game);
+const { draft, status: saveStatus, syncing, cloud } = provideGuideDraft(game, guideId);
+const pageTitle = computed(() => (!gameId.value ? 'Novo guia' : isDlc.value ? 'Editar guia da DLC' : 'Editar guia'));
+const subtitle = computed(() => {
+  if (!gameId.value) return 'Comece escolhendo o jogo.';
+  return isDlc.value ? `${draft.value?.dlc?.name || 'DLC'} · DLC de ${game.value?.title ?? ''}` : '';
+});
 const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = useGuideTabs(draft);
 
 // Coletáveis do guia para citar em qualquer aba de texto (botão da joia no editor)
@@ -43,17 +53,17 @@ const changeGame = () => router.push({ name: 'guide-new' });
 // Abas grudadas embaixo da barra → tapam o vão acima delas (ver .tabs-bar.is-stuck)
 const stuck = useIsStuck(useTemplateRef('tabsSentinel'));
 
-watch(game, (g) => {
-  document.title = g ? `Editar: ${g.title} · ${APP_NAME}` : `Novo guia · ${APP_NAME}`;
+watch([game, () => draft.value?.dlc?.name], ([g, dlcName]) => {
+  document.title = g ? `Editar: ${dlcName ? `${dlcName} (DLC)` : g.title} · ${APP_NAME}` : `Novo guia · ${APP_NAME}`;
 });
 </script>
 
 <template>
   <div class="container page">
     <PageHeader
-      :title="gameId ? 'Editar guia' : 'Novo guia'"
-      :back="gameId ? { name: 'my-guides' } : '/'"
-      :subtitle="gameId ? '' : 'Comece escolhendo o jogo.'"
+      :title="pageTitle"
+      :back="isDlc ? { name: 'guide-edit', params: { id: gameId }, query: { aba: 'dlc' } } : gameId ? { name: 'my-guides' } : '/'"
+      :subtitle="subtitle"
     >
       <template v-if="gameId && draft" #actions>
         <div class="d-flex flex-column align-end gap-1">
@@ -72,7 +82,7 @@ watch(game, (g) => {
     </EmptyState>
 
     <template v-else>
-      <SelectedGameCard :game="game" :loading="loading" class="mb-2" @change="changeGame" />
+      <SelectedGameCard :game="game" :loading="loading" :changeable="!isDlc" class="mb-2" @change="changeGame" />
 
       <template v-if="game">
         <div ref="tabsSentinel" aria-hidden="true" />

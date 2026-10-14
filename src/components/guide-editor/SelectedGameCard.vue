@@ -8,6 +8,7 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 const props = defineProps({
   game: { type: Object, default: null },
   loading: Boolean,
+  changeable: { type: Boolean, default: true }, // guia de DLC: o jogo é fixo
 });
 defineEmits(['change']);
 
@@ -25,6 +26,7 @@ const meta = computed(() =>
         <p v-if="meta" class="text-xs text-muted truncate">{{ meta }}</p>
       </div>
       <BaseButton
+        v-if="changeable"
         :icon="ArrowLeftRight"
         icon-only
         size="sm"

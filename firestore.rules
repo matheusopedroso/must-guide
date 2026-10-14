@@ -8,13 +8,13 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.get('admin', false) == true;
     }
 
-    // Guias: guides/{gameId} (ex.: rawg-3498), mesmo formato de src/utils/guideDraft.js.
+    // Guias: guides/{guideId} — jogo (rawg-3498) ou DLC (rawg-3498~001), formato de src/utils/guideDraft.js.
     //   Publicado (status == 'published') → qualquer pessoa lê. Rascunho → só o admin.
-    //   Só o admin grava, e o id do documento tem que bater com o gameId de dentro.
-    match /guides/{gameId} {
+    //   Só o admin grava, e o id do documento tem que bater com o guideId de dentro (guias antigos: gameId).
+    match /guides/{guideId} {
       allow read: if isAdmin() || resource.data.get('status', 'draft') == 'published';
       allow create, update: if isAdmin()
-        && request.resource.data.gameId == gameId
+        && request.resource.data.get('guideId', request.resource.data.gameId) == guideId
         && request.resource.data.status in ['draft', 'published'];
       allow delete: if isAdmin();
     }

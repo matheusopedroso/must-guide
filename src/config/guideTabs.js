@@ -119,16 +119,9 @@ export const GUIDE_TABS = [
     id: 'dlc',
     label: 'DLCs',
     icon: PackagePlus,
-    description: 'Troféus e conteúdo das expansões.',
-    component: SectionsTab,
-    sections: {
-      key: 'dlcs',
-      unit: 'DLC',
-      numbered: false,
-      titlePlaceholder: 'Nome da DLC',
-      bodyPlaceholder: 'Como liberar a DLC, ordem recomendada e dicas dos troféus dela. Digite @ para citar um troféu…',
-      emptyText: 'Uma seção por expansão, com o texto e os troféus dela.',
-    },
+    description: 'Cada DLC com troféus vira um guia separado (troféus, guia, roadmap próprios), ligado a este.',
+    gameOnly: true, // não existe dentro de um guia de DLC
+    component: defineAsyncComponent(() => import('@/components/guide-editor/tabs/DlcTab.vue')),
   },
   {
     id: 'dicas',

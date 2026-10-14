@@ -61,7 +61,7 @@ const visible = computed(() => (filter.value === 'all' ? items.value : items.val
       </div>
 
       <div class="d-flex flex-column gap-2">
-        <GuideCard v-for="g in visible" :key="g.gameId" :guide="g" />
+        <GuideCard v-for="g in visible" :key="g.guideId" :guide="g" />
         <p v-if="!visible.length" class="text-sm text-muted py-2">Nenhum guia neste filtro.</p>
       </div>
     </template>

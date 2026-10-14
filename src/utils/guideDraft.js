@@ -1,13 +1,18 @@
 import { EMPTY_NOTE } from '@/config/trophies';
 import { GUIDE_TABS } from '@/config/guideTabs';
+import { dlcGuideId } from './guideIds';
 import { hasRichContent } from './html';
 
 // Formato do guia. É o mesmo documento do Firestore (guides/{gameId}) e do rascunho no navegador.
 export const DRAFT_VERSION = 1;
 
-export const createDraft = (game) => ({
+// dlc: { groupId, name, icon } → guia separado da DLC (guideId "jogo~grupo", parentId = jogo)
+export const createDraft = (game, { dlc = null } = {}) => ({
   v: DRAFT_VERSION,
+  guideId: dlc ? dlcGuideId(game.id, dlc.groupId) : game.id, // id do documento (guides/{guideId})
   gameId: game.id,
+  parentId: dlc ? game.id : null, // guia de DLC: o guia do jogo base
+  dlc: dlc ? { groupId: dlc.groupId, name: dlc.name ?? '', icon: dlc.icon ?? null } : null,
   game: { id: game.id, title: game.title, cover: game.cover ?? null },
   status: 'draft', // draft | published (publicado = qualquer um lê; ver firestore.rules)
   publishedAt: null, // ISO da 1ª publicação
@@ -18,18 +23,17 @@ export const createDraft = (game) => ({
   guide: [], // aba Guia: seções [{ id, title, body (HTML), trophies: [trophyId] }] — utils/sections
   roadmap: [], // aba Roadmap: etapas no mesmo formato
   tips: [], // aba Dicas: dicas no mesmo formato
-  collectibles: [], // Coletáveis · walkthrough: Detonado · missables: Perdíveis · online: Online · dlcs: DLCs (mesmo formato)
+  collectibles: [], // Coletáveis · walkthrough: Detonado · missables: Perdíveis · online: Online (mesmo formato)
   walkthrough: [],
   missables: [],
   online: [],
-  dlcs: [],
   updatedAt: null, // ISO da última edição (decide entre a cópia do navegador e a da nuvem)
 });
 
 // Garante todos os campos ao ler um rascunho antigo ou incompleto
 export function normalizeDraft(raw, game) {
-  const base = createDraft(game);
-  return { ...base, ...raw, game: base.game, stats: { ...base.stats, ...raw?.stats } };
+  const base = createDraft(game, { dlc: raw?.dlc });
+  return { ...base, ...raw, guideId: raw?.guideId ?? base.guideId, game: base.game, stats: { ...base.stats, ...raw?.stats } };
 }
 
 // Vazia = nenhum campo preenchido (texto sem conteúdo real também conta como vazio)
@@ -58,8 +62,13 @@ export const GUIDE_STATUS = {
 // Resumo para listas (Meus guias): só o que o card mostra
 export function summarizeGuide(g, source) {
   return {
+    guideId: g.guideId ?? g.gameId,
     gameId: g.gameId,
-    title: g.game?.title ?? g.gameId,
+    title: g.dlc ? g.dlc.name || 'DLC' : (g.game?.title ?? g.gameId),
+    gameTitle: g.game?.title ?? '',
+    dlc: !!g.dlc,
+    dlcGroup: g.dlc?.groupId ?? null,
+    dlcIcon: g.dlc?.icon ?? null,
     cover: g.game?.cover ?? null,
     status: g.status === 'published' ? 'published' : 'draft',
     updatedAt: g.updatedAt ?? null,

@@ -12,18 +12,20 @@ import { formatDate, formatDateTime } from '@/utils/date';
 const props = defineProps({ guide: { type: Object, required: true } }); // summarizeGuide()
 
 const router = useRouter();
-const view = computed(() => ({ name: 'guide-view', params: { id: props.guide.gameId } }));
-const edit = computed(() => ({ name: 'guide-edit', params: { id: props.guide.gameId } }));
+const view = computed(() => ({ name: 'guide-view', params: { id: props.guide.guideId } }));
+const edit = computed(() => ({ name: 'guide-edit', params: { id: props.guide.guideId } }));
 const status = computed(() => GUIDE_STATUS[props.guide.status]);
 </script>
 
 <template>
   <article class="gcard surface radius-2 d-flex align-center gap-2 p-2" @click="router.push(view)">
-    <GameCover :src="guide.cover" :title="guide.title" size="sm" class="gcard__cover shrink-0" />
+    <img v-if="guide.dlc && guide.dlcIcon" :src="guide.dlcIcon" alt="" class="gcard__cover gcard__cover--dlc radius-1 shrink-0" loading="lazy" />
+    <GameCover v-else :src="guide.cover" :title="guide.title" size="sm" class="gcard__cover shrink-0" />
 
     <div class="flex-1 min-w-0 d-flex flex-column gap-1">
       <div class="d-flex align-center flex-wrap gap-1">
         <span class="badge" :class="`badge--${status.tone}`">{{ status.label }}</span>
+        <span v-if="guide.dlc" class="badge badge--info">DLC · {{ guide.gameTitle }}</span>
         <span v-if="guide.source === 'local'" class="badge" data-tooltip="Ainda não está na nuvem">
           <HardDrive :size="12" /> Só neste navegador
         </span>
@@ -63,6 +65,11 @@ const status = computed(() => GUIDE_STATUS[props.guide.status]);
   &__cover {
     width: 56px;
     aspect-ratio: 3 / 4;
+
+    &--dlc {
+      aspect-ratio: 1;
+      object-fit: cover;
+    }
   }
 
   &__title {

@@ -8,6 +8,7 @@ import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useToast } from '@/composables/useToast';
 import { absoluteUrl, copyText } from '@/utils/share';
+import { guideIdOf } from '@/utils/guideIds';
 
 // Publicar o guia (rascunho → publicado) e as ações do publicado: ver, copiar link, voltar para rascunho.
 // Publicar exige o admin logado (grava na nuvem) e a lista de troféus vinculada.
@@ -16,7 +17,7 @@ const router = useRouter();
 const toast = useToast();
 
 const published = computed(() => draft.value.status === 'published');
-const viewRoute = computed(() => ({ name: 'guide-view', params: { id: draft.value.gameId } }));
+const viewRoute = computed(() => ({ name: 'guide-view', params: { id: guideIdOf(draft.value) } }));
 const blocked = computed(() => {
   if (!cloud.value) return 'Entre como administrador para publicar';
   if (!draft.value.versions.length) return 'Vincule a lista de troféus antes de publicar';

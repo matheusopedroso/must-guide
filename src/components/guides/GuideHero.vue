@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Globe, HardDrive } from 'lucide-vue-next';
+import { CornerLeftUp, Globe, HardDrive } from 'lucide-vue-next';
 import GameCover from '@/components/ui/GameCover.vue';
 import GuideStatsSummary from '@/components/guide-editor/GuideStatsSummary.vue';
 import { coverSrc } from '@/utils/cover';
@@ -10,13 +10,16 @@ import { formatDate } from '@/utils/date';
 // capa à esquerda e, à direita, selos, título, meta, visão geral (linha das "notas") e ações (slot).
 // #extra: abaixo das ações (ex.: seu progresso).
 // Celular (igual ao Must Watch): sem capa, imagem nítida na largura da tela no alto, degradê e texto centralizado.
+// Guia de DLC: título e ícone da DLC, selo "Guia de DLC" e link para o guia do jogo.
 const props = defineProps({
   guide: { type: Object, required: true },
   game: { type: Object, default: null }, // detalhes do jogo (ano, plataformas), se já carregou
   source: { type: String, default: '' }, // cloud | local
 });
 
-const title = computed(() => props.game?.title ?? props.guide.game?.title ?? '');
+const gameTitle = computed(() => props.game?.title ?? props.guide.game?.title ?? '');
+const dlc = computed(() => props.guide.dlc ?? null);
+const title = computed(() => (dlc.value ? dlc.value.name || 'DLC' : gameTitle.value));
 const cover = computed(() => props.game?.cover ?? props.guide.game?.cover ?? null);
 // Fundo: desfocado no desktop (640px basta) · nítido no celular (1280px, a tela tem 2–3× de densidade)
 const backdrop = computed(() =>
@@ -40,16 +43,20 @@ const hasStats = computed(() => Object.values(props.guide.stats ?? {}).some(Bool
     <div class="hero__overlay" aria-hidden="true" />
 
     <div class="hero__inner">
-      <GameCover :src="cover" :title="title" size="lg" eager class="hero__poster" />
+      <img v-if="dlc?.icon" :src="dlc.icon" :alt="title" class="hero__poster hero__poster--dlc" />
+      <GameCover v-else :src="cover" :title="title" size="lg" eager class="hero__poster" />
 
       <div class="hero__info">
         <div class="d-flex flex-wrap align-center gap-1 hero__labels">
-          <span class="hero__kicker">Guia de troféus</span>
+          <span class="hero__kicker">{{ dlc ? 'Guia de DLC' : 'Guia de troféus' }}</span>
           <span v-if="published" class="badge badge--success"><Globe :size="12" /> Publicado</span>
           <span v-else class="badge">Rascunho</span>
           <span v-if="source === 'local'" class="badge"><HardDrive :size="12" /> Neste navegador</span>
         </div>
         <h1 class="hero__title">{{ title }}</h1>
+        <RouterLink v-if="dlc" :to="{ name: 'guide-view', params: { id: guide.gameId } }" class="hero__parent d-inline-flex align-center gap-1 text-sm fw-600">
+          <CornerLeftUp :size="14" /> DLC de {{ gameTitle }}
+        </RouterLink>
         <div v-if="meta.length" class="hero__meta d-flex flex-wrap align-center">
           <span v-for="m in meta" :key="m">{{ m }}</span>
         </div>
@@ -122,6 +129,23 @@ const hasStats = computed(() => Object.values(props.guide.stats ?? {}).some(Bool
       aspect-ratio: 3 / 4;
       border-radius: $r2;
       box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border);
+    }
+  }
+
+  &__poster--dlc {
+    @include up(md) {
+      aspect-ratio: 1;
+      object-fit: cover;
+      align-self: center;
+    }
+  }
+
+  &__parent {
+    margin-bottom: space(1);
+    color: var(--accent);
+
+    &:hover {
+      text-decoration: underline;
     }
   }
 

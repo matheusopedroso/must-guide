@@ -2,6 +2,7 @@ import { computed, ref, shallowRef, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import { listDrafts } from '@/services/draft.service';
 import { editedAt, isBlankDraft, summarizeGuide } from '@/utils/guideDraft';
+import { guideIdOf } from '@/utils/guideIds';
 
 // Guias para a lista "Meus guias": nuvem (admin) + rascunhos deste navegador.
 // O mesmo jogo nas duas → fica a cópia mais recente. Ordem: editado por último primeiro.
@@ -14,7 +15,7 @@ export function useMyGuides() {
   async function load() {
     loading.value = true;
     error.value = '';
-    const byId = new Map(listDrafts().filter((d) => !isBlankDraft(d)).map((d) => [d.gameId, { guide: d, source: 'local' }]));
+    const byId = new Map(listDrafts().filter((d) => !isBlankDraft(d)).map((d) => [guideIdOf(d), { guide: d, source: 'local' }]));
 
     if (enabled) {
       await whenReady();
@@ -22,8 +23,8 @@ export function useMyGuides() {
         try {
           const { listGuides } = await import('@/services/guides.service');
           for (const g of await listGuides({ admin: true })) {
-            const local = byId.get(g.gameId);
-            if (!local || editedAt(g) >= editedAt(local.guide)) byId.set(g.gameId, { guide: g, source: 'cloud' });
+            const local = byId.get(guideIdOf(g));
+            if (!local || editedAt(g) >= editedAt(local.guide)) byId.set(guideIdOf(g), { guide: g, source: 'cloud' });
           }
         } catch (e) {
           console.error('[guias] Falha ao listar', e);

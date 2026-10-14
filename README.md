@@ -133,7 +133,7 @@ Classes de texto das páginas de detalhe em `src/styles/components/_detail-page.
 No celular (rota com `meta.immersive`): sem a barra de navegação do topo, a imagem do jogo nítida (1280px) na largura
 da tela até o alto, voltar/compartilhar redondos por cima e a PageBar completa só depois de rolar — como no Must Watch.
 
-## Abas de seções (Guia, Roadmap, Coletáveis, Detonado, Perdíveis, Online, DLCs, Dicas)
+## Abas de seções (Guia, Roadmap, Coletáveis, Detonado, Perdíveis, Online, Dicas)
 
 As duas abas usam o mesmo modelo, configurado em `src/config/guideTabs.js` (`sections`: onde guardar, nome da
 seção, numerada ou não, textos de ajuda) e as mesmas peças (`SectionsTab` no editor, `SectionsView` na leitura,
@@ -147,7 +147,6 @@ seção, numerada ou não, textos de ajuda) e as mesmas peças (`SectionsTab` no
 | **Detonado** | `walkthrough` | Capítulo (masculino) | "Capítulo 1: título" |
 | **Perdíveis** | `missables` | Seção · + troféus marcados como Perdível no topo | só o título |
 | **Online** | `online` | Seção · + troféus marcados como Online no topo | só o título |
-| **DLCs** | `dlcs` | DLC (nome da expansão) | só o título |
 | **Dicas** (opcional) | `tips` | Dica (Melhor build, Farm de dinheiro…) | só o título |
 
 `masc: true` ajusta os textos ("deste capítulo"); `flag` (Perdíveis/Online) lista sozinho, no topo da leitura, os
@@ -177,18 +176,35 @@ para o guia todo (a aba Coletáveis mostra igual); tocar no nome abre os detalhe
 editada por último. Peças: `src/components/collectibles/`, `useCollectibles.js` (contexto + `useCollected`),
 `src/utils/collectibles.js`, `src/services/progress.service.js`.
 
+## Guias de DLC (um guia separado por DLC)
+
+Cada DLC com troféus próprios (grupo da lista da PSN, ex.: `001`) vira **outro guia**, com troféus, guia, roadmap,
+coletáveis, dificuldade e status próprios — como no PSNProfiles.
+
+- **Id:** guia do jogo = `gameId` (`rawg-123`); guia da DLC = `gameId~grupo` (`rawg-123~001`), com
+  `parentId: gameId` e `dlc: { groupId, name, icon }` (`src/utils/guideIds.js`: `dlcGuideId`, `parseGuideId`, `guideIdOf`).
+- **Troféus por guia** (`src/utils/trophyScope.js`): o guia do jogo mostra só o grupo base (`default`) quando a lista
+  tem DLCs; o da DLC, só o grupo dela. `useTrophyData(…, { scope })` devolve a lista recortada (e `fullList`).
+- **Editor do jogo → aba DLCs** (`DlcTab`, só em guia de jogo — `gameOnly`): lista os grupos de DLC da versão principal
+  com o status do guia; "Criar guia da DLC" copia as versões e as anotações dos troféus daquele grupo e abre
+  `/guia/<id-da-dlc>/editar`. A aba Troféus avisa quantas DLCs a lista tem.
+- **Leitura:** o guia do jogo lista as DLCs (`DlcGuideList`, só as publicadas para quem não é admin —
+  `listDlcGuides`); o da DLC mostra "Guia de DLC", o ícone da DLC e o link para o jogo. Em Meus guias aparece o selo "DLC".
+- **Regras:** `guides/{guideId}` exige `guideId` (ou `gameId`, nos antigos) igual ao id do documento. Rode
+  `firebase deploy --only firestore` depois de atualizar o `firestore.rules`.
+
 ## Rascunho do guia
 
-O guia em edição fica sempre no navegador (`localStorage`, chave `mg:guide-draft:<jogo>`) e, com o admin logado,
+O guia em edição fica sempre no navegador (`localStorage`, chave `mg:guide-draft:<guideId>`) e, com o admin logado,
 também no Firestore. Ao abrir, vale a cópia mais recente (`updatedAt`): a da nuvem substitui a local, ou a local
 (editada sem internet ou antes do login) sobe. Gravação: navegador em 600 ms, nuvem agrupada em 2,5 s e ao sair.
 Formato (`src/utils/guideDraft.js`):
 
 ```js
-{ gameId, game, status: 'draft' | 'published', publishedAt, tabs: [], versions: [{ id, name, platform, service }],
+{ guideId, gameId, parentId?, dlc?: { groupId, name, icon }, game, status: 'draft' | 'published', publishedAt, tabs: [], versions: [{ id, name, platform, service }],
   trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } },
   stats: { difficulty, playthroughs, hours },
-  guide: [{ id, title, body, trophies }], roadmap, tips, collectibles, walkthrough, missables, online, dlcs: [mesmo formato],
+  guide: [{ id, title, body, trophies }], roadmap, tips, collectibles, walkthrough, missables, online: [mesmo formato],
   updatedAt }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
 ```
 
