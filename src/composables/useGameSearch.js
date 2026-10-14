@@ -1,20 +1,16 @@
 import { computed, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { fetchPopularGames, searchGames } from '@/services/games.service';
 import { useDebounceFn } from './useDebounceFn';
 
 const MIN_CHARS = 2;
 
-// Pesquisa da tela de início: populares por padrão, resultados ao digitar.
-// O termo fica na URL (?q=) → voltar para a tela mantém a busca.
-export function useGameSearch() {
-  const route = useRoute();
-  const router = useRouter();
-
-  const term = ref(String(route.query.q ?? ''));
+// Lista de jogos a partir de um termo: populares quando vazio, resultados ao digitar.
+// Usado na tela de início e no seletor do editor.
+export function useGameSearch(term, { immediate = true } = {}) {
   const games = ref([]);
   const provider = ref(null);
   const loading = ref(false);
+  const loaded = ref(false);
   const error = ref('');
   let controller = null;
 
@@ -32,6 +28,7 @@ export function useGameSearch() {
       const data = isSearching.value ? await searchGames(query.value, { signal }) : await fetchPopularGames({ signal });
       games.value = data.games;
       provider.value = data.provider;
+      loaded.value = true;
     } catch (e) {
       if (e.name === 'AbortError') return;
       games.value = [];
@@ -44,7 +41,6 @@ export function useGameSearch() {
   const debouncedLoad = useDebounceFn(load, 400);
 
   watch(query, (q, old) => {
-    router.replace({ query: q ? { q } : {} });
     // Só consulta quando o resultado muda: ignora 1 caractere e espaços extras
     const wasSearching = (old ?? '').length >= MIN_CHARS;
     if (!isSearching.value && !wasSearching) return;
@@ -52,7 +48,7 @@ export function useGameSearch() {
     isSearching.value ? debouncedLoad() : (debouncedLoad.cancel(), load());
   });
 
-  load();
+  if (immediate) load();
 
-  return { term, games, provider, loading, error, isSearching, query, retry: load };
+  return { games, provider, loading, loaded, error, isSearching, query, load };
 }

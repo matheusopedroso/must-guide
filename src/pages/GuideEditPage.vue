@@ -1,16 +1,84 @@
 <script setup>
-import { Hammer } from 'lucide-vue-next';
+import { computed, watch } from 'vue';
+import { TriangleAlert } from 'lucide-vue-next';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseTabs from '@/components/ui/BaseTabs.vue';
+import GamePicker from '@/components/games/GamePicker.vue';
+import SelectedGameCard from '@/components/guide-editor/SelectedGameCard.vue';
+import TabPlaceholder from '@/components/guide-editor/TabPlaceholder.vue';
+import { useQueryParam } from '@/composables/useQueryParam';
+import { useGameDetails } from '@/composables/useGameDetails';
+import { DEFAULT_TAB, GUIDE_TABS } from '@/config/guideTabs';
+import { APP_NAME } from '@/config/app';
+
+// Jogo e aba ficam na URL (?jogo=rawg-123&aba=coletaveis): recarregar ou voltar mantém o estado
+const gameId = useQueryParam('jogo');
+const tabParam = useQueryParam('aba');
+const { game, loading, error, set: setGame } = useGameDetails(gameId);
+
+const activeTab = computed(() => GUIDE_TABS.find((t) => t.id === tabParam.value) ?? GUIDE_TABS[0]);
+const tab = computed({
+  get: () => activeTab.value.id,
+  set: (id) => (tabParam.value = id === DEFAULT_TAB ? '' : id), // aba padrão não polui a URL
+});
+
+function selectGame(selected) {
+  setGame(selected); // já temos os dados: evita buscar de novo
+  gameId.value = selected.id;
+}
+
+const changeGame = () => (gameId.value = '');
+
+watch(game, (g) => {
+  document.title = g ? `Guia: ${g.title} · ${APP_NAME}` : `Novo guia · ${APP_NAME}`;
+});
 </script>
 
 <template>
   <div class="container page">
-    <PageHeader title="Novo guia" back="/" />
-    <EmptyState
-      :icon="Hammer"
-      title="Editor em construção"
-      text="Esta é a próxima etapa: escolher o jogo e montar as seções e passos do guia."
-    />
+    <PageHeader title="Novo guia" back="/" :subtitle="gameId ? '' : 'Comece escolhendo o jogo.'" />
+
+    <section v-if="!gameId" class="picker-wrap">
+      <GamePicker autofocus @select="selectGame" />
+    </section>
+
+    <EmptyState v-else-if="error" :icon="TriangleAlert" title="Não deu para carregar o jogo" :text="error">
+      <BaseButton @click="changeGame">Escolher outro jogo</BaseButton>
+    </EmptyState>
+
+    <template v-else>
+      <SelectedGameCard :game="game" :loading="loading" class="mb-2" @change="changeGame" />
+
+      <template v-if="game">
+        <div class="tabs-bar mb-3">
+          <BaseTabs v-model="tab" :tabs="GUIDE_TABS" label="Seções do guia" id-prefix="guide-tab" />
+        </div>
+
+        <section
+          :id="`guide-tab-panel-${activeTab.id}`"
+          role="tabpanel"
+          :aria-labelledby="`guide-tab-${activeTab.id}`"
+        >
+          <component :is="activeTab.component" v-if="activeTab.component" :game="game" />
+          <TabPlaceholder v-else :tab="activeTab" />
+        </section>
+      </template>
+    </template>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.picker-wrap {
+  max-width: 640px;
+}
+
+// Abas fixas abaixo do header ao rolar (as abas vão ter conteúdo longo)
+.tabs-bar {
+  position: sticky;
+  top: $header-height;
+  z-index: 10;
+  background: var(--bg);
+}
+</style>

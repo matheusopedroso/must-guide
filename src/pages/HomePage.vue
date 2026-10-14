@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { SearchX, TriangleAlert } from 'lucide-vue-next';
 import SearchInput from '@/components/ui/SearchInput.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -9,8 +9,14 @@ import GameGrid from '@/components/games/GameGrid.vue';
 import GameCard from '@/components/games/GameCard.vue';
 import GameCardSkeleton from '@/components/games/GameCardSkeleton.vue';
 import { useGameSearch } from '@/composables/useGameSearch';
+import { useQueryParam } from '@/composables/useQueryParam';
 
-const { term, games, provider, loading, error, isSearching, query, retry } = useGameSearch();
+// O termo fica na URL (?q=): voltar para a tela mantém a busca
+const q = useQueryParam('q');
+const term = ref(q.value);
+watch(term, (v) => (q.value = v.trim()));
+
+const { games, provider, loading, error, isSearching, query, load: retry } = useGameSearch(term);
 
 const sectionTitle = computed(() => (isSearching.value ? `Resultados para “${query.value}”` : 'Populares agora'));
 </script>

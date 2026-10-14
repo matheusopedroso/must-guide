@@ -37,14 +37,15 @@ must-guide/
 │     ├─ config.js             provedor ativo e opções (região SP)
 │     └─ handlers/games.js     function HTTP (secrets só do provedor ativo)
 ├─ src/
-│  ├─ components/ui/           BaseButton, SearchInput, GameCover, EmptyState, PageHeader…
+│  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, GameCover, EmptyState, PageHeader…
 │  ├─ components/layout/       AppHeader
-│  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid
-│  ├─ composables/             useGameSearch, useDebounceFn, useTheme
+│  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
+│  ├─ components/guide-editor/ SelectedGameCard, TabPlaceholder (abas: componentes por vir)
+│  ├─ composables/             useGameSearch, useGameDetails, useQueryParam, useDebounceFn, useTheme
 │  ├─ services/games.service.js  fetch para /api/games com cache da sessão
-│  ├─ config/                  app, providers
+│  ├─ config/                  app, providers, guideTabs (abas do editor)
 │  ├─ utils/cover.js           tamanho da capa por provedor
-│  ├─ pages/                   HomePage, GuideEditPage
+│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
 └─ firebase.json               Hosting + rewrite /api/games/** → function "games"
 ```

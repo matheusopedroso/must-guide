@@ -7,6 +7,7 @@ const props = defineProps({
   placeholder: { type: String, default: 'Buscar' },
   size: { type: String, default: 'md' }, // md | lg
   autofocus: Boolean,
+  inputAttrs: { type: Object, default: () => ({}) }, // atributos/eventos extras do <input> (ex.: combobox)
 });
 
 // Foco automático só com mouse: no celular abriria o teclado cobrindo a tela
@@ -19,6 +20,8 @@ function clear() {
   model.value = '';
   input.value?.focus();
 }
+
+defineExpose({ focus: () => input.value?.focus() });
 </script>
 
 <template>
@@ -35,6 +38,7 @@ function clear() {
       class="input"
       :placeholder="placeholder"
       :aria-label="placeholder"
+      v-bind="inputAttrs"
     />
     <button v-if="model" type="button" class="search__clear d-flex align-center justify-center" aria-label="Limpar" @click="clear">
       <X :size="16" />
