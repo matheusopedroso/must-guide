@@ -106,8 +106,8 @@ const hasBody = computed(
     </div>
 
     <!-- Rodapé: etiquetas -->
-    <footer class="trophy__foot px-2 py-2 border-top">
-      <TrophyMetaTags :trophy="trophy" :note="note" :stats="stats">
+    <footer class="trophy__foot d-flex align-start gap-1 px-2 py-2 border-top">
+      <TrophyMetaTags :trophy="trophy" :note="note" :stats="stats" class="trophy__meta">
         <template #before>
           <span v-for="f in flags" :key="f.id" class="badge" :class="`badge--${f.tone}`">
             <component :is="f.icon" :size="14" :stroke-width="2" /> {{ f.label }}
@@ -117,6 +117,12 @@ const hasBody = computed(
           </button>
         </template>
       </TrophyMetaTags>
+
+      <!-- Conquistado: separado, no canto direito -->
+      <span v-if="stats?.earned" class="tag trophy__earned shrink-0">
+        <Check :size="14" :stroke-width="2.5" />
+        <span class="tag__label">Conquistado:</span> {{ formatEarnedAt(stats.earnedAt) }}
+      </span>
     </footer>
   </li>
 </template>
@@ -188,6 +194,33 @@ const hasBody = computed(
   &__detail {
     font-size: 14px;
     color: var(--text-muted);
+  }
+
+  // Rodapé: etiquetas à esquerda (quebram linha) e "Conquistado" fixo à direita.
+  // No celular o "Conquistado" desce para a linha de baixo, alinhado à direita.
+  &__foot {
+    @include down(sm) {
+      flex-wrap: wrap;
+    }
+  }
+
+  // (sem a utilitária flex-1: ela usa !important e impediria o ajuste do celular)
+  &__meta {
+    flex: 1 1 0;
+    min-width: 0;
+
+    @include down(sm) {
+      flex-basis: 100%;
+    }
+  }
+
+  &__earned {
+    background: color-mix(in srgb, var(--earned) 12%, transparent);
+    color: var(--earned);
+
+    @include down(sm) {
+      margin-left: auto;
+    }
   }
 
   // Conquistado na conta (progresso da PSN): borda + anel no tom teal

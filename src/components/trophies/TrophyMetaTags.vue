@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { CirclePlay, Link as LinkIcon, Trophy } from 'lucide-vue-next';
 import RatingInput from '@/components/ui/RatingInput.vue';
 import { DIFFICULTY_LABELS, DIFFICULTY_MAX, RARITY_LABELS, TROPHY_MOMENT_MAP, TROPHY_TYPE_MAP } from '@/config/trophies';
-import { formatEarnedAt, formatRate } from '@/utils/trophies';
+import { formatRate } from '@/utils/trophies';
 import { isYoutube } from '@/utils/url';
 
 // Rodapé do card: etiquetas "Rótulo: valor" (só o que existe). Slot "before": itens no começo (ex.: badges)
@@ -31,9 +31,6 @@ const moment = computed(() => TROPHY_MOMENT_MAP[props.note.when]?.label ?? '');
     </span>
     <span v-if="rarity" class="tag" title="Porcentagem de jogadores com o troféu">
       <span class="tag__label">Raridade:</span> {{ rarity }}
-    </span>
-    <span v-if="stats?.earned" class="tag">
-      <span class="tag__label">Conquistado:</span> {{ formatEarnedAt(stats.earnedAt) }}
     </span>
     <span v-if="moment" class="tag"><span class="tag__label">Momento:</span> {{ moment }}</span>
     <span v-if="note.chapter" class="tag tag--chapter" :title="note.chapter">
