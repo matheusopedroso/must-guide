@@ -6,6 +6,9 @@ import { apiPlugin } from './vite/apiPlugin.js';
 // Endereço do site publicado (tags de compartilhamento). Pode ser trocado por VITE_SITE_URL no .env
 const DEFAULT_SITE_URL = 'https://must-guide-app.web.app';
 
+// Bibliotecas que toda página usa (chunk "vendor")
+const VENDOR = /[\\/]node_modules[\\/](vue|@vue|vue-router|lucide-vue-next|pell)[\\/]/;
+
 // Troca %SITE_URL% no index.html (og:image e og:url precisam de URL completa)
 const siteUrlPlugin = (siteUrl) => ({
   name: 'must-guide:site-url',
@@ -30,9 +33,10 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          // Bibliotecas num arquivo separado: mudam pouco e ficam em cache entre deploys
+          // Bibliotecas da base num arquivo separado: mudam pouco e ficam em cache entre deploys.
+          // O resto (Firebase e dependências) é carregado sob demanda e o Vite separa sozinho.
           manualChunks(id) {
-            if (id.includes('node_modules')) return 'vendor';
+            if (VENDOR.test(id)) return 'vendor';
           },
         },
       },

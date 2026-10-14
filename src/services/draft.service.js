@@ -1,5 +1,5 @@
 // Rascunho do guia guardado no navegador (localStorage), 1 chave por jogo.
-// Quando o guia passar a ser salvo no Firestore, só este arquivo muda.
+// É a cópia local (offline/sem login); a da nuvem fica em guides.service.js (sincronia em useGuideDraft).
 const key = (gameId) => `mg:guide-draft:${gameId}`;
 
 export function loadDraft(gameId) {

@@ -26,6 +26,7 @@ must-guide/
 ├─ functions/
 │  ├─ .env.example             modelo do functions/.env (GAMES_PROVIDER=rawg | igdb; sem o arquivo usa rawg)
 │  ├─ index.js                 exporta os handlers
+│  ├─ scripts/set-admin.js     dá/tira o papel de admin (Custom Claim)
 │  └─ src/
 │     ├─ core/                 código puro, sem Firebase (roda no Vite e na function)
 │     │  ├─ providers/rawg.js  busca, populares e detalhes no RAWG
@@ -40,17 +41,18 @@ must-guide/
 │     │  ├─ gameShape.js       formato único de jogo + siglas de plataforma
 │     │  └─ memoryCache.js
 │     ├─ config.js             provedor ativo e opções (região SP)
+│     ├─ auth.js               requireAdmin (token do Firebase com a claim admin)
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
 │  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), DropdownMenu, IconSelect, NumberStepper, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal (pilha, foco, arrastar p/ fechar), VideoModal (YouTube no app), GameCover, EmptyState…
-│  ├─ components/layout/       AppHeader, AppLogo
+│  ├─ components/layout/       AppHeader, AppLogo, AccountMenu (Entrar / conta)
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, GuideStats (resumo) + GuideStatsModal (edição), DifficultyPicker, DifficultyBadge, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
 │  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
-│  ├─ composables/             useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
-│  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (rascunho no navegador)
-│  ├─ config/                  app, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
+│  ├─ composables/             useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (navegador), guides (Firestore), firebase/ (app, auth)
+│  ├─ config/                  app, firebase, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
 │  ├─ utils/                   cover, text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
 │  ├─ assets/brand/logo.js     paths do logo (usados pelo AppLogo)
 │  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
@@ -80,22 +82,49 @@ Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO`
 logado em playstation.com, abra https://ca.account.sony.com/api/v1/ssocookie e copie o `npsso`.
 Em produção: `firebase functions:secrets:set PSN_NPSSO`.
 
+## Firebase (login e guias na nuvem)
+
+Login com Google (Firebase Auth) e guias no Firestore (`guides/{gameId}`). Sem as variáveis `VITE_FIREBASE_*`
+o app continua funcionando só com o rascunho no navegador.
+
+1. Console do Firebase → **Authentication** → Método de login → ative **Google**.
+   Em Configurações → Domínios autorizados, confira `localhost` e o domínio do Hosting.
+2. **Firestore Database** → Criar banco → modo produção, região `southamerica-east1` (São Paulo).
+3. Configurações do projeto → Seus apps → app **Web** → copie a config para o `.env.local` (`VITE_FIREBASE_*`, ver `.env.example`).
+4. Publique as regras: `firebase deploy --only firestore`.
+5. Entre no app com sua conta Google uma vez e torne-a admin (Custom Claim, igual ao Must Watch):
+   `cd functions && node scripts/set-admin.js seu@email.com` (com `GOOGLE_APPLICATION_CREDENTIALS` apontando
+   para a chave da conta de serviço, guardada fora do projeto). Saia e entre de novo.
+
+| Peça | Arquivo |
+|---|---|
+| Config (pública) | `src/config/firebase.js` |
+| SDK sob demanda (app + Firestore *lite*) | `src/services/firebase/app.js` |
+| Login Google (popup; redirect se bloqueado) | `src/services/firebase/auth.js` · estado em `src/composables/useAuth.js` |
+| Guias (ler/gravar) | `src/services/guides.service.js` |
+| Sincronização navegador ↔ nuvem | `src/composables/guide/useGuideDraft.js` |
+| Regras | `firestore.rules` (admin grava; publicado qualquer um lê) |
+| Rotas pessoais da PSN | `/api/trophies/titles` e `progress` exigem token de admin em produção (`functions/src/auth.js`); no `npm run dev` ficam abertas |
+
+O SDK só é baixado se o aparelho já teve login ou ao clicar em **Entrar** (quem só visita não carrega nada).
+
 ## Rascunho do guia
 
-Enquanto não há banco, o guia em edição fica no navegador (`localStorage`, chave `mg:guide-draft:<jogo>`),
-já no formato do futuro documento do Firestore (`src/utils/guideDraft.js`):
+O guia em edição fica sempre no navegador (`localStorage`, chave `mg:guide-draft:<jogo>`) e, com o admin logado,
+também no Firestore. Ao abrir, vale a cópia mais recente (`updatedAt`): a da nuvem substitui a local, ou a local
+(editada sem internet ou antes do login) sobe. Gravação: navegador em 600 ms, nuvem agrupada em 2,5 s e ao sair.
+Formato (`src/utils/guideDraft.js`):
 
 ```js
-{ gameId, game, tabs: [], versions: [{ id, name, platform, service }],
+{ gameId, game, status: 'draft' | 'published', tabs: [], versions: [{ id, name, platform, service }],
   trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } },
-  stats: { difficulty, playthroughs, hours } }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
+  stats: { difficulty, playthroughs, hours }, updatedAt }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
 ```
 
 - `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).
 - Formato completo da anotação em `EMPTY_NOTE` (`src/config/trophies.js`); só os campos preenchidos são gravados.
 - `when` = momento (`TROPHY_MOMENTS`), `difficulty` = 1–5, `chapter` = capítulo/missão, `video` = link.
 - `tip` = HTML do "Como conseguir" (editor Pell; filtrado ao colar, ao fechar e ao exibir — `src/utils/html.js`). As marcações (História, Perdível, Online) vêm de `TROPHY_FLAGS` em `src/config/trophies.js`: para criar outra, basta adicionar lá (botão e filtro aparecem sozinhos).
-- Gravação agrupada (600 ms) e ao minimizar/sair da página.
 
 ## Editor de texto (Pell)
 

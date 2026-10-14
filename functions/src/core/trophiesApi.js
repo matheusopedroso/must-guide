@@ -13,20 +13,23 @@ export const TROPHY_LIST_VERSION = 2;
 
 const parseService = (value) => (['trophy', 'trophy2'].includes(value) ? value : null);
 
-// Rotas da API de troféus (/api/trophies/**)
-export function createTrophiesApi(getSecret) {
+// Rotas da API de troféus (/api/trophies/**). As pessoais (conta do PSN_NPSSO) são `private`:
+// em produção só o admin logado acessa (options.authorize, ver handlers/trophies.js).
+export function createTrophiesApi(getSecret, options = {}) {
   const trophies = createTrophyService(createPsnClient(getSecret));
   const memory = createCache({ max: 100 });
 
   return createApi('trophies', {
     // Lista pessoal (jogos da conta) → sem cache na CDN
     titles: {
+      private: true,
       cache: 'private, max-age=300',
       run: async () => ({ titles: await remember(memory, 'titles', 10 * 60, trophies.userTitles) }),
     },
 
     // Progresso pessoal num jogo (conquistados + raridade) → curto e sem CDN
     progress: {
+      private: true,
       cache: 'private, max-age=60',
       async run({ id, query }) {
         const npId = String(id ?? '').toUpperCase();
@@ -45,5 +48,5 @@ export function createTrophiesApi(getSecret) {
         return { list: await remember(memory, key, 24 * HOUR, () => trophies.trophyList(npId, service)) };
       },
     },
-  });
+  }, options);
 }

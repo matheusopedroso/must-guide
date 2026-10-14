@@ -2,6 +2,7 @@
 import { Moon, Plus, Sun } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import AppLogo from './AppLogo.vue';
+import AccountMenu from './AccountMenu.vue';
 import { useTheme } from '@/composables/useTheme';
 
 const { theme, toggle } = useTheme();
@@ -23,6 +24,7 @@ const { theme, toggle } = useTheme();
           @click="toggle"
         />
         <BaseButton :to="{ name: 'guide-new' }" :icon="Plus" variant="primary">Criar guia</BaseButton>
+        <AccountMenu />
       </div>
     </div>
   </header>

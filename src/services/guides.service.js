@@ -1,43 +1,22 @@
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from 'firebase/firestore';
-import { db } from './firebase';
-import { normalizeDoc } from '@/utils/firestore';
+import { COLLECTIONS } from '@/config/firebase';
+import { getFirestore } from './firebase/app';
 
-const guidesCol = collection(db, 'guides');
+// Guias no Firestore: guides/{gameId}, mesmo formato do rascunho (utils/guideDraft.js)
+// + updatedBy (uid) e savedAt (hora do servidor). Regras em firestore.rules.
 
-export async function fetchGuides({ gameId = null, max = 50 } = {}) {
-  const constraints = [orderBy('updatedAt', 'desc'), limit(max)];
-  if (gameId) constraints.unshift(where('gameId', '==', gameId));
-  const snap = await getDocs(query(guidesCol, ...constraints));
-  return snap.docs.map(normalizeDoc);
+export async function fetchGuide(gameId) {
+  const { db, fs } = await getFirestore();
+  const snap = await fs.getDoc(fs.doc(db, COLLECTIONS.guides, gameId));
+  if (!snap.exists()) return null;
+  const { savedAt, updatedBy, ...guide } = snap.data(); // campos só do servidor ficam fora do rascunho
+  return guide;
 }
 
-export async function fetchGuide(id) {
-  const snap = await getDoc(doc(guidesCol, id));
-  return snap.exists() ? normalizeDoc(snap) : null;
+export async function saveGuide(guide, uid) {
+  const { db, fs } = await getFirestore();
+  await fs.setDoc(fs.doc(db, COLLECTIONS.guides, guide.gameId), {
+    ...guide,
+    updatedBy: uid,
+    savedAt: fs.serverTimestamp(),
+  });
 }
-
-// Cria ou atualiza. Seções e passos ficam no próprio documento (1 leitura por guia)
-export async function saveGuide(guide, authorId) {
-  const ref = guide.id ? doc(guidesCol, guide.id) : doc(guidesCol);
-  const { id: _omit, ...data } = guide;
-  const now = serverTimestamp();
-  const payload = { ...data, authorId, updatedAt: now };
-  if (!guide.id) payload.createdAt = now;
-
-  await setDoc(ref, payload, { merge: true });
-  return { ...data, id: ref.id, authorId, updatedAt: new Date(), createdAt: guide.createdAt ?? new Date() };
-}
-
-export const deleteGuide = (id) => deleteDoc(doc(guidesCol, id));

@@ -15,15 +15,17 @@ export function parseApiUrl(rawUrl, base) {
   return { route: parts[0] ?? '', id: parts[1] ?? null, query: Object.fromEntries(url.searchParams) };
 }
 
-// Monta uma API a partir de rotas { nome: { cache: 'Cache-Control', run(args) } }
+// Monta uma API a partir de rotas { nome: { cache: 'Cache-Control', private?: true, run(args) } }
 // handle(rota, args) → { status, body, headers }. Erros com .status viram resposta; o resto, 502.
-export function createApi(name, routes) {
+// authorize(headers): checa as rotas `private` (lança httpError 401/403). Sem ele (dev), ficam abertas.
+export function createApi(name, routes, { authorize } = {}) {
   return {
     async handle(route, args = {}) {
       const def = routes[route];
       if (!def) return json(404, { error: 'Rota não encontrada.' });
 
       try {
+        if (def.private && authorize) await authorize(args.headers ?? {});
         const body = await def.run(args);
         return json(200, body, def.cache ? { 'Cache-Control': def.cache } : {});
       } catch (e) {

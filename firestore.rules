@@ -2,28 +2,26 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Por enquanto só o dono do projeto entra.
-    // Quando abrir para outras pessoas, troque por um campo/claim de admin.
+    // Admin = Custom Claim `admin` no Firebase Authentication (gravada pelo script
+    // functions/scripts/set-admin.js). Não fica em nenhum documento, então ninguém se promove pelo app.
     function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email == 'bh.matheuspedroso@gmail.com';
+      return request.auth != null && request.auth.token.get('admin', false) == true;
     }
 
-    // Catálogo de jogos (cache do IGDB) — compartilhado
-    match /games/{gameId} {
-      allow read, write: if isAdmin();
+    // Guias: guides/{gameId} (ex.: rawg-3498), mesmo formato de src/utils/guideDraft.js.
+    //   Publicado (status == 'published') → qualquer pessoa lê. Rascunho → só o admin.
+    //   Só o admin grava, e o id do documento tem que bater com o gameId de dentro.
+    match /guides/{gameId} {
+      allow read: if isAdmin() || resource.data.get('status', 'draft') == 'published';
+      allow create, update: if isAdmin()
+        && request.resource.data.gameId == gameId
+        && request.resource.data.status in ['draft', 'published'];
+      allow delete: if isAdmin();
     }
 
-    // Guias — compartilhados (no futuro: leitura para todos os logados)
-    match /guides/{guideId} {
-      allow read, write: if isAdmin();
-    }
-
-    // Dados pessoais: biblioteca e progresso dos checklists
-    match /users/{uid}/{document=**} {
-      allow read, write: if isAdmin() && request.auth.uid == uid;
+    // Todo o resto fechado
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

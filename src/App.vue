@@ -1,5 +1,6 @@
 <script setup>
 import AppHeader from '@/components/layout/AppHeader.vue';
+import ToastHost from '@/components/ui/ToastHost.vue';
 </script>
 
 <template>
@@ -11,6 +12,7 @@ import AppHeader from '@/components/layout/AppHeader.vue';
       </Transition>
     </RouterView>
   </main>
+  <ToastHost />
 </template>
 
 <style lang="scss">

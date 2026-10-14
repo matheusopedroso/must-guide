@@ -9,6 +9,7 @@ import GamePicker from '@/components/games/GamePicker.vue';
 import SelectedGameCard from '@/components/guide-editor/SelectedGameCard.vue';
 import AddTabMenu from '@/components/guide-editor/AddTabMenu.vue';
 import TabPlaceholder from '@/components/guide-editor/TabPlaceholder.vue';
+import SaveStatus from '@/components/guide-editor/SaveStatus.vue';
 import { useQueryParam } from '@/composables/useQueryParam';
 import { useGameDetails } from '@/composables/useGameDetails';
 import { useGuideTabs } from '@/composables/guide/useGuideTabs';
@@ -19,10 +20,8 @@ import { APP_NAME } from '@/config/app';
 // O conteúdo do guia (abas, versões, dicas) fica no rascunho, salvo no navegador por jogo.
 const gameId = useQueryParam('jogo');
 const { game, loading, error, set: setGame } = useGameDetails(gameId);
-const { draft, status: saveStatus } = provideGuideDraft(game);
+const { draft, status: saveStatus, syncing, cloud } = provideGuideDraft(game);
 const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = useGuideTabs(draft);
-
-const SAVE_LABELS = { pending: 'Salvando…', saved: 'Rascunho salvo neste navegador', error: 'Não foi possível salvar o rascunho' };
 
 function selectGame(selected) {
   setGame(selected); // já temos os dados: evita buscar de novo
@@ -39,8 +38,8 @@ watch(game, (g) => {
 <template>
   <div class="container page">
     <PageHeader title="Novo guia" back="/" :subtitle="gameId ? '' : 'Comece escolhendo o jogo.'">
-      <template v-if="SAVE_LABELS[saveStatus]" #actions>
-        <span class="text-xs" :class="saveStatus === 'error' ? 'text-danger' : 'text-subtle'">{{ SAVE_LABELS[saveStatus] }}</span>
+      <template v-if="gameId" #actions>
+        <SaveStatus :status="saveStatus" :syncing="syncing" :cloud="cloud" />
       </template>
     </PageHeader>
 
