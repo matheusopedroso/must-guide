@@ -4,7 +4,8 @@ import { useScrolledPast } from '@/composables/useScrolledPast';
 
 // Barra flutuante das páginas de detalhe (igual à BarraFlutuante do Must Watch):
 // voltar · título · ações (slot) · compartilhar. Gruda logo abaixo da navegação.
-// No celular só aparece depois de rolar um pouco (o topo da página mostra a capa inteira).
+// Celular, no topo da página: só os botões redondos sobre a imagem (sem fundo nem título);
+// a barra completa entra depois de rolar um pouco.
 defineProps({
   title: { type: String, default: '' },
   share: { type: Boolean, default: true },
@@ -16,7 +17,7 @@ const scrolled = useScrolledPast(140);
 
 <template>
   <header class="pbar d-grid align-center gap-1" :class="{ 'is-top': !scrolled }">
-    <button type="button" class="pbar__btn d-flex align-center justify-center radius-1" aria-label="Voltar" @click="$emit('back')">
+    <button type="button" class="pbar__btn d-flex align-center justify-center" aria-label="Voltar" @click="$emit('back')">
       <ArrowLeft :size="18" />
     </button>
     <p class="pbar__title truncate fw-600" :title="title">{{ title }}</p>
@@ -25,7 +26,7 @@ const scrolled = useScrolledPast(140);
       <button
         v-if="share"
         type="button"
-        class="pbar__btn d-flex align-center justify-center radius-1 tooltip-left"
+        class="pbar__btn d-flex align-center justify-center tooltip-left"
         aria-label="Compartilhar"
         data-tooltip="Compartilhar"
         @click="$emit('share')"
@@ -53,26 +54,44 @@ const scrolled = useScrolledPast(140);
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
   box-shadow: var(--nav-shadow);
-  transition: top 0.22s $ease, opacity 0.2s ease, transform 0.2s ease;
+  transition-duration: 0.22s;
+  transition-timing-function: $ease;
 
   @include up(md) {
     width: min(#{$container-header}, calc(100% - #{space(4)}));
   }
 
-  // Celular: some no topo da página (a capa aparece inteira) e entra ao rolar
-  @include down(sm) {
+  transition-property: top, background, border-color, box-shadow;
+
+  // Celular no topo: botões redondos sobre a imagem, sem a barra
+  @include down(md) {
     &.is-top {
-      opacity: 0;
-      transform: translateY(-8px);
-      pointer-events: none;
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+
+      .pbar__title {
+        opacity: 0;
+      }
+
+      .pbar__btn {
+        border-radius: $r-full;
+        background: rgba(20, 20, 19, 0.45);
+        color: #fff;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
     }
   }
 
   &__btn {
     width: 40px;
     height: 40px;
+    border-radius: $r1;
     color: var(--text-muted);
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s, border-radius 0.2s;
 
     &:hover {
       background: var(--surface-hover);
@@ -82,6 +101,7 @@ const scrolled = useScrolledPast(140);
 
   &__title {
     font-size: 14px;
+    transition: opacity 0.2s;
   }
 }
 </style>

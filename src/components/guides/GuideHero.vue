@@ -8,7 +8,8 @@ import { formatDate } from '@/utils/date';
 
 // Topo da leitura do guia (igual ao hero do título no Must Watch): fundo do jogo desfocado,
 // capa à esquerda e, à direita, selos, título, meta, visão geral (linha das "notas") e ações (slot).
-// #extra: abaixo das ações (ex.: seu progresso). No celular: sem capa, fundo nítido no alto e texto centralizado.
+// #extra: abaixo das ações (ex.: seu progresso).
+// Celular (igual ao Must Watch): sem capa, imagem nítida na largura da tela no alto, degradê e texto centralizado.
 const props = defineProps({
   guide: { type: Object, required: true },
   game: { type: Object, default: null }, // detalhes do jogo (ano, plataformas), se já carregou
@@ -17,7 +18,12 @@ const props = defineProps({
 
 const title = computed(() => props.game?.title ?? props.guide.game?.title ?? '');
 const cover = computed(() => props.game?.cover ?? props.guide.game?.cover ?? null);
-const backdrop = computed(() => (cover.value ? `url("${coverSrc(cover.value, 'lg')}")` : 'none'));
+// Fundo: desfocado no desktop (640px basta) · nítido no celular (1280px, a tela tem 2–3× de densidade)
+const backdrop = computed(() =>
+  cover.value
+    ? { '--backdrop': `url("${coverSrc(cover.value, 'lg')}")`, '--backdrop-sharp': `url("${coverSrc(cover.value, 'xl')}")` }
+    : null,
+);
 const platforms = computed(() => [...new Set(props.guide.versions.map((v) => v.platform).filter(Boolean))]);
 const meta = computed(() =>
   [props.game?.year, platforms.value.join(' · '), props.guide.updatedAt && `Atualizado em ${formatDate(props.guide.updatedAt)}`].filter(
@@ -29,7 +35,7 @@ const hasStats = computed(() => Object.values(props.guide.stats ?? {}).some(Bool
 </script>
 
 <template>
-  <section class="hero" :style="{ '--backdrop': backdrop }">
+  <section class="hero" :style="backdrop">
     <div class="hero__backdrop" aria-hidden="true" />
     <div class="hero__overlay" aria-hidden="true" />
 
@@ -76,7 +82,7 @@ const hasStats = computed(() => Object.values(props.guide.stats ?? {}).some(Bool
   }
 
   &__backdrop {
-    background: var(--backdrop) center 26% / cover no-repeat;
+    background: var(--backdrop, none) center 26% / cover no-repeat;
     filter: blur(2px) saturate(0.9);
     transform: scale(1.04);
     opacity: 0.4;
@@ -163,20 +169,27 @@ const hasStats = computed(() => Object.values(props.guide.stats ?? {}).some(Bool
     margin-left: -(space(1)); // compensa o espaço interno das ações (76px)
   }
 
-  // Celular (padrão do Must Watch): fundo nítido no alto, degradê e texto centralizado
-  @include down(sm) {
-    padding: max(112px, 40vw) space(2) space(3);
+  // Celular (padrão do Must Watch): imagem nítida no tamanho natural (16:9 na largura da tela),
+  // título sobre a parte de baixo dela e degradê até o fundo
+  @include down(md) {
+    padding: max(104px, 34vw) space(2) space(3);
 
     &__backdrop {
+      background-image: var(--backdrop-sharp, none);
+      background-size: 100% auto;
+      background-position: center top;
       opacity: 1;
       filter: none;
       transform: none;
-      background-size: 100% auto;
-      background-position: center top;
     }
 
     &__overlay {
-      background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 10%, transparent) 0%, color-mix(in srgb, var(--bg) 40%, transparent) 30vw, var(--bg) 58vw);
+      background: linear-gradient(
+        180deg,
+        rgba(20, 20, 19, 0.15) 0%,
+        color-mix(in srgb, var(--bg) 35%, transparent) 30vw,
+        var(--bg) 56vw
+      );
     }
 
     &__info {

@@ -129,7 +129,8 @@ ações em círculo e o seu progresso) → `PillTabs` (Visão geral · Troféus,
 **Visão geral** (`GuideOverview`): sobre o jogo + ficha (`.facts`) à esquerda, cartão "Para platinar" à direita
 (lugar do "Onde assistir") e os troféus que pedem atenção (Perdíveis, História, Online) — tocar leva ao troféu.
 Classes de texto das páginas de detalhe em `src/styles/components/_detail-page.scss` (`.kicker`, `.section-heading`, `.facts`, `.label-row`, `.pill`).
-No celular: sem capa, fundo nítido no alto e texto centralizado.
+No celular (rota com `meta.immersive`): sem a barra de navegação do topo, a imagem do jogo nítida (1280px) na largura
+da tela até o alto, voltar/compartilhar redondos por cima e a PageBar completa só depois de rolar — como no Must Watch.
 
 ## Rascunho do guia
 
