@@ -19,3 +19,7 @@ export function fetchTrophyProgress(npId, service, opts) {
   const qs = service ? `?service=${service}` : '';
   return request(`/progress/${encodeURIComponent(npId)}${qs}`, { ...opts, noCache: true, auth: true }).then((d) => d.progress);
 }
+
+// Jogos de outra pessoa pelo ID da PSN → { player: { onlineId, avatar }, titles }. Serve para vincular jogos que a
+// conta do servidor ainda não tem (a PSN só mostra o código da lista para quem já jogou). Rota privada.
+export const fetchPsnPlayerTitles = (onlineId, opts) => request(`/player/${encodeURIComponent(onlineId)}`, { ...opts, auth: true });

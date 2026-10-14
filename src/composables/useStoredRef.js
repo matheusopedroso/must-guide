@@ -12,12 +12,13 @@ export function useStoredRef(key, fallback) {
   }
 
   const state = ref(initial);
+  // sync: grava na hora (o componente pode sumir logo depois da mudança, ex.: ao escolher um item)
   watch(state, (value) => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {
       /* sem armazenamento */
     }
-  });
+  }, { flush: 'sync' });
   return state;
 }

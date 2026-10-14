@@ -18,13 +18,35 @@ const mapTitle = (t) => ({
 });
 
 export const NP_ID_PATTERN = /^NPWR\d{5}_\d{2}$/;
+export const ONLINE_ID_PATTERN = /^[A-Za-z][\w-]{2,15}$/; // ID da PSN: 3–16, letras, números, - e _
+
+const avatarOf = (urls = []) => (urls.find((a) => a.size === 'm') ?? urls[0])?.avatarUrl ?? null;
 
 // Consultas de troféus sobre o cliente autenticado
 export function createTrophyService(client) {
-  // Jogos com troféus da conta do NPSSO (mais recentes primeiro; máx. 800 por chamada)
-  async function userTitles() {
-    const data = await client.get('/users/me/trophyTitles', { limit: 800 });
-    return data.trophyTitles.map(mapTitle);
+  // Jogos com troféus de uma conta (mais recentes primeiro; máx. 800 por chamada)
+  const titlesOf = async (accountId) => (await client.get(`/users/${accountId}/trophyTitles`, { limit: 800 })).trophyTitles.map(mapTitle);
+  const userTitles = () => titlesOf('me');
+
+  // Jogos de outra pessoa pelo ID da PSN: serve para achar o código (NPWR) de um jogo que a conta do
+  // NPSSO ainda não tem — a PSN só mostra o código para quem já jogou. Precisa de perfil com troféus públicos.
+  async function playerTitles(onlineId) {
+    if (!ONLINE_ID_PATTERN.test(onlineId)) throw httpError(400, 'ID da PSN inválido.');
+    let profile;
+    try {
+      ({ profile } = await client.profile(onlineId));
+    } catch (e) {
+      if (e.status === 404) throw httpError(404, `Não achei o perfil “${onlineId}” na PSN.`);
+      throw e;
+    }
+    let titles;
+    try {
+      titles = await titlesOf(profile.accountId);
+    } catch (e) {
+      if (e.status === 403 || e.status === 404) throw httpError(403, `Os troféus de “${profile.onlineId}” não são públicos. Tente outro perfil.`);
+      throw e;
+    }
+    return { player: { onlineId: profile.onlineId, avatar: avatarOf(profile.avatarUrls) }, titles };
   }
 
   // PS3/PS4/Vita exigem npServiceName=trophy; PS5 usa trophy2.
@@ -112,5 +134,5 @@ export function createTrophyService(client) {
     return { earned, total: data.trophies.length, trophies };
   }
 
-  return { userTitles, trophyList, userProgress };
+  return { userTitles, playerTitles, trophyList, userProgress };
 }

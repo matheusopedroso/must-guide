@@ -27,6 +27,17 @@ export function createTrophiesApi(getSecret, options = {}) {
       run: async () => ({ titles: await remember(memory, 'titles', 10 * 60, trophies.userTitles) }),
     },
 
+    // Jogos de outro perfil (ID da PSN): para vincular jogos que a conta ainda não tem. Usa a conta do
+    // NPSSO para consultar → também privada (só o admin)
+    player: {
+      private: true,
+      cache: 'private, max-age=600',
+      async run({ id }) {
+        const onlineId = String(id ?? '').trim();
+        return remember(memory, `u:${onlineId.toLowerCase()}`, 10 * 60, () => trophies.playerTitles(onlineId));
+      },
+    },
+
     // Progresso pessoal num jogo (conquistados + raridade) → curto e sem CDN
     progress: {
       private: true,

@@ -34,7 +34,7 @@ must-guide/
 │     │  ├─ providers/index.js lista de provedores e os secrets de cada um
 │     │  ├─ http.js            createApi, parseApiUrl, json, httpError, remember
 │     │  ├─ gamesApi.js        rotas /api/games (popular, search, game)
-│     │  ├─ trophiesApi.js     rotas /api/trophies (titles, list, progress)
+│     │  ├─ trophiesApi.js     rotas /api/trophies (titles, player, list, progress)
 │     │  ├─ psn/auth.js        NPSSO → tokens (refresh automático, login único em paralelo)
 │     │  ├─ psn/client.js      GET autenticado na API de troféus (pt-BR)
 │     │  ├─ psn/trophies.js    jogos da conta, lista de troféus (descobre PS4/PS5) e progresso/raridade
@@ -77,8 +77,13 @@ Em produção o Hosting guarda as respostas na CDN (`s-maxage`), então a maiori
 | Rota | Retorno | Cache (navegador / CDN) |
 |---|---|---|
 | `GET /api/trophies/titles` | jogos com troféus da conta do NPSSO | 5 min / sem CDN |
+| `GET /api/trophies/player/:psnId` | jogos de outro perfil público (`{ player, titles }`) — para vincular jogo que a conta não tem | 10 min / sem CDN |
 | `GET /api/trophies/list/:npId?service=` | grupos + troféus (pt-BR, com `nameEn` em inglês) de qualquer jogo | 1 h / 24 h |
 | `GET /api/trophies/progress/:npId?service=` | conquistados, data e raridade na conta (`null` se não tem o jogo) | 1 min / sem CDN |
+
+**Vincular um jogo:** a PSN só mostra o código da lista (NPWR) de jogos que a conta já abriu. No editor
+(`PsnTitlePicker`): sua conta, **perfil de outra pessoa** (ID da PSN de quem já jogou, com troféus públicos — os
+usados ficam em `mg:psn-players`) ou o código colado.
 
 Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO` vale ~2 meses:
 logado em playstation.com, abra https://ca.account.sony.com/api/v1/ssocookie e copie o `npsso`.
@@ -106,7 +111,7 @@ o app continua funcionando só com o rascunho no navegador.
 | Guias (ler/gravar) | `src/services/guides.service.js` |
 | Sincronização navegador ↔ nuvem | `src/composables/guide/useGuideDraft.js` |
 | Regras | `firestore.rules` (admin grava guias; publicado qualquer um lê; progresso só o dono) |
-| Rotas pessoais da PSN | `/api/trophies/titles` e `progress` exigem token de admin em produção (`functions/src/auth.js`); no `npm run dev` ficam abertas |
+| Rotas pessoais da PSN | `/api/trophies/titles`, `player` e `progress` exigem token de admin em produção (`functions/src/auth.js`); no `npm run dev` ficam abertas |
 
 O SDK só é baixado se o aparelho já teve login ou ao clicar em **Entrar** (quem só visita não carrega nada).
 
