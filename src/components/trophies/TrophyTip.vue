@@ -110,16 +110,14 @@ function onViewClick(e) {
       </div>
     </div>
 
-    <div v-else class="tip radius-1 px-2 py-2" @click="onViewClick">
-      <p class="text-xs fw-600 text-accent mb-1">Como conseguir</p>
-      <div class="rich-text text-sm" v-html="safeHtml" />
-    </div>
+    <!-- A seção do meio do card já é o guia: texto direto, sem caixa nem título -->
+    <div v-else class="tip rich-text" @click="onViewClick" v-html="safeHtml" />
   </div>
 </template>
 
 <style lang="scss" scoped>
 .tip {
-  background: var(--surface-2);
+  font-size: 14px;
   cursor: text;
 }
 

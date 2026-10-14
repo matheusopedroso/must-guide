@@ -11,7 +11,7 @@ import { hasRichContent } from '@/utils/html';
 import { trophyAnchorId } from '@/utils/trophyRef';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 
-// Card do troféu em 3 partes: topo (ícone, nome, ações) · meio (descrição e textos) · rodapé (badges e etiquetas)
+// Card do troféu em 3 partes: topo (ícone, nome, descrição, ações) · meio (guia, se preenchido) · rodapé (badges e etiquetas)
 const props = defineProps({
   trophy: { type: Object, required: true },
   note: { type: Object, required: true },
@@ -35,10 +35,8 @@ const reveal = () => blurred.value && (revealed.value = true);
 const hasTip = computed(() => hasRichContent(props.note.tip));
 const flags = computed(() => TROPHY_FLAGS.filter((f) => props.note[f.id]));
 const tipLabel = computed(() => (hasTip.value ? 'Editar como conseguir' : 'Como conseguir'));
-// Seção do meio só quando há algo para mostrar
-const hasBody = computed(
-  () => props.trophy.detail || hasTip.value || editingTip.value || editingDetails.value || props.citedBy.length,
-);
+// Seção do meio = guia do troféu: só aparece se foi preenchido (ou está sendo editado)
+const hasBody = computed(() => hasTip.value || editingTip.value || editingDetails.value);
 </script>
 
 <template>
@@ -56,7 +54,24 @@ const hasBody = computed(
         </span>
       </div>
 
-      <h4 class="trophy__name spoil" @click="reveal">{{ trophy.name || 'Troféu oculto' }}</h4>
+      <div class="trophy__title d-flex flex-column gap-1 min-w-0">
+        <h4 class="trophy__name spoil" @click="reveal">{{ trophy.name || 'Troféu oculto' }}</h4>
+        <p v-if="trophy.detail" class="trophy__detail spoil" @click="reveal">{{ trophy.detail }}</p>
+
+        <p v-if="citedBy.length" class="d-flex align-center flex-wrap gap-1 text-xs text-subtle mt-1">
+          <span>Citado em:</span>
+          <a
+            v-for="src in citedBy"
+            :key="src.id"
+            :href="`#${trophyAnchorId(src.id)}`"
+            class="trophy-ref"
+            :data-type="src.type"
+            @click.prevent="ctx?.goTo(src.id)"
+          >
+            {{ src.name || 'Troféu oculto' }}
+          </a>
+        </p>
+      </div>
 
       <div class="trophy__actions d-flex gap-1">
         <BaseButton
@@ -83,26 +98,10 @@ const hasBody = computed(
       </div>
     </header>
 
-    <!-- Meio: descrição e textos do guia -->
+    <!-- Meio: o guia do troféu (só quando preenchido ou em edição) -->
     <div v-if="hasBody" class="trophy__body p-2 border-top d-flex flex-column gap-2">
-      <p v-if="trophy.detail" class="trophy__detail spoil" @click="reveal">{{ trophy.detail }}</p>
-
       <TrophyDetailsEditor v-if="editingDetails" :note="note" @update="update" @close="editingDetails = false" />
       <TrophyTip v-model:editing="editingTip" :tip="note.tip" :trophy-id="trophy.id" @update="update" />
-
-      <p v-if="citedBy.length" class="d-flex align-center flex-wrap gap-1 text-xs text-subtle">
-        <span>Citado em:</span>
-        <a
-          v-for="src in citedBy"
-          :key="src.id"
-          :href="`#${trophyAnchorId(src.id)}`"
-          class="trophy-ref"
-          :data-type="src.type"
-          @click.prevent="ctx?.goTo(src.id)"
-        >
-          {{ src.name || 'Troféu oculto' }}
-        </a>
-      </p>
     </div>
 
     <!-- Rodapé: etiquetas -->
@@ -137,7 +136,7 @@ const hasBody = computed(
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: 'icon name actions';
-    align-items: center;
+    align-items: start;
     column-gap: space(2);
   }
 
@@ -168,8 +167,12 @@ const hasBody = computed(
     border: 2px solid var(--surface);
   }
 
-  &__name {
+  &__title {
     grid-area: name;
+    align-self: center;
+  }
+
+  &__name {
     font-family: $font-sans;
     font-size: 15px;
     font-weight: 600;
@@ -192,7 +195,8 @@ const hasBody = computed(
   }
 
   &__detail {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.4;
     color: var(--text-muted);
   }
 
