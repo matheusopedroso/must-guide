@@ -20,6 +20,7 @@ const props = defineProps({
   stats: { type: Object, default: null }, // progresso da conta: { earned, earnedAt, rate, rarity }
   citedBy: { type: Array, default: () => [] }, // troféus cujo "Como conseguir" cita este
   spoiler: Boolean, // troféu oculto com nomes escondidos (até tocar)
+  readonly: Boolean, // leitura do guia: sem os botões de edição
 });
 const emit = defineEmits(['update-note']);
 const update = (patch) => emit('update-note', props.trophy.id, patch);
@@ -110,27 +111,29 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
             data-tooltip="Abrir link"
           />
         </template>
-        <BaseButton
-          :icon="SlidersHorizontal"
-          icon-only
-          size="sm"
-          :class="{ 'is-on': editingDetails }"
-          class="trophy__action"
-          :aria-pressed="editingDetails"
-          aria-label="Detalhes do troféu"
-          data-tooltip="Detalhes"
-          @click="editingDetails = !editingDetails"
-        />
-        <BaseButton
-          :icon="MessageSquareText"
-          icon-only
-          size="sm"
-          class="trophy__action tooltip-left"
-          :class="{ 'is-filled': hasTip }"
-          :aria-label="tipLabel"
-          :data-tooltip="tipLabel"
-          @click="editingTip = true"
-        />
+        <template v-if="!readonly">
+          <BaseButton
+            :icon="SlidersHorizontal"
+            icon-only
+            size="sm"
+            :class="{ 'is-on': editingDetails }"
+            class="trophy__action"
+            :aria-pressed="editingDetails"
+            aria-label="Detalhes do troféu"
+            data-tooltip="Detalhes"
+            @click="editingDetails = !editingDetails"
+          />
+          <BaseButton
+            :icon="MessageSquareText"
+            icon-only
+            size="sm"
+            class="trophy__action tooltip-left"
+            :class="{ 'is-filled': hasTip }"
+            :aria-label="tipLabel"
+            :data-tooltip="tipLabel"
+            @click="editingTip = true"
+          />
+        </template>
       </div>
     </header>
 

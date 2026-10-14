@@ -9,6 +9,7 @@ export const createDraft = (game) => ({
   gameId: game.id,
   game: { id: game.id, title: game.title, cover: game.cover ?? null },
   status: 'draft', // draft | published (publicado = qualquer um lê; ver firestore.rules)
+  publishedAt: null, // ISO da 1ª publicação
   tabs: [], // abas opcionais ativadas (ids de config/guideTabs)
   versions: [], // listas de troféus da PSN: [{ id, name, platform, service }] — a 1ª é a principal
   trophies: {}, // anotações por trophyId no formato de EMPTY_NOTE (config/trophies), só as preenchidas
@@ -32,3 +33,23 @@ export const isBlankDraft = (d) =>
 
 // Mais recente entre duas cópias (pelo updatedAt)
 export const editedAt = (d) => (d?.updatedAt ? Date.parse(d.updatedAt) || 0 : 0);
+
+export const GUIDE_STATUS = {
+  draft: { label: 'Rascunho', tone: 'neutral' },
+  published: { label: 'Publicado', tone: 'success' },
+};
+
+// Resumo para listas (Meus guias): só o que o card mostra
+export function summarizeGuide(g, source) {
+  return {
+    gameId: g.gameId,
+    title: g.game?.title ?? g.gameId,
+    cover: g.game?.cover ?? null,
+    status: g.status === 'published' ? 'published' : 'draft',
+    updatedAt: g.updatedAt ?? null,
+    platforms: (g.versions ?? []).map((v) => v.platform).filter(Boolean),
+    tips: Object.values(g.trophies ?? {}).filter((n) => hasRichContent(n.tip)).length,
+    difficulty: g.stats?.difficulty ?? 0,
+    source, // cloud | local (só neste navegador)
+  };
+}

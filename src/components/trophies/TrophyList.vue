@@ -14,6 +14,7 @@ const props = defineProps({
   progress: { type: Object, default: null }, // { trophies: { [id]: stats } } da conta, se tiver o jogo
   getNote: { type: Function, required: true },
   backlinks: { type: Map, default: () => new Map() }, // troféu citado → ids de quem cita
+  readonly: Boolean, // leitura do guia (sem edição)
 });
 defineEmits(['update-note']);
 
@@ -78,6 +79,7 @@ const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);
           :stats="stats(t.id)"
           :cited-by="citedBy(t.id)"
           :spoiler="t.hidden && !showHidden"
+          :readonly="readonly"
           @update-note="(id, patch) => $emit('update-note', id, patch)"
         />
       </ul>

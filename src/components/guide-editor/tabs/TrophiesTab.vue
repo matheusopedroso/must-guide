@@ -8,10 +8,11 @@ import TrophyList from '@/components/trophies/TrophyList.vue';
 import TrophyHeader from '@/components/trophies/TrophyHeader.vue';
 import GuideStats from '@/components/guide-editor/GuideStats.vue';
 import { useAsyncState } from '@/composables/useAsyncState';
+import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
 import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
-import { fetchTrophyList, fetchTrophyProgress } from '@/services/trophies.service';
+import { fetchTrophyList } from '@/services/trophies.service';
 import { compareVersions } from '@/utils/trophies';
 
 defineProps({ game: { type: Object, required: true } });
@@ -22,10 +23,7 @@ const { versions, principal, active, activeId, add, sync, remove, makePrincipal 
 
 const adding = ref(false);
 
-// Lista e progresso da versão aberta (carregam em paralelo; trocar de versão cancela o anterior)
-const load = (fn) => (v, opts) => fn(v.id, v.service, opts);
-const { data: list, loading, error } = useAsyncState(active, load(fetchTrophyList));
-const { data: progress } = useAsyncState(active, load(fetchTrophyProgress));
+const { list, progress, loading, error, load } = useTrophyData(active);
 
 // Lista principal só é buscada quando outra versão está aberta (para comparar)
 const otherOpen = computed(() => (active.value && active.value.id !== principal.value?.id ? principal.value : null));

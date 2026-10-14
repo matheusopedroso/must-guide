@@ -1,5 +1,6 @@
 <script setup>
-import { watch } from 'vue';
+import { computed, useTemplateRef, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { Trash2, TriangleAlert } from 'lucide-vue-next';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -10,36 +11,49 @@ import SelectedGameCard from '@/components/guide-editor/SelectedGameCard.vue';
 import AddTabMenu from '@/components/guide-editor/AddTabMenu.vue';
 import TabPlaceholder from '@/components/guide-editor/TabPlaceholder.vue';
 import SaveStatus from '@/components/guide-editor/SaveStatus.vue';
-import { useQueryParam } from '@/composables/useQueryParam';
+import PublishControl from '@/components/guide-editor/PublishControl.vue';
 import { useGameDetails } from '@/composables/useGameDetails';
 import { useGuideTabs } from '@/composables/guide/useGuideTabs';
 import { provideGuideDraft } from '@/composables/guide/useGuideDraft';
+import { useIsStuck } from '@/composables/useIsStuck';
 import { APP_NAME } from '@/config/app';
 
-// Jogo e aba aberta ficam na URL (?jogo=rawg-123&aba=coletaveis).
-// O conteúdo do guia (abas, versões, dicas) fica no rascunho, salvo no navegador por jogo.
-const gameId = useQueryParam('jogo');
+// /guia/novo → escolher o jogo · /guia/:id/editar → editor (aba aberta em ?aba=).
+// O conteúdo do guia (abas, versões, dicas) fica no rascunho: navegador + nuvem (useGuideDraft).
+const route = useRoute();
+const router = useRouter();
+const gameId = computed(() => String(route.params.id ?? ''));
 const { game, loading, error, set: setGame } = useGameDetails(gameId);
 const { draft, status: saveStatus, syncing, cloud } = provideGuideDraft(game);
 const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = useGuideTabs(draft);
 
 function selectGame(selected) {
   setGame(selected); // já temos os dados: evita buscar de novo
-  gameId.value = selected.id;
+  router.replace({ name: 'guide-edit', params: { id: selected.id } });
 }
 
-const changeGame = () => (gameId.value = '');
+const changeGame = () => router.push({ name: 'guide-new' });
+
+// Abas grudadas embaixo da barra → tapam o vão acima delas (ver .tabs-bar.is-stuck)
+const stuck = useIsStuck(useTemplateRef('tabsSentinel'));
 
 watch(game, (g) => {
-  document.title = g ? `Guia: ${g.title} · ${APP_NAME}` : `Novo guia · ${APP_NAME}`;
+  document.title = g ? `Editar: ${g.title} · ${APP_NAME}` : `Novo guia · ${APP_NAME}`;
 });
 </script>
 
 <template>
   <div class="container page">
-    <PageHeader title="Novo guia" back="/" :subtitle="gameId ? '' : 'Comece escolhendo o jogo.'">
-      <template v-if="gameId" #actions>
-        <SaveStatus :status="saveStatus" :syncing="syncing" :cloud="cloud" />
+    <PageHeader
+      :title="gameId ? 'Editar guia' : 'Novo guia'"
+      :back="gameId ? { name: 'my-guides' } : '/'"
+      :subtitle="gameId ? '' : 'Comece escolhendo o jogo.'"
+    >
+      <template v-if="gameId && draft" #actions>
+        <div class="d-flex flex-column align-end gap-1">
+          <PublishControl />
+          <SaveStatus :status="saveStatus" :syncing="syncing" :cloud="cloud" />
+        </div>
       </template>
     </PageHeader>
 
@@ -55,7 +69,8 @@ watch(game, (g) => {
       <SelectedGameCard :game="game" :loading="loading" class="mb-2" @change="changeGame" />
 
       <template v-if="game">
-        <div class="tabs-bar d-flex align-center gap-1 mb-3">
+        <div ref="tabsSentinel" aria-hidden="true" />
+        <div class="tabs-bar d-flex align-center gap-1 mb-3" :class="{ 'is-stuck': stuck }">
           <BaseTabs v-model="active" :tabs="tabs" label="Seções do guia" id-prefix="guide-tab" class="flex-1" />
           <AddTabMenu v-if="available.length" :tabs="available" class="shrink-0" @add="addTab" />
         </div>
@@ -96,8 +111,8 @@ watch(game, (g) => {
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 
-  // Preenche o vão entre a barra de navegação e as abas (senão o conteúdo aparece ali ao rolar)
-  &::before {
+  // Grudada: preenche o vão entre a barra de navegação e as abas (senão o conteúdo aparece ali ao rolar)
+  &.is-stuck::before {
     content: '';
     position: absolute;
     inset-inline: 0;

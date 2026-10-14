@@ -1,4 +1,4 @@
-import { computed, inject, onBeforeUnmount, provide, ref, watch } from 'vue';
+import { computed, inject, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue';
 import { loadDraft, saveDraft } from '@/services/draft.service';
 import { fetchGuide, saveGuide } from '@/services/guides.service';
 import { useAuth } from '@/composables/useAuth';
@@ -119,6 +119,18 @@ export function provideGuideDraft(game) {
     { deep: true },
   );
 
+  // Publicar / voltar para rascunho: grava na nuvem na hora (não espera o agrupamento).
+  // true = ficou salvo na nuvem
+  async function setStatus(next) {
+    if (!draft.value || !cloud.value || draft.value.status === next) return false;
+    draft.value.status = next;
+    if (next === 'published' && !draft.value.publishedAt) draft.value.publishedAt = new Date().toISOString();
+    await nextTick(); // o watch marca a edição
+    flushLocal();
+    await flushCloud();
+    return status.value === 'cloud';
+  }
+
   // Não perde a última edição ao minimizar o app ou sair da página
   const flushAll = () => {
     flushLocal();
@@ -131,7 +143,7 @@ export function provideGuideDraft(game) {
     flushAll();
   });
 
-  const api = { draft, status, syncing, cloud, flush: flushAll };
+  const api = { draft, status, syncing, cloud, setStatus, flush: flushAll };
   provide(KEY, api);
   return api;
 }

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
-import { Clock, Pencil, Repeat } from 'lucide-vue-next';
-import DifficultyBadge from './DifficultyBadge.vue';
+import { Pencil } from 'lucide-vue-next';
+import GuideStatsSummary from './GuideStatsSummary.vue';
 import GuideStatsModal from './GuideStatsModal.vue';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useGuideStats } from '@/composables/guide/useGuideStats';
@@ -21,9 +21,7 @@ const editing = ref(false);
     @click="editing = true"
   >
     <template v-if="filled">
-      <DifficultyBadge v-if="stats.difficulty" :value="stats.difficulty" />
-      <span v-if="stats.playthroughs" class="tag"><Repeat :size="14" /> {{ stats.playthroughs }} {{ stats.playthroughs > 1 ? 'jogadas' : 'jogada' }}</span>
-      <span v-if="stats.hours" class="tag"><Clock :size="14" /> {{ stats.hours }} h</span>
+      <GuideStatsSummary :stats="stats" />
       <Pencil :size="14" class="stats__edit" />
     </template>
     <span v-else class="stats__empty d-inline-flex align-center gap-1 text-sm fw-500">

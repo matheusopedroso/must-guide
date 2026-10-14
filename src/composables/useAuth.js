@@ -1,4 +1,4 @@
-import { computed, readonly, ref, shallowRef } from 'vue';
+import { computed, readonly, ref, shallowRef, watch } from 'vue';
 import { firebaseEnabled } from '@/config/firebase';
 import { useToast } from './useToast';
 
@@ -62,6 +62,14 @@ async function logout() {
 
 const isAdmin = computed(() => claims.value?.admin === true);
 
+// Resolve quando já se sabe se há sessão (antes de ler algo que depende do login)
+const whenReady = () =>
+  ready.value
+    ? Promise.resolve()
+    : new Promise((resolve) => {
+        const stop = watch(ready, (v) => v && (stop(), resolve()));
+      });
+
 export function useAuth() {
-  return { enabled: firebaseEnabled, user: readonly(user), isAdmin, ready: readonly(ready), busy: readonly(busy), login, logout };
+  return { enabled: firebaseEnabled, user: readonly(user), isAdmin, ready: readonly(ready), busy: readonly(busy), whenReady, login, logout };
 }

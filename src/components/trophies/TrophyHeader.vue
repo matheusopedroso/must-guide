@@ -15,6 +15,7 @@ const props = defineProps({
   list: { type: Object, default: null },
   progress: { type: Object, default: null },
   loading: Boolean,
+  readonly: Boolean, // leitura do guia: sem o menu de versões
 });
 defineEmits(['select', 'add', 'remove', 'make-principal']);
 
@@ -47,7 +48,7 @@ const label = (v) => v.platform || v.id;
         <ProgressBar :value="progress.earned" :max="progress.total" />
       </div>
 
-      <DropdownMenu label="Versões do jogo" class="shrink-0">
+      <DropdownMenu v-if="!readonly" label="Versões do jogo" class="shrink-0">
         <template #trigger="{ open, toggle }">
           <BaseButton
             :icon="EllipsisVertical"
@@ -82,7 +83,7 @@ const label = (v) => v.platform || v.id;
       </DropdownMenu>
     </div>
 
-    <div class="d-flex align-center justify-between flex-wrap gap-1 px-2 py-1 border-top">
+    <div v-if="multiple || $slots.default" class="d-flex align-center justify-between flex-wrap gap-1 px-2 py-1 border-top">
       <div v-if="multiple" class="d-flex flex-wrap gap-1" role="group" aria-label="Versão aberta">
         <button
           v-for="(v, i) in versions"

@@ -48,14 +48,15 @@ must-guide/
 │  ├─ components/layout/       AppNav (barra flutuante do topo), MobileTabBar (barra de baixo no celular), AccountMenu, AccountSummary, AccountAvatar, AppLogo
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
-│  ├─ components/guide-editor/ SelectedGameCard, GuideStats (resumo) + GuideStatsModal (edição), DifficultyPicker, DifficultyBadge, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
-│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
-│  ├─ composables/             useNavVisibility (barras somem ao rolar), useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ components/guides/       GuideCard (Meus guias), GuideTrophiesView (troféus em modo leitura)
+│  ├─ components/guide-editor/ PublishControl (Publicar / voltar para rascunho), SaveStatus, GuideStatsSummary, SelectedGameCard, GuideStats (resumo) + GuideStatsModal (edição), DifficultyPicker, DifficultyBadge, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
+│  ├─ composables/guide/       useGuideDraft (rascunho + nuvem, publicar), useGuide (leitura), useMyGuides (lista), useTrophyData (lista/progresso da versão), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
+│  ├─ composables/             useNavVisibility (barras somem ao rolar), useIsStuck (sticky grudado), useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (navegador), guides (Firestore), firebase/ (app, auth)
 │  ├─ config/                  app, navigation (abas da navegação), firebase, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
-│  ├─ utils/                   cover, text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
+│  ├─ utils/                   cover, date, share (link/copiar), text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
 │  ├─ assets/brand/logo.js     paths do logo (usados pelo AppLogo)
-│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
+│  ├─ pages/                   HomePage (/), MyGuidesPage (/guias), GuideEditPage (/guia/novo · /guia/:id/editar?aba=…), GuideViewPage (/guia/:id)
 │  └─ styles/                  abstracts · base · layout · components · utilities
 └─ firebase.json               Hosting + rewrites /api/games/** e /api/trophies/** → functions
 ```
@@ -108,6 +109,18 @@ o app continua funcionando só com o rascunho no navegador.
 
 O SDK só é baixado se o aparelho já teve login ou ao clicar em **Entrar** (quem só visita não carrega nada).
 
+## Publicar e ler o guia
+
+| Rota | O quê |
+|---|---|
+| `/guias` | **Meus guias**: rascunhos e publicados (nuvem do admin + rascunhos deste navegador), filtro por status |
+| `/guia/novo` | escolher o jogo → vai para o editor (o endereço antigo `?jogo=` redireciona) |
+| `/guia/:id/editar` | editor; **Publicar** (pede confirmação e grava na nuvem na hora) · publicado: copiar link / voltar para rascunho |
+| `/guia/:id` | leitura: jogo, visão geral, troféus e dicas sem edição. Publicado → qualquer pessoa; rascunho → só o admin (ou a cópia deste navegador) |
+
+Publicar exige o admin logado e a lista de troféus vinculada. Depois de publicado, as edições continuam
+salvando sozinhas e aparecem na hora para quem lê. O progresso da conta (conquistados) só aparece para o admin.
+
 ## Rascunho do guia
 
 O guia em edição fica sempre no navegador (`localStorage`, chave `mg:guide-draft:<jogo>`) e, com o admin logado,
@@ -116,7 +129,7 @@ também no Firestore. Ao abrir, vale a cópia mais recente (`updatedAt`): a da n
 Formato (`src/utils/guideDraft.js`):
 
 ```js
-{ gameId, game, status: 'draft' | 'published', tabs: [], versions: [{ id, name, platform, service }],
+{ gameId, game, status: 'draft' | 'published', publishedAt, tabs: [], versions: [{ id, name, platform, service }],
   trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } },
   stats: { difficulty, playthroughs, hours }, updatedAt }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
 ```
