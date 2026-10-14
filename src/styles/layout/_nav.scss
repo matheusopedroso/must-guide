@@ -1,0 +1,28 @@
+@use '../abstracts' as *;
+
+// Espaço das barras flutuantes (AppNav no topo, MobileTabBar embaixo no celular).
+// --nav-space   altura reservada no topo da página (fixa: o conteúdo não pula quando a barra some)
+// --nav-offset  onde grudam os elementos "sticky" (abas do editor): 0 quando a barra some ao rolar
+// --tabbar-space espaço no fim da página para a barra de baixo (só celular)
+:root {
+  --nav-space: #{space(1) + $nav-height-sm + space(1)};
+  --tabbar-space: calc(#{space(1) + 66px + space(2)} + env(safe-area-inset-bottom, 0px));
+
+  @include up(md) {
+    --nav-space: #{space(2) + $nav-height + space(2)};
+    --tabbar-space: 0px;
+  }
+}
+
+:root {
+  --nav-offset: var(--nav-space);
+}
+
+.nav-hidden {
+  --nav-offset: 0px;
+}
+
+.app-main {
+  padding-top: var(--nav-space);
+  padding-bottom: var(--tabbar-space);
+}

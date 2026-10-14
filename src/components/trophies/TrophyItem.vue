@@ -171,7 +171,7 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
 
 <style lang="scss" scoped>
 .trophy {
-  scroll-margin-top: $header-height + 64px; // header + barra de abas fixa
+  scroll-margin-top: calc(var(--nav-space) + 64px); // barra de navegação + barra de abas fixa
   transition: box-shadow 0.2s;
 
   // Topo: ícone | nome | ações

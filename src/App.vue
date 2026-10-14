@@ -1,17 +1,22 @@
 <script setup>
-import AppHeader from '@/components/layout/AppHeader.vue';
+import AppNav from '@/components/layout/AppNav.vue';
+import MobileTabBar from '@/components/layout/MobileTabBar.vue';
 import ToastHost from '@/components/ui/ToastHost.vue';
+import { useNavVisibility } from '@/composables/useNavVisibility';
+
+const { topHidden, bottomHidden } = useNavVisibility();
 </script>
 
 <template>
-  <AppHeader />
-  <main>
+  <AppNav :hidden="topHidden" />
+  <main class="app-main">
     <RouterView v-slot="{ Component, route }">
       <Transition name="page" mode="out-in">
         <component :is="Component" :key="route.path" />
       </Transition>
     </RouterView>
   </main>
+  <MobileTabBar :hidden="bottomHidden" />
   <ToastHost />
 </template>
 

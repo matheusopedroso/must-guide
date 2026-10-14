@@ -30,7 +30,9 @@ $breakpoints: (
 
 $container-header: 1180px;
 $container-content: 1072px;
-$header-height: 64px;
+// Barra de navegação flutuante (layout/_nav.scss)
+$nav-height: 64px;
+$nav-height-sm: 56px;
 
 $font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
 $font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;

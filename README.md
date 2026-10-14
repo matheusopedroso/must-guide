@@ -45,14 +45,14 @@ must-guide/
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
 │  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), DropdownMenu, IconSelect, NumberStepper, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal (pilha, foco, arrastar p/ fechar), VideoModal (YouTube no app), GameCover, EmptyState…
-│  ├─ components/layout/       AppHeader, AppLogo, AccountMenu (Entrar / conta)
+│  ├─ components/layout/       AppNav (barra flutuante do topo), MobileTabBar (barra de baixo no celular), AccountMenu, AccountSummary, AccountAvatar, AppLogo
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, GuideStats (resumo) + GuideStatsModal (edição), DifficultyPicker, DifficultyBadge, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
 │  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
-│  ├─ composables/             useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ composables/             useNavVisibility (barras somem ao rolar), useAuth (sessão), useToast, useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (navegador), guides (Firestore), firebase/ (app, auth)
-│  ├─ config/                  app, firebase, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
+│  ├─ config/                  app, navigation (abas da navegação), firebase, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
 │  ├─ utils/                   cover, text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
 │  ├─ assets/brand/logo.js     paths do logo (usados pelo AppLogo)
 │  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
@@ -160,6 +160,13 @@ Faixas em `DIFFICULTY_BANDS` (`src/config/guide.js`): 1–2 Fácil (verde) · 3�
 
 `BaseModal` (v-model, `title`, `description`, `wide`, slot `#footer`): no celular sobe de baixo e fecha arrastando;
 Esc, tocar fora e o "voltar" do celular fecham só o de cima (`useModalStack`); o foco entra no modal e volta ao fechar.
+
+## Navegação
+
+Igual ao Must Watch: barra flutuante no topo (logo · abas · tema e conta) e, no celular, barra flutuante
+embaixo (só ícones; a aba ativa mostra o nome; a última é a Conta). As duas somem ao rolar para baixo e voltam ao subir
+(`useNavVisibility`). Abas em `src/config/navigation.js`. Espaços reservados em `src/styles/layout/_nav.scss`:
+`--nav-space` (topo da página), `--nav-offset` (onde grudam elementos sticky; 0 com a barra escondida) e `--tabbar-space`.
 
 ## Dica ao passar o mouse
 

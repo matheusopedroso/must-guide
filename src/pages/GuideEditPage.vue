@@ -84,12 +84,27 @@ watch(game, (g) => {
   max-width: 640px;
 }
 
-// Abas fixas abaixo do header ao rolar (as abas vão ter conteúdo longo)
+// Abas fixas abaixo da barra de navegação ao rolar; sobem quando a barra some (--nav-offset)
 .tabs-bar {
   position: sticky;
-  top: $header-height;
+  top: var(--nav-offset);
+  transition: top 0.22s $ease;
   z-index: 10;
+  // 8px a mais dos lados: cobre o anel dos cards conquistados que passam por baixo
+  margin-inline: calc(-1 * #{space(1)});
+  padding-inline: space(1);
   background: var(--bg);
   border-bottom: 1px solid var(--border);
+
+  // Preenche o vão entre a barra de navegação e as abas (senão o conteúdo aparece ali ao rolar)
+  &::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 100%;
+    height: var(--nav-offset);
+    background: var(--bg);
+    pointer-events: none;
+  }
 }
 </style>

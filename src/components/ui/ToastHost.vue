@@ -31,7 +31,7 @@ const ICONS = { info: Info, success: CircleCheck, error: CircleAlert };
   position: fixed;
   left: space(2);
   right: space(2);
-  bottom: space(2);
+  bottom: calc(var(--tabbar-space) + #{space(2)}); // acima da barra de baixo no celular
   z-index: 200;
   pointer-events: none;
 
