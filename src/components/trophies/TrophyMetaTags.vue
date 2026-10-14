@@ -6,7 +6,7 @@ import { DIFFICULTY_LABELS, DIFFICULTY_MAX, RARITY_LABELS, TROPHY_MOMENT_MAP, TR
 import { formatEarnedAt, formatRate } from '@/utils/trophies';
 import { isYoutube } from '@/utils/url';
 
-// Rodapé do card: etiquetas "Rótulo: valor" (só o que existe)
+// Rodapé do card: etiquetas "Rótulo: valor" (só o que existe). Slot "before": itens no começo (ex.: badges)
 const props = defineProps({
   trophy: { type: Object, required: true },
   note: { type: Object, required: true },
@@ -24,6 +24,7 @@ const moment = computed(() => TROPHY_MOMENT_MAP[props.note.when]?.label ?? '');
 
 <template>
   <div class="d-flex align-center flex-wrap gap-1">
+    <slot name="before" />
     <span class="tag">
       <span class="tag__label">Tipo:</span>
       <Trophy :size="14" :stroke-width="2" :style="{ color: type.color }" /> {{ type.label }}

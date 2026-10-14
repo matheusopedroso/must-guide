@@ -11,7 +11,7 @@ import { hasRichContent } from '@/utils/html';
 import { trophyAnchorId } from '@/utils/trophyRef';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 
-// Card do troféu em 3 partes: topo (nome, badges, ações) · meio (descrição e textos) · rodapé (etiquetas)
+// Card do troféu em 3 partes: topo (ícone, nome, ações) · meio (descrição e textos) · rodapé (badges e etiquetas)
 const props = defineProps({
   trophy: { type: Object, required: true },
   note: { type: Object, required: true },
@@ -34,7 +34,7 @@ const reveal = () => blurred.value && (revealed.value = true);
 
 const hasTip = computed(() => hasRichContent(props.note.tip));
 const flags = computed(() => TROPHY_FLAGS.filter((f) => props.note[f.id]));
-const hasBadges = computed(() => flags.value.length > 0 || props.trophy.hidden);
+const tipLabel = computed(() => (hasTip.value ? 'Editar como conseguir' : 'Como conseguir'));
 // Seção do meio só quando há algo para mostrar
 const hasBody = computed(
   () => props.trophy.detail || hasTip.value || editingTip.value || editingDetails.value || props.citedBy.length,
@@ -44,7 +44,7 @@ const hasBody = computed(
 <template>
   <li :id="trophyAnchorId(trophy.id)" class="trophy surface radius-2" :class="{ 'is-blurred': blurred }">
     <!-- Topo -->
-    <header class="trophy__head p-2" :class="{ 'has-badges': hasBadges }">
+    <header class="trophy__head p-2">
       <div
         class="trophy__icon radius-1"
         :title="stats?.earned ? `Conquistado em ${formatEarnedAt(stats.earnedAt)}` : ''"
@@ -58,37 +58,28 @@ const hasBody = computed(
 
       <h4 class="trophy__name spoil" @click="reveal">{{ trophy.name || 'Troféu oculto' }}</h4>
 
-      <div v-if="hasBadges" class="trophy__badges d-flex align-center flex-wrap gap-1">
-        <span v-for="f in flags" :key="f.id" class="badge" :class="`badge--${f.tone}`">
-          <component :is="f.icon" :size="14" :stroke-width="2" /> {{ f.label }}
-        </span>
-        <button v-if="trophy.hidden" type="button" class="badge" :title="blurred ? 'Tocar para ver' : ''" @click="revealed = true">
-          <EyeOff :size="14" :stroke-width="2" /> {{ blurred ? 'Oculto · ver' : 'Oculto' }}
-        </button>
-      </div>
-
       <div class="trophy__actions d-flex gap-1">
         <BaseButton
           :icon="SlidersHorizontal"
+          icon-only
           size="sm"
           :class="{ 'is-on': editingDetails }"
           class="trophy__action"
           :aria-pressed="editingDetails"
           aria-label="Detalhes do troféu"
+          data-tooltip="Detalhes"
           @click="editingDetails = !editingDetails"
-        >
-          Detalhes
-        </BaseButton>
+        />
         <BaseButton
           :icon="MessageSquareText"
+          icon-only
           size="sm"
-          class="trophy__action"
+          class="trophy__action tooltip-left"
           :class="{ 'is-filled': hasTip }"
-          :aria-label="hasTip ? 'Editar como conseguir' : 'Escrever como conseguir'"
+          :aria-label="tipLabel"
+          :data-tooltip="tipLabel"
           @click="editingTip = true"
-        >
-          Como conseguir
-        </BaseButton>
+        />
       </div>
     </header>
 
@@ -116,7 +107,16 @@ const hasBody = computed(
 
     <!-- Rodapé: etiquetas -->
     <footer class="trophy__foot px-2 py-2 border-top">
-      <TrophyMetaTags :trophy="trophy" :note="note" :stats="stats" />
+      <TrophyMetaTags :trophy="trophy" :note="note" :stats="stats">
+        <template #before>
+          <span v-for="f in flags" :key="f.id" class="badge" :class="`badge--${f.tone}`">
+            <component :is="f.icon" :size="14" :stroke-width="2" /> {{ f.label }}
+          </span>
+          <button v-if="trophy.hidden" type="button" class="badge" @click="revealed = true">
+            <EyeOff :size="14" :stroke-width="2" /> {{ blurred ? 'Oculto · ver' : 'Oculto' }}
+          </button>
+        </template>
+      </TrophyMetaTags>
     </footer>
   </li>
 </template>
@@ -126,25 +126,13 @@ const hasBody = computed(
   scroll-margin-top: $header-height + 64px; // header + barra de abas fixa
   transition: box-shadow 0.2s;
 
-  // Topo: celular = ícone | nome | ações (badges na linha de baixo); desktop = tudo numa linha
+  // Topo: ícone | nome | ações
   &__head {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: 'icon name actions';
     align-items: center;
     column-gap: space(2);
-    row-gap: space(1);
-
-    &.has-badges {
-      grid-template-areas:
-        'icon name actions'
-        'icon badges badges';
-
-      @include up(md) {
-        grid-template-columns: auto minmax(0, 1fr) auto auto;
-        grid-template-areas: 'icon name badges actions';
-      }
-    }
   }
 
   &__icon {
@@ -153,7 +141,6 @@ const hasBody = computed(
     width: 40px;
     height: 40px;
     background: var(--surface-2);
-    align-self: start;
 
     img {
       width: 100%;
@@ -184,10 +171,6 @@ const hasBody = computed(
     letter-spacing: 0;
   }
 
-  &__badges {
-    grid-area: badges;
-  }
-
   &__actions {
     grid-area: actions;
   }
@@ -199,13 +182,6 @@ const hasBody = computed(
 
     &.is-filled {
       color: var(--accent);
-    }
-
-    // No celular só o ícone
-    :deep(span) {
-      @include down(sm) {
-        display: none;
-      }
     }
   }
 

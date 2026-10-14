@@ -1,0 +1,53 @@
+@use '../abstracts' as *;
+
+// Dica ao passar o mouse (ou focar pelo teclado): <button data-tooltip="Detalhes">
+// Só CSS, sem JS. Use também aria-label no elemento (leitor de tela não lê o ::after).
+[data-tooltip] {
+  position: relative;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + #{space(1)});
+    left: 50%;
+    z-index: 40;
+    padding: $space-half space(1);
+    border-radius: $r1;
+    background: var(--text);
+    color: var(--bg);
+    font-family: $font-sans;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, $space-half);
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  // Encostado na direita (ex.: últimos botões do card): abre para a esquerda
+  &.tooltip-left::after {
+    left: auto;
+    right: 0;
+    transform: translateY($space-half);
+  }
+
+  &.tooltip-left:hover::after,
+  &.tooltip-left:focus-visible::after {
+    transform: none;
+  }
+}
+
+// Sem mouse (toque) não mostra: evita balão preso na tela após tocar
+@media (hover: none) {
+  [data-tooltip]:hover::after {
+    opacity: 0;
+  }
+}

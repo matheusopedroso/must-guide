@@ -106,6 +106,11 @@ para um botão novo, informe `result()` e, se tiver estado ligado/desligado, `st
 Na leitura, tocar no chip rola até o troféu (tira o filtro) e destaca. Vale nas versões PS4/PS5 (mesmo `trophyId`).
 Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado das anotações em `useTrophyNotes` → `backlinks`).
 
+## Dica ao passar o mouse
+
+Qualquer elemento: `data-tooltip="Texto"` (+ `aria-label`). Encostado na direita: classe `tooltip-left`.
+Estilo em `src/styles/components/_tooltip.scss` (só CSS; não aparece em telas de toque).
+
 ## Trocar de provedor de jogos
 
 | Provedor | Chaves | Observações |
