@@ -169,7 +169,11 @@ para um botão novo, informe `result()` e, se tiver estado ligado/desligado, `st
 **Referência a troféu:** botão de troféu na barra ou digitar `@` no texto → escolhe o troféu → entra um chip.
 **Linkar um nome já escrito:** selecione o trecho (ex.: "Bounty Hunter") e toque no botão de troféu ou aperte
 **Ctrl/⌘+K** → a lista abre já buscando o trecho (nome igual em PT ou EN vem primeiro) → o trecho vira o chip,
-mantendo o texto que você escreveu. Formato do chip
+mantendo o texto que você escreveu.
+**Linkar automaticamente (varinha):** acha no texto todos os nomes de troféus já escritos (PT ou EN, palavra
+inteira, sem diferenciar maiúsculas, aspas ' e ’ iguais, nome mais longo primeiro) e transforma em chips de uma vez;
+ignora o que já é link. O aviso mostra quantos foram e tem **Desfazer**. Lógica em `autoLinkTrophies` (`src/utils/trophyRef.js`).
+Formato do chip
 `<a href="#trofeu-ID" data-trophy="ID" data-type="gold" class="trophy-ref" contenteditable="false">Nome</a>`.
 Na leitura, tocar no chip rola até o troféu (tira o filtro) e destaca. Vale nas versões PS4/PS5 (mesmo `trophyId`).
 Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado das anotações em `useTrophyNotes` → `backlinks`).

@@ -1,18 +1,20 @@
 <script setup>
 import { ref, useTemplateRef } from 'vue';
-import { Trophy } from 'lucide-vue-next';
+import { Trophy, WandSparkles } from 'lucide-vue-next';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import TrophyRefPicker from './TrophyRefPicker.vue';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 import { EDITOR_ACTIONS } from '@/config/editor';
-import { trophyRefHtml } from '@/utils/trophyRef';
+import { autoLinkTrophies, trophyRefHtml } from '@/utils/trophyRef';
+import { useToast } from '@/composables/useToast';
 
 // Editor de texto (Pell) que cita troféus: botão na barra ou "@" → lista → chip do troféu no texto.
 // Com um trecho selecionado (ex.: o nome do troféu escrito no texto), o botão ou Ctrl/⌘+K abre a lista já
 // buscando por ele e o trecho vira o link para o troféu (mantém o texto escolhido).
+// Varinha: transforma de uma vez todos os nomes de troféus já escritos (PT ou EN) em links — com Desfazer.
 // A lista de troféus vem do contexto (provideTrophyContext). Usado no "Como conseguir" e no Roadmap.
 const model = defineModel({ type: String, default: '' });
-defineProps({
+const props = defineProps({
   placeholder: { type: String, default: '' },
   exclude: { type: [Number, String, Array], default: null }, // troféu(s) que não aparecem na lista
   autofocus: Boolean,
@@ -20,6 +22,7 @@ defineProps({
 const emit = defineEmits(['keydown']);
 
 const ctx = useTrophyContext();
+const toast = useToast();
 const editor = useTemplateRef('editor');
 const picking = ref(false);
 const selection = ref(''); // texto selecionado que vai virar o link
@@ -55,8 +58,20 @@ const actions = ctx
         icon: Trophy,
         result: openFromSelection,
       },
+      { name: 'autoLink', title: 'Linkar troféus automaticamente (acha os nomes já escritos no texto)', icon: WandSparkles, result: autoLink },
     ]
   : EDITOR_ACTIONS;
+
+// Varinha: linka todos os nomes encontrados (fora dos links que já existem)
+function autoLink() {
+  const before = model.value;
+  const { html, count } = autoLinkTrophies(before, ctx.trophies.value, { exclude: props.exclude ?? [] });
+  if (!count) return toast.show('Nenhum nome de troféu encontrado no texto.', 'info');
+  model.value = html;
+  toast.show(`${count} ${count > 1 ? 'nomes de troféus viraram links' : 'nome de troféu virou link'}.`, 'success', {
+    action: { label: 'Desfazer', run: () => (model.value = before) },
+  });
+}
 
 // Com seleção: o trecho vira o chip (mesmo texto). Sem: entra o nome do troféu + espaço.
 function insertRef(trophy) {

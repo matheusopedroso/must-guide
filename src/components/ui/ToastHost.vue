@@ -18,6 +18,9 @@ const ICONS = { info: Info, success: CircleCheck, error: CircleAlert };
       >
         <component :is="ICONS[t.tone]" :size="18" class="toast__icon shrink-0" />
         <span class="flex-1">{{ t.text }}</span>
+        <button v-if="t.action" type="button" class="toast__action fw-600 shrink-0" @click="t.action.run(), dismiss(t.id)">
+          {{ t.action.label }}
+        </button>
         <button type="button" class="toast__close shrink-0" aria-label="Fechar aviso" @click="dismiss(t.id)">
           <X :size="16" />
         </button>
@@ -56,6 +59,14 @@ const ICONS = { info: Info, success: CircleCheck, error: CircleAlert };
 
   &--error &__icon {
     color: var(--danger);
+  }
+
+  &__action {
+    color: var(--accent);
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   &__close {
