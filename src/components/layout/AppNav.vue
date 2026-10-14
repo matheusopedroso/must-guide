@@ -26,11 +26,11 @@ const { theme, toggle } = useTheme();
         v-for="item in NAV_ITEMS"
         :key="item.id"
         :to="item.to"
-        class="nav__link d-flex align-center gap-1 px-2 radius-1"
+        class="nav__link d-flex align-center gap-1"
         :class="{ 'is-active': item.match(route) }"
         :aria-current="item.match(route) ? 'page' : undefined"
       >
-        <component :is="item.icon" :size="18" :stroke-width="1.75" />
+        <component :is="item.icon" :size="16" :stroke-width="1.8" />
         <span>{{ item.label }}</span>
       </RouterLink>
     </nav>
@@ -61,7 +61,7 @@ const { theme, toggle } = useTheme();
   align-items: center;
   gap: space(2);
   width: calc(100% - #{space(2)});
-  height: $nav-height-sm;
+  min-height: $nav-height-sm;
   padding: space(1) space(1) space(1) space(2);
   border: 1px solid var(--border);
   border-radius: $r2;
@@ -77,7 +77,7 @@ const { theme, toggle } = useTheme();
     top: space(2);
     grid-template-columns: 1fr auto 1fr; // abas no centro de verdade
     width: min(#{$container-header}, calc(100% - #{space(4)}));
-    height: $nav-height;
+    min-height: $nav-height;
   }
 
   &.is-hidden {
@@ -90,7 +90,7 @@ const { theme, toggle } = useTheme();
     justify-self: start;
 
     :deep(svg) {
-      height: 32px;
+      height: 36px;
 
       @include up(md) {
         height: 40px;
@@ -98,12 +98,14 @@ const { theme, toggle } = useTheme();
     }
   }
 
+  // Medidas do Must Watch: 8px 16px, canto 16px, ícone 16px, texto 10.5px
   &__link {
-    height: 40px;
+    padding: space(1) space(2);
+    border-radius: $r2;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     white-space: nowrap;
     transition: background 0.15s, color 0.15s;

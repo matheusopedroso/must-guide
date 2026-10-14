@@ -17,7 +17,7 @@ const accountOpen = ref(false);
 </script>
 
 <template>
-  <nav class="tabbar d-flex d-md-none align-center gap-1 p-1" :class="{ 'is-hidden': hidden }" aria-label="Navegação principal">
+  <nav class="tabbar d-flex d-md-none align-center justify-between gap-1 p-1" :class="{ 'is-hidden': hidden }" aria-label="Navegação principal">
     <RouterLink
       v-for="item in NAV_ITEMS"
       :key="item.id"
@@ -27,7 +27,7 @@ const accountOpen = ref(false);
       :aria-current="item.match(route) ? 'page' : undefined"
       :aria-label="item.label"
     >
-      <component :is="item.icon" :size="20" :stroke-width="1.75" class="shrink-0" />
+      <component :is="item.icon" :size="18" :stroke-width="1.8" class="shrink-0" />
       <span class="tabbar__label">{{ item.short ?? item.label }}</span>
     </RouterLink>
 
@@ -38,7 +38,7 @@ const accountOpen = ref(false);
       :aria-label="user ? `Conta: ${user.displayName || user.email}` : 'Conta'"
       @click="accountOpen = true"
     >
-      <AccountAvatar :size="24" class="tabbar__avatar" />
+      <AccountAvatar :size="22" class="tabbar__avatar" />
       <span class="tabbar__label">Conta</span>
     </button>
   </nav>
@@ -52,11 +52,11 @@ const accountOpen = ref(false);
 .tabbar {
   position: fixed;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + #{space(1)});
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   z-index: 55;
-  width: min(400px, calc(100% - #{space(2)}));
+  width: min(390px, calc(100% - 20px));
   border: 1px solid var(--border);
-  border-radius: $r2;
+  border-radius: $r4; // 32px (radius-md do Must Watch)
   background: var(--nav-glass);
   backdrop-filter: blur(22px) saturate(160%);
   -webkit-backdrop-filter: blur(22px) saturate(160%);
@@ -71,17 +71,18 @@ const accountOpen = ref(false);
   }
 
   // Inativas: só o ícone, dividindo o espaço. Ativa: ocupa o que o nome precisa (nunca corta).
+  // Medidas do Must Watch: padding 8px, canto 32px, ícone 18px, texto 10px (9px até 430px)
   &__item {
     flex: 1 1 0;
     min-width: 0;
-    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0;
-    border-radius: $r1;
+    padding: space(1);
+    border-radius: $r4;
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -111,6 +112,17 @@ const accountOpen = ref(false);
 
   &__item.is-active &__avatar {
     box-shadow: 0 0 0 2px var(--on-accent);
+  }
+}
+
+@media (max-width: 430px) {
+  .tabbar {
+    width: calc(100% - #{space(2)});
+    bottom: calc(env(safe-area-inset-bottom, 0px) + #{space(1)});
+
+    &__item {
+      font-size: 9px;
+    }
   }
 }
 

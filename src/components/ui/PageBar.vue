@@ -18,7 +18,7 @@ const scrolled = useScrolledPast(140);
 <template>
   <header class="pbar d-grid align-center gap-1" :class="{ 'is-top': !scrolled }">
     <button type="button" class="pbar__btn d-flex align-center justify-center" aria-label="Voltar" @click="$emit('back')">
-      <ArrowLeft :size="18" />
+      <ArrowLeft :size="18" :stroke-width="1.9" />
     </button>
     <p class="pbar__title truncate fw-600" :title="title">{{ title }}</p>
     <div class="d-flex align-center gap-1">
@@ -31,7 +31,7 @@ const scrolled = useScrolledPast(140);
         data-tooltip="Compartilhar"
         @click="$emit('share')"
       >
-        <Share2 :size="18" />
+        <Share2 :size="18" :stroke-width="1.9" />
       </button>
     </div>
   </header>
@@ -39,17 +39,17 @@ const scrolled = useScrolledPast(140);
 
 <style lang="scss" scoped>
 .pbar {
-  --pbar-height: 48px;
+  // Medidas do Must Watch (BarraFlutuante): 58px (54 no celular), padding 8, canto 18, botões 42 (38)
   position: sticky;
-  top: calc(var(--nav-offset) + #{space(1)});
+  top: calc(var(--nav-offset) + var(--pbar-gap));
   z-index: 40;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  width: min(#{$container-header}, calc(100% - #{space(2)}));
+  width: calc(100% - #{space(2)});
   height: var(--pbar-height);
   margin: 0 auto;
-  padding: $space-half;
+  padding: space(1);
   border: 1px solid var(--border);
-  border-radius: $r2;
+  border-radius: 18px;
   background: var(--nav-glass);
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
@@ -57,8 +57,8 @@ const scrolled = useScrolledPast(140);
   transition-duration: 0.22s;
   transition-timing-function: $ease;
 
-  @include up(md) {
-    width: min(#{$container-header}, calc(100% - #{space(4)}));
+  @include up(sm) {
+    width: min(#{$container-header}, calc(100% - 24px));
   }
 
   transition-property: top, background, border-color, box-shadow;
@@ -78,7 +78,7 @@ const scrolled = useScrolledPast(140);
 
       .pbar__btn {
         border-radius: $r-full;
-        background: rgba(20, 20, 19, 0.45);
+        background: rgba(10, 8, 5, 0.56);
         color: #fff;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
@@ -87,20 +87,27 @@ const scrolled = useScrolledPast(140);
   }
 
   &__btn {
-    width: 40px;
-    height: 40px;
-    border-radius: $r1;
-    color: var(--text-muted);
+    width: 38px;
+    height: 38px;
+    border-radius: $r2;
+    background: color-mix(in srgb, var(--text) 5%, transparent);
+    color: var(--text);
+
+    @include up(sm) {
+      width: 42px;
+      height: 42px;
+    }
+
     transition: background 0.15s, color 0.15s, border-radius 0.2s;
 
     &:hover {
-      background: var(--surface-hover);
-      color: var(--text);
+      background: color-mix(in srgb, var(--text) 10%, transparent);
     }
   }
 
   &__title {
-    font-size: 14px;
+    font-size: 13px;
+    letter-spacing: 0.05em;
     transition: opacity 0.2s;
   }
 }

@@ -72,7 +72,7 @@ const hasStats = computed(() => Object.values(props.guide.stats ?? {}).some(Bool
   isolation: isolate;
   overflow: hidden;
   // Fica atrás da navegação e da PageBar (a página sobe por baixo delas)
-  padding: calc(var(--nav-space) + 48px + #{space(5)}) space(2) space(5);
+  padding: calc(var(--nav-space) + var(--pbar-gap) + var(--pbar-height) + #{space(4)}) space(2) space(5);
 
   &__backdrop,
   &__overlay {

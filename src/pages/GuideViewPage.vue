@@ -152,8 +152,8 @@ async function share() {
   padding-bottom: space(8);
 
   &__bar {
-    margin-top: calc(var(--nav-space) + #{space(1)});
-    margin-bottom: calc(-48px - var(--nav-space) - #{space(1)}); // não ocupa espaço: fica por cima do hero
+    margin-top: calc(var(--nav-space) + var(--pbar-gap));
+    margin-bottom: calc(-1 * (var(--pbar-height) + var(--nav-space) + var(--pbar-gap))); // não ocupa espaço: fica por cima do hero
   }
 
   &__skeleton {
@@ -163,7 +163,7 @@ async function share() {
   }
 
   &__empty {
-    padding-top: calc(var(--nav-space) + 48px + #{space(5)});
+    padding-top: calc(var(--nav-space) + var(--pbar-gap) + var(--pbar-height) + #{space(4)});
   }
 
   &__content {

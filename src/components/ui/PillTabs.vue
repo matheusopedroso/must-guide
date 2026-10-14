@@ -9,7 +9,7 @@ defineProps({
 </script>
 
 <template>
-  <nav class="ptabs d-flex gap-1 p-1" role="tablist" :aria-label="label">
+  <nav class="ptabs d-flex" role="tablist" :aria-label="label">
     <button
       v-for="t in tabs"
       :key="t.id"
@@ -28,11 +28,14 @@ defineProps({
 
 <style lang="scss" scoped>
 .ptabs {
+  // Medidas do Must Watch (.abas-pagina): padding/gap 4, botões com 8px, texto 11px (10px no celular)
   position: sticky;
-  top: calc(var(--nav-offset) + #{space(1)} + 48px + #{space(1)}); // navegação + PageBar
+  top: calc(var(--nav-offset) + var(--pbar-gap) + var(--pbar-height) + #{space(1)}); // navegação + PageBar
   z-index: 25;
-  width: min(560px, 100%);
+  gap: $space-half;
+  width: min(700px, 100%);
   margin: 0 auto space(4);
+  padding: $space-half;
   border: 1px solid var(--border);
   border-radius: $r-full;
   background: var(--nav-glass);
@@ -49,8 +52,7 @@ defineProps({
   &__tab {
     flex: 1 1 0;
     min-width: 0;
-    height: 36px;
-    padding-inline: space(1);
+    padding: space(1);
     border-radius: $r-full;
     color: var(--text-muted);
     font-size: 11px;
@@ -72,6 +74,14 @@ defineProps({
 
   &__count {
     opacity: 0.7;
+  }
+
+  @media (max-width: 500px) {
+    &__tab {
+      padding: space(1) $space-half;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
   }
 }
 </style>
