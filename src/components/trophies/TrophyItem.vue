@@ -1,16 +1,17 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { Check, EyeOff, MessageSquareText, SlidersHorizontal, Trophy } from 'lucide-vue-next';
+import { Check, EyeOff, MessageSquareText, SlidersHorizontal } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import TrophyMetaTags from './TrophyMetaTags.vue';
 import TrophyDetailsEditor from './TrophyDetailsEditor.vue';
 import TrophyTip from './TrophyTip.vue';
-import { RARITY_LABELS, TROPHY_TYPE_MAP } from '@/config/trophies';
-import { formatEarnedAt, formatRate } from '@/utils/trophies';
+import { TROPHY_FLAGS } from '@/config/trophies';
+import { formatEarnedAt } from '@/utils/trophies';
 import { hasRichContent } from '@/utils/html';
 import { trophyAnchorId } from '@/utils/trophyRef';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 
+// Card do troféu em 3 partes: topo (nome, badges, ações) · meio (descrição e textos) · rodapé (etiquetas)
 const props = defineProps({
   trophy: { type: Object, required: true },
   note: { type: Object, required: true },
@@ -29,23 +30,25 @@ const revealed = ref(false);
 // Borrado só enquanto for spoiler e ninguém revelou/editou
 const blurred = computed(() => props.spoiler && !revealed.value);
 watch([editingTip, editingDetails], ([a, b]) => (a || b) && (revealed.value = true));
+const reveal = () => blurred.value && (revealed.value = true);
 
 const hasTip = computed(() => hasRichContent(props.note.tip));
-const type = computed(() => TROPHY_TYPE_MAP[props.trophy.type] ?? TROPHY_TYPE_MAP.bronze);
-const rarity = computed(() => {
-  const s = props.stats;
-  if (s?.rate == null) return '';
-  return [RARITY_LABELS[s.rarity], `${formatRate(s.rate)} dos jogadores`].filter(Boolean).join(' · ');
-});
+const flags = computed(() => TROPHY_FLAGS.filter((f) => props.note[f.id]));
+const hasBadges = computed(() => flags.value.length > 0 || props.trophy.hidden);
+// Seção do meio só quando há algo para mostrar
+const hasBody = computed(
+  () => props.trophy.detail || hasTip.value || editingTip.value || editingDetails.value || props.citedBy.length,
+);
 </script>
 
 <template>
-  <li :id="trophyAnchorId(trophy.id)" class="trophy d-flex flex-column gap-2 py-2" :class="{ 'is-blurred': blurred }">
-    <div class="d-flex gap-2">
+  <li :id="trophyAnchorId(trophy.id)" class="trophy surface radius-2" :class="{ 'is-blurred': blurred }">
+    <!-- Topo -->
+    <header class="trophy__head p-2" :class="{ 'has-badges': hasBadges }">
       <div
-        class="trophy__icon radius-1 shrink-0"
+        class="trophy__icon radius-1"
         :title="stats?.earned ? `Conquistado em ${formatEarnedAt(stats.earnedAt)}` : ''"
-        @click="blurred && (revealed = true)"
+        @click="reveal"
       >
         <img v-if="trophy.icon" :src="trophy.icon" alt="" loading="lazy" decoding="async" class="spoil" />
         <span v-if="stats?.earned" class="trophy__check d-flex align-center justify-center" aria-label="Conquistado">
@@ -53,98 +56,104 @@ const rarity = computed(() => {
         </span>
       </div>
 
-      <div class="d-flex flex-column gap-1 min-w-0 flex-1">
-        <div class="d-flex align-start gap-1">
-          <div class="d-flex align-center flex-wrap gap-1 flex-1 min-w-0">
-            <h4 class="trophy__name spoil" @click="blurred && (revealed = true)">{{ trophy.name || 'Troféu oculto' }}</h4>
-            <span class="tag" :style="{ color: type.color }">
-              <Trophy :size="14" :stroke-width="2" /> {{ type.label }}
-            </span>
-            <button v-if="trophy.hidden" type="button" class="tag" :title="blurred ? 'Tocar para ver' : ''" @click="revealed = true">
-              <EyeOff :size="14" :stroke-width="1.75" /> {{ blurred ? 'Oculto · ver' : 'Oculto' }}
-            </button>
-          </div>
+      <h4 class="trophy__name spoil" @click="reveal">{{ trophy.name || 'Troféu oculto' }}</h4>
 
-          <div class="d-flex gap-1 shrink-0">
-            <BaseButton
-              :icon="SlidersHorizontal"
-              size="sm"
-              :variant="editingDetails ? 'secondary' : 'ghost'"
-              class="trophy__action"
-              :aria-pressed="editingDetails"
-              aria-label="Detalhes do troféu"
-              @click="editingDetails = !editingDetails"
-            >
-              Detalhes
-            </BaseButton>
-            <BaseButton
-              :icon="MessageSquareText"
-              size="sm"
-              :variant="hasTip ? 'ghost' : 'secondary'"
-              class="trophy__action"
-              :class="{ 'is-filled': hasTip }"
-              :aria-label="hasTip ? 'Editar como conseguir' : 'Escrever como conseguir'"
-              @click="editingTip = true"
-            >
-              Como conseguir
-            </BaseButton>
-          </div>
-        </div>
-
-        <p v-if="trophy.detail" class="text-sm text-muted spoil" @click="blurred && (revealed = true)">{{ trophy.detail }}</p>
-        <p v-if="rarity" class="text-xs text-subtle">{{ rarity }}</p>
-
-        <TrophyMetaTags :note="note" />
-
-        <p v-if="citedBy.length" class="cited d-flex align-center flex-wrap gap-1 text-xs text-subtle">
-          <span>Citado em:</span>
-          <a
-            v-for="src in citedBy"
-            :key="src.id"
-            :href="`#${trophyAnchorId(src.id)}`"
-            class="trophy-ref"
-            :data-type="src.type"
-            @click.prevent="ctx?.goTo(src.id)"
-          >
-            {{ src.name || 'Troféu oculto' }}
-          </a>
-        </p>
+      <div v-if="hasBadges" class="trophy__badges d-flex align-center flex-wrap gap-1">
+        <span v-for="f in flags" :key="f.id" class="badge" :class="`badge--${f.tone}`">
+          <component :is="f.icon" :size="14" :stroke-width="2" /> {{ f.label }}
+        </span>
+        <button v-if="trophy.hidden" type="button" class="badge" :title="blurred ? 'Tocar para ver' : ''" @click="revealed = true">
+          <EyeOff :size="14" :stroke-width="2" /> {{ blurred ? 'Oculto · ver' : 'Oculto' }}
+        </button>
       </div>
+
+      <div class="trophy__actions d-flex gap-1">
+        <BaseButton
+          :icon="SlidersHorizontal"
+          size="sm"
+          :class="{ 'is-on': editingDetails }"
+          class="trophy__action"
+          :aria-pressed="editingDetails"
+          aria-label="Detalhes do troféu"
+          @click="editingDetails = !editingDetails"
+        >
+          Detalhes
+        </BaseButton>
+        <BaseButton
+          :icon="MessageSquareText"
+          size="sm"
+          class="trophy__action"
+          :class="{ 'is-filled': hasTip }"
+          :aria-label="hasTip ? 'Editar como conseguir' : 'Escrever como conseguir'"
+          @click="editingTip = true"
+        >
+          Como conseguir
+        </BaseButton>
+      </div>
+    </header>
+
+    <!-- Meio: descrição e textos do guia -->
+    <div v-if="hasBody" class="trophy__body p-2 border-top d-flex flex-column gap-2">
+      <p v-if="trophy.detail" class="trophy__detail spoil" @click="reveal">{{ trophy.detail }}</p>
+
+      <TrophyDetailsEditor v-if="editingDetails" :note="note" @update="update" @close="editingDetails = false" />
+      <TrophyTip v-model:editing="editingTip" :tip="note.tip" :trophy-id="trophy.id" @update="update" />
+
+      <p v-if="citedBy.length" class="d-flex align-center flex-wrap gap-1 text-xs text-subtle">
+        <span>Citado em:</span>
+        <a
+          v-for="src in citedBy"
+          :key="src.id"
+          :href="`#${trophyAnchorId(src.id)}`"
+          class="trophy-ref"
+          :data-type="src.type"
+          @click.prevent="ctx?.goTo(src.id)"
+        >
+          {{ src.name || 'Troféu oculto' }}
+        </a>
+      </p>
     </div>
 
-    <!-- Largura total do troféu -->
-    <TrophyDetailsEditor v-if="editingDetails" :note="note" @update="update" @close="editingDetails = false" />
-    <TrophyTip v-model:editing="editingTip" :tip="note.tip" :trophy-id="trophy.id" @update="update" />
+    <!-- Rodapé: etiquetas -->
+    <footer class="trophy__foot px-2 py-2 border-top">
+      <TrophyMetaTags :trophy="trophy" :note="note" :stats="stats" />
+    </footer>
   </li>
 </template>
 
 <style lang="scss" scoped>
 .trophy {
-  // Ocupa a largura do card (o card tem 16px de respiro) para o destaque ir de ponta a ponta
-  margin-inline: -(space(2));
-  padding-inline: space(2);
+  scroll-margin-top: $header-height + 64px; // header + barra de abas fixa
+  transition: box-shadow 0.2s;
 
-  & + & {
-    border-top: 1px solid var(--border);
-  }
+  // Topo: celular = ícone | nome | ações (badges na linha de baixo); desktop = tudo numa linha
+  &__head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'icon name actions';
+    align-items: center;
+    column-gap: space(2);
+    row-gap: space(1);
 
-  // Destaque ao chegar por uma referência no texto
-  &.is-flash {
-    animation: flash 1.6s $ease;
+    &.has-badges {
+      grid-template-areas:
+        'icon name actions'
+        'icon badges badges';
+
+      @include up(md) {
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        grid-template-areas: 'icon name badges actions';
+      }
+    }
   }
 
   &__icon {
+    grid-area: icon;
     position: relative;
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     background: var(--surface-2);
-    border-radius: $r1;
-    overflow: visible;
-
-    @include up(md) {
-      width: 56px;
-      height: 56px;
-    }
+    align-self: start;
 
     img {
       width: 100%;
@@ -158,8 +167,8 @@ const rarity = computed(() => {
     position: absolute;
     right: -$space-half;
     bottom: -$space-half;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: var(--success);
     color: var(--surface);
@@ -167,20 +176,47 @@ const rarity = computed(() => {
   }
 
   &__name {
+    grid-area: name;
+    font-family: $font-sans;
     font-size: 15px;
     font-weight: 600;
     line-height: 1.3;
+    letter-spacing: 0;
   }
 
-  &__action.is-filled {
-    color: var(--accent);
+  &__badges {
+    grid-area: badges;
   }
 
-  // No celular só o ícone, para não espremer o nome do troféu
-  &__action :deep(span) {
-    @include down(sm) {
-      display: none;
+  &__actions {
+    grid-area: actions;
+  }
+
+  &__action {
+    &.is-on {
+      background: var(--surface-hover);
     }
+
+    &.is-filled {
+      color: var(--accent);
+    }
+
+    // No celular só o ícone
+    :deep(span) {
+      @include down(sm) {
+        display: none;
+      }
+    }
+  }
+
+  &__detail {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  // Destaque ao chegar por uma referência no texto
+  &.is-flash {
+    animation: flash 1.6s $ease;
   }
 
   // Spoiler: nome, descrição e ícone borrados até tocar
@@ -194,11 +230,11 @@ const rarity = computed(() => {
 @keyframes flash {
   0%,
   50% {
-    background: var(--accent-soft);
+    box-shadow: 0 0 0 3px var(--accent);
   }
 
   100% {
-    background: transparent;
+    box-shadow: 0 0 0 3px transparent;
   }
 }
 </style>

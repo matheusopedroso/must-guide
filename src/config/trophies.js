@@ -16,12 +16,12 @@ export const NP_ID_PATTERN = /^NPWR\d{5}_\d{2}$/;
 // trophyRare da PSN → rótulo
 export const RARITY_LABELS = { 0: 'Ultra raro', 1: 'Muito raro', 2: 'Raro', 3: 'Comum' };
 
-// Marcações que o guia pode dar a cada troféu (botões no troféu + filtros da lista).
-// Para criar uma nova, basta adicionar aqui.
+// Marcações que o guia pode dar a cada troféu (badges no card + botões em Detalhes + filtros).
+// tone = cor do badge (classes .badge--* em styles/components/_controls.scss). Para criar uma nova, basta adicionar aqui.
 export const TROPHY_FLAGS = [
-  { id: 'story', label: 'História', icon: BookOpen },
-  { id: 'missable', label: 'Perdível', icon: TriangleAlert },
-  { id: 'online', label: 'Online', icon: Wifi },
+  { id: 'story', label: 'História', icon: BookOpen, tone: 'info' },
+  { id: 'missable', label: 'Perdível', icon: TriangleAlert, tone: 'danger' },
+  { id: 'online', label: 'Online', icon: Wifi, tone: 'accent' },
 ];
 
 // Em que momento do jogo o troféu sai (campo "when" da anotação)

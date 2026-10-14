@@ -1,47 +1,57 @@
 <script setup>
 import { computed } from 'vue';
-import { CirclePlay, Clock, Link as LinkIcon, MapPin } from 'lucide-vue-next';
+import { CirclePlay, Link as LinkIcon, Trophy } from 'lucide-vue-next';
 import RatingInput from '@/components/ui/RatingInput.vue';
-import { DIFFICULTY_LABELS, DIFFICULTY_MAX, TROPHY_FLAGS, TROPHY_MOMENT_MAP } from '@/config/trophies';
+import { DIFFICULTY_LABELS, DIFFICULTY_MAX, RARITY_LABELS, TROPHY_MOMENT_MAP, TROPHY_TYPE_MAP } from '@/config/trophies';
+import { formatEarnedAt, formatRate } from '@/utils/trophies';
 import { isYoutube } from '@/utils/url';
 
-// Modo compacto: só aparece o que foi preenchido (marcações e dados do troféu)
-const props = defineProps({ note: { type: Object, required: true } });
+// Rodapé do card: etiquetas "Rótulo: valor" (só o que existe)
+const props = defineProps({
+  trophy: { type: Object, required: true },
+  note: { type: Object, required: true },
+  stats: { type: Object, default: null },
+});
 
-const flags = computed(() => TROPHY_FLAGS.filter((f) => props.note[f.id]));
+const type = computed(() => TROPHY_TYPE_MAP[props.trophy.type] ?? TROPHY_TYPE_MAP.bronze);
+const rarity = computed(() => {
+  const s = props.stats;
+  if (s?.rate == null) return '';
+  return [RARITY_LABELS[s.rarity], formatRate(s.rate)].filter(Boolean).join(' · ');
+});
 const moment = computed(() => TROPHY_MOMENT_MAP[props.note.when]?.label ?? '');
-const hasAny = computed(
-  () => flags.value.length || moment.value || props.note.chapter || props.note.difficulty || props.note.video,
-);
 </script>
 
 <template>
-  <div v-if="hasAny" class="d-flex align-center flex-wrap gap-1">
-    <span v-for="f in flags" :key="f.id" class="tag tag--accent">
-      <component :is="f.icon" :size="14" :stroke-width="1.75" /> {{ f.label }}
+  <div class="d-flex align-center flex-wrap gap-1">
+    <span class="tag">
+      <span class="tag__label">Tipo:</span>
+      <Trophy :size="14" :stroke-width="2" :style="{ color: type.color }" /> {{ type.label }}
     </span>
-    <span v-if="moment" class="tag"><Clock :size="14" :stroke-width="1.75" /> {{ moment }}</span>
+    <span v-if="rarity" class="tag" title="Porcentagem de jogadores com o troféu">
+      <span class="tag__label">Raridade:</span> {{ rarity }}
+    </span>
+    <span v-if="stats?.earned" class="tag">
+      <span class="tag__label">Conquistado:</span> {{ formatEarnedAt(stats.earnedAt) }}
+    </span>
+    <span v-if="moment" class="tag"><span class="tag__label">Momento:</span> {{ moment }}</span>
     <span v-if="note.chapter" class="tag tag--chapter" :title="note.chapter">
-      <MapPin :size="14" :stroke-width="1.75" /> <span class="truncate">{{ note.chapter }}</span>
+      <span class="tag__label">Capítulo:</span> <span class="truncate">{{ note.chapter }}</span>
     </span>
-    <span v-if="note.difficulty" class="tag" :title="`Dificuldade: ${DIFFICULTY_LABELS[note.difficulty]}`">
+    <span v-if="note.difficulty" class="tag" :title="DIFFICULTY_LABELS[note.difficulty]">
+      <span class="tag__label">Dificuldade:</span>
       <RatingInput :model-value="note.difficulty" :max="DIFFICULTY_MAX" readonly label="Dificuldade" />
     </span>
     <a v-if="note.video" :href="note.video" target="_blank" rel="noopener noreferrer" class="tag tag--link">
       <component :is="isYoutube(note.video) ? CirclePlay : LinkIcon" :size="14" :stroke-width="1.75" />
-      {{ isYoutube(note.video) ? 'Vídeo' : 'Link' }}
+      {{ isYoutube(note.video) ? 'Ver vídeo' : 'Abrir link' }}
     </a>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.tag--accent {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
 .tag--chapter {
-  max-width: 220px;
+  max-width: 260px;
 }
 
 .tag--link {

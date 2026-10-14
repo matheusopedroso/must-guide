@@ -121,6 +121,37 @@ select.input {
   font-weight: 500;
 }
 
+// Badge de status (ex.: Perdível, Oculto). Tons: neutral, info, danger, accent, success
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-half;
+  height: 24px;
+  padding-inline: space(1);
+  border-radius: $r1;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  @each $tone in 'info', 'danger', 'accent', 'success' {
+    &--#{$tone} {
+      background: color-mix(in srgb, var(--#{$tone}) 14%, transparent);
+      color: var(--#{$tone});
+    }
+  }
+
+  &--accent {
+    background: var(--accent-soft);
+  }
+}
+
+// Etiqueta "Rótulo: valor" (rodapé dos cards)
+.tag__label {
+  font-weight: 600;
+}
+
 .scroll-x {
   display: flex;
   overflow-x: auto;

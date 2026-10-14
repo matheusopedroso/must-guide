@@ -69,12 +69,12 @@ function applyFilter(id) {
 
     <p v-if="search" class="text-xs text-subtle">{{ visibleCount }} troféu(s) encontrado(s)</p>
 
-    <section v-for="g in sections" :key="g.id" class="surface radius-2 px-2 pt-1 pb-1">
-      <header v-if="showGroups" class="d-flex align-center justify-between flex-wrap gap-1 py-1 border-bottom">
+    <section v-for="g in sections" :key="g.id" class="d-flex flex-column gap-2 mt-1">
+      <header v-if="showGroups" class="d-flex align-center justify-between flex-wrap gap-1">
         <h3 class="group-title">{{ groupName(g) }}</h3>
         <TrophyCounts :counts="g.counts" />
       </header>
-      <ul>
+      <ul class="d-flex flex-column gap-2">
         <TrophyItem
           v-for="t in g.trophies"
           :key="t.id"
