@@ -1,6 +1,8 @@
 <script setup>
 import { Eye, EyeOff } from 'lucide-vue-next';
+import { useTemplateRef, watch } from 'vue';
 import SearchInput from '@/components/ui/SearchInput.vue';
+import ScrollRail from '@/components/ui/ScrollRail.vue';
 
 // Barra da lista: busca, ordenação, mostrar ocultos e filtros
 const search = defineModel('search', { type: String, default: '' });
@@ -11,6 +13,10 @@ defineProps({
   sorts: { type: Array, required: true },
   filters: { type: Array, required: true },
 });
+
+// Chip escolhido (também pelo resumo do guia) sempre à vista no trilho
+const rail = useTemplateRef('rail');
+watch(filter, () => rail.value?.reveal());
 </script>
 
 <template>
@@ -32,7 +38,7 @@ defineProps({
       </button>
     </div>
 
-    <div class="scroll-x gap-1" role="group" aria-label="Filtrar troféus">
+    <ScrollRail ref="rail" label="Filtrar troféus">
       <button
         v-for="f in filters"
         :key="f.id"
@@ -44,7 +50,7 @@ defineProps({
       >
         {{ f.label }} <span class="chip__count">{{ f.count }}</span>
       </button>
-    </div>
+    </ScrollRail>
   </div>
 </template>
 

@@ -42,7 +42,7 @@ must-guide/
 │     ├─ config.js             provedor ativo e opções (região SP)
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
-│  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, GameCover, EmptyState…
+│  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, GameCover, EmptyState…
 │  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyToolbar, TrophyGuideSummary, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
