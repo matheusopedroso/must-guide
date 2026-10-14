@@ -1,16 +1,23 @@
 // HTML do editor (Pell): filtro de segurança, conversão de texto antigo e checagem de vazio.
 
-// Tags permitidas → atributos permitidos. O resto é removido (o texto de dentro é mantido).
+// Tags permitidas → atributos permitidos (com validação do valor). O resto é removido (o texto de dentro é mantido).
+const TROPHY_REF = /^#trofeu-\d+$/;
 const ALLOWED = {
-  P: [], BR: [], DIV: [], SPAN: [],
-  B: [], STRONG: [], I: [], EM: [], U: [], S: [], STRIKE: [], CODE: [],
-  H3: [], H4: [], UL: [], OL: [], LI: [], BLOCKQUOTE: [], HR: [],
-  A: ['href'],
+  P: {}, BR: {}, DIV: {}, SPAN: {},
+  B: {}, STRONG: {}, I: {}, EM: {}, U: {}, S: {}, STRIKE: {}, CODE: {},
+  H3: {}, H4: {}, UL: {}, OL: {}, LI: {}, BLOCKQUOTE: {}, HR: {},
+  // Link externo ou referência a troféu (<a href="#trofeu-12" data-trophy="12" data-type="gold" class="trophy-ref">)
+  A: {
+    href: (v) => /^(https?:|mailto:)/i.test(v) || TROPHY_REF.test(v),
+    'data-trophy': (v) => /^\d+$/.test(v),
+    'data-type': (v) => ['platinum', 'gold', 'silver', 'bronze'].includes(v),
+    class: (v) => v === 'trophy-ref',
+    contenteditable: (v) => v === 'false',
+  },
 };
 // Títulos grandes colados de sites viram os do guia
 const RENAME = { H1: 'H3', H2: 'H3', H5: 'H4', H6: 'H4' };
 const DROP_WITH_CONTENT = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'TEMPLATE', 'svg', 'SVG', 'IMG', 'VIDEO', 'AUDIO']);
-const SAFE_URL = /^(https?:|mailto:)/i;
 
 function clean(node, doc) {
   for (const child of [...node.childNodes]) {
@@ -38,17 +45,21 @@ function clean(node, doc) {
       continue;
     }
 
+    const rules = ALLOWED[el.tagName];
     for (const attr of [...el.attributes]) {
-      if (!ALLOWED[el.tagName].includes(attr.name)) el.removeAttribute(attr.name);
+      if (!rules[attr.name]?.(attr.value)) el.removeAttribute(attr.name);
     }
     if (el.tagName === 'A') {
-      if (!SAFE_URL.test(el.getAttribute('href') ?? '')) {
+      if (!el.hasAttribute('href')) {
         clean(el, doc);
         el.replaceWith(...el.childNodes); // link inseguro vira texto comum
         continue;
       }
-      el.setAttribute('target', '_blank');
-      el.setAttribute('rel', 'noopener noreferrer');
+      // Referência a troféu é interna; link externo abre em nova aba
+      if (!TROPHY_REF.test(el.getAttribute('href'))) {
+        el.setAttribute('target', '_blank');
+        el.setAttribute('rel', 'noopener noreferrer');
+      }
     }
     clean(el, doc);
   }
@@ -63,7 +74,7 @@ export function sanitizeHtml(html = '') {
   return doc.body.innerHTML;
 }
 
-const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 // O editor sempre grava começando por um bloco (<p>, <h3>, <ul>…); texto antigo não
 const looksLikeHtml = (s) => /^\s*<(p|h[1-6]|ul|ol|div|blockquote|hr|br)[\s/>]/i.test(s);
 

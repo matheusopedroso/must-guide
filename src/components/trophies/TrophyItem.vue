@@ -7,6 +7,7 @@ import TrophyTip from './TrophyTip.vue';
 import { RARITY_LABELS, TROPHY_TYPE_MAP } from '@/config/trophies';
 import { formatEarnedAt, formatRate } from '@/utils/trophies';
 import { hasRichContent } from '@/utils/html';
+import { trophyAnchorId } from '@/utils/trophyRef';
 
 const props = defineProps({
   trophy: { type: Object, required: true },
@@ -28,7 +29,7 @@ const rarity = computed(() => {
 </script>
 
 <template>
-  <li class="trophy d-flex flex-column gap-2 py-2" :class="{ 'is-earned': stats?.earned }">
+  <li :id="trophyAnchorId(trophy.id)" class="trophy d-flex flex-column gap-2 py-2" :class="{ 'is-earned': stats?.earned }">
     <div class="d-flex gap-2">
       <div class="trophy__icon radius-1 shrink-0" :title="stats?.earned ? `Conquistado em ${formatEarnedAt(stats.earnedAt)}` : ''">
         <img v-if="trophy.icon" :src="trophy.icon" alt="" loading="lazy" decoding="async" />
@@ -66,14 +67,23 @@ const rarity = computed(() => {
     </div>
 
     <!-- Largura total do troféu (texto longo fica mais fácil de ler) -->
-    <TrophyTip v-model:editing="editingTip" :tip="note.tip" @update="update" />
+    <TrophyTip v-model:editing="editingTip" :tip="note.tip" :trophy-id="trophy.id" @update="update" />
   </li>
 </template>
 
 <style lang="scss" scoped>
 .trophy {
+  // Ocupa a largura do card (o card tem 16px de respiro) para o destaque ir de ponta a ponta
+  margin-inline: -(space(2));
+  padding-inline: space(2);
+
   & + & {
     border-top: 1px solid var(--border);
+  }
+
+  // Destaque ao chegar por uma referência no texto
+  &.is-flash {
+    animation: flash 1.6s $ease;
   }
 
   &__icon {
@@ -123,6 +133,17 @@ const rarity = computed(() => {
     font-size: 15px;
     font-weight: 600;
     line-height: 1.3;
+  }
+}
+
+@keyframes flash {
+  0%,
+  50% {
+    background: var(--accent-soft);
+  }
+
+  100% {
+    background: transparent;
   }
 }
 </style>

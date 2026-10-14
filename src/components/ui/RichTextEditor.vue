@@ -11,12 +11,15 @@ const props = defineProps({
   actions: { type: Array, default: () => EDITOR_ACTIONS },
   autofocus: Boolean,
 });
-const emit = defineEmits(['keydown']);
+// trigger: caractere especial digitado (ex.: "@") → quem usa o editor decide o que fazer
+const emit = defineEmits(['keydown', 'trigger']);
+const TRIGGERS = ['@'];
 
 const root = useTemplateRef('root');
 const empty = ref(!hasRichContent(model.value));
 let content = null;
 let buttons = [];
+let savedRange = null;
 
 function onChange(html) {
   empty.value = !hasRichContent(html);
@@ -28,6 +31,57 @@ function onPaste(e) {
   e.preventDefault();
   const html = e.clipboardData.getData('text/html');
   exec('insertHTML', html ? sanitizeHtml(html) : textToHtml(e.clipboardData.getData('text/plain')));
+}
+
+// Guarda onde está o cursor (antes de abrir algo que tira o foco do editor)
+function saveSelection() {
+  const sel = window.getSelection();
+  savedRange = sel.rangeCount && content.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+}
+
+function restoreSelection() {
+  content.focus();
+  if (!savedRange) return focusEnd();
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(savedRange);
+}
+
+// Insere HTML onde o cursor estava. deleteBefore: apaga N caracteres antes (ex.: o "@" que abriu a lista).
+// Feito com Range (e não execCommand('insertHTML')): o navegador jogava blocos não editáveis para fora do parágrafo.
+function insertHtml(html, { deleteBefore = 0 } = {}) {
+  restoreSelection();
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+
+  if (deleteBefore) {
+    const { startContainer: node, startOffset: offset } = range;
+    if (node.nodeType === Node.TEXT_NODE && offset >= deleteBefore) range.setStart(node, offset - deleteBefore);
+  }
+  range.deleteContents();
+
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const last = tpl.content.lastChild;
+  range.insertNode(tpl.content);
+
+  // Cursor logo depois do que foi inserido
+  const after = document.createRange();
+  after.setStartAfter(last);
+  after.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(after);
+
+  content.dispatchEvent(new Event('input', { bubbles: true })); // avisa o Pell → v-model atualiza
+  savedRange = null;
+}
+
+function onInput(e) {
+  if (e.inputType === 'insertText' && TRIGGERS.includes(e.data)) {
+    saveSelection();
+    emit('trigger', e.data);
+  }
 }
 
 function focusEnd() {
@@ -55,6 +109,7 @@ onMounted(() => {
   content.innerHTML = textToHtml(model.value); // anotações antigas em texto simples viram parágrafos
   content.addEventListener('paste', onPaste);
   content.addEventListener('keydown', (e) => emit('keydown', e));
+  content.addEventListener('input', onInput);
 
   const bar = root.value.querySelector('.rte__bar');
   bar.addEventListener('mousedown', (e) => e.preventDefault()); // clicar no botão não tira a seleção do texto
@@ -76,7 +131,7 @@ watch(model, (value) => {
   empty.value = !hasRichContent(value);
 });
 
-defineExpose({ focus: () => content && focusEnd() });
+defineExpose({ focus: () => content && focusEnd(), saveSelection, restoreSelection, insertHtml });
 </script>
 
 <template>

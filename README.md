@@ -45,13 +45,13 @@ must-guide/
 │  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, RichTextEditor (Pell), GameCover, EmptyState…
 │  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyItem, TrophyFlags, TrophyTip, TrophyCounts
+│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyItem, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
-│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes
+│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext
 │  ├─ composables/             useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (rascunho no navegador)
 │  ├─ config/                  app, providers, guideTabs, trophies, editor (botões do Pell)
-│  ├─ utils/                   cover, text, trophies, guideDraft, html (filtro de HTML do editor)
+│  ├─ utils/                   cover, text, trophies, guideDraft, html (filtro de HTML do editor), trophyRef
 │  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
 └─ firebase.json               Hosting + rewrites /api/games/** e /api/trophies/** → functions
@@ -97,6 +97,10 @@ já no formato do futuro documento do Firestore (`src/utils/guideDraft.js`):
 `src/components/ui/RichTextEditor.vue` (v-model = HTML). Os botões ficam em `src/config/editor.js`:
 `name` igual a um botão do Pell (`bold`, `italic`, `ulist`, `olist`, `quote`, `code`…) reaproveita o comportamento;
 para um botão novo, informe `result()` e, se tiver estado ligado/desligado, `state()`. Ícones vêm do lucide.
+
+**Referência a troféu:** botão de troféu na barra ou digitar `@` no texto → escolhe o troféu → entra um chip
+`<a href="#trofeu-ID" data-trophy="ID" data-type="gold" class="trophy-ref" contenteditable="false">Nome</a>`.
+Na leitura, tocar no chip rola até o troféu (tira o filtro) e destaca. Vale nas versões PS4/PS5 (mesmo `trophyId`).
 
 ## Trocar de provedor de jogos
 

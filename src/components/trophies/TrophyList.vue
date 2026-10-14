@@ -1,9 +1,11 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import TrophyItem from './TrophyItem.vue';
 import TrophyCounts from './TrophyCounts.vue';
 import { TROPHY_FLAGS, TROPHY_TYPES } from '@/config/trophies';
 import { hasRichContent } from '@/utils/html';
+import { trophyAnchorId } from '@/utils/trophyRef';
+import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 
 // Lista de troféus por grupo (jogo base + DLCs), com filtros e anotações do guia
 const props = defineProps({
@@ -41,6 +43,20 @@ const sections = computed(() => {
   }
   return [...byGroup.values()].filter((g) => g.trophies.length);
 });
+
+// Ir até um troféu referenciado no texto: tira o filtro (senão ele pode estar escondido) e destaca
+async function goTo(id) {
+  filter.value = 'all';
+  await nextTick();
+  const el = document.getElementById(trophyAnchorId(id));
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('is-flash');
+  void el.offsetWidth; // reinicia a animação se clicar de novo
+  el.classList.add('is-flash');
+}
+
+provideTrophyContext({ trophies: computed(() => props.list.trophies), goTo });
 
 const showGroups = computed(() => props.list.groups.length > 1);
 const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);
