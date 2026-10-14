@@ -42,10 +42,10 @@ must-guide/
 │     ├─ config.js             provedor ativo e opções (região SP)
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
-│  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal, VideoModal (YouTube no app), GameCover, EmptyState…
+│  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), DropdownMenu, IconSelect, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal, VideoModal (YouTube no app), GameCover, EmptyState…
 │  ├─ components/layout/       AppHeader, AppLogo
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyToolbar, TrophyGuideSummary, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
+│  ├─ components/trophies/     PsnTitlePicker, TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, GuideStats (dificuldade/jogadas/horas), AddTabMenu, TabPlaceholder, tabs/TrophiesTab
 │  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
 │  ├─ composables/             useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
@@ -88,7 +88,7 @@ já no formato do futuro documento do Firestore (`src/utils/guideDraft.js`):
 ```js
 { gameId, game, tabs: [], versions: [{ id, name, platform, service }],
   trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } },
-  stats: { difficulty, playthroughs, hours } }   // visão geral (0 = não informado; limites em config/guide.js)
+  stats: { difficulty, playthroughs, hours } }   // visão geral no cabeçalho da aba Troféus (0 = não informado; config/guide.js)
 ```
 
 - `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).

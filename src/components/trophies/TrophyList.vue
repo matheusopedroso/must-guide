@@ -3,13 +3,12 @@ import { computed, nextTick, toRef } from 'vue';
 import TrophyItem from './TrophyItem.vue';
 import TrophyCounts from './TrophyCounts.vue';
 import TrophyToolbar from './TrophyToolbar.vue';
-import TrophyGuideSummary from './TrophyGuideSummary.vue';
 import { trophyAnchorId } from '@/utils/trophyRef';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useTrophyListView } from '@/composables/guide/useTrophyListView';
 import { useStoredRef } from '@/composables/useStoredRef';
 
-// Lista de troféus: resumo do guia, barra (busca/ordem/filtros) e grupos (jogo base + DLCs)
+// Lista de troféus: barra (busca/filtro/ordem) e grupos (jogo base + DLCs)
 const props = defineProps({
   list: { type: Object, required: true },
   progress: { type: Object, default: null }, // { trophies: { [id]: stats } } da conta, se tiver o jogo
@@ -18,7 +17,7 @@ const props = defineProps({
 });
 defineEmits(['update-note']);
 
-const { search, filter, sort, sorts, filters, sections, visibleCount, stats, reset } = useTrophyListView({
+const { search, filter, sort, sorts, filters, sections, visibleCount, total, narrowed, stats, reset } = useTrophyListView({
   list: toRef(props, 'list'),
   progress: toRef(props, 'progress'),
   getNote: props.getNote,
@@ -47,17 +46,10 @@ provideTrophyContext({ trophies: computed(() => props.list.trophies), goTo });
 
 const showGroups = computed(() => props.list.groups.length > 1);
 const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);
-
-function applyFilter(id) {
-  search.value = '';
-  filter.value = id;
-}
 </script>
 
 <template>
   <div class="d-flex flex-column gap-2">
-    <TrophyGuideSummary :trophies="list.trophies" :get-note="getNote" @filter="applyFilter" />
-
     <TrophyToolbar
       v-model:search="search"
       v-model:filter="filter"
@@ -67,10 +59,13 @@ function applyFilter(id) {
       :filters="filters"
     />
 
-    <p v-if="search" class="text-xs text-subtle">{{ visibleCount }} troféu(s) encontrado(s)</p>
+    <p v-if="narrowed && visibleCount" class="d-flex align-center gap-1 text-xs text-subtle">
+      Mostrando {{ visibleCount }} de {{ total }}
+      <button type="button" class="text-accent fw-500" @click="reset">· Limpar</button>
+    </p>
 
-    <section v-for="g in sections" :key="g.id" class="d-flex flex-column gap-2 mt-1">
-      <header v-if="showGroups" class="d-flex align-center justify-between flex-wrap gap-1">
+    <section v-for="g in sections" :key="g.id" class="d-flex flex-column gap-2">
+      <header v-if="showGroups" class="d-flex align-center justify-between flex-wrap gap-1 mt-1">
         <h3 class="group-title">{{ groupName(g) }}</h3>
         <TrophyCounts :counts="g.counts" />
       </header>

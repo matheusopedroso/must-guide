@@ -5,7 +5,8 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import PsnTitlePicker from '@/components/trophies/PsnTitlePicker.vue';
 import TrophyList from '@/components/trophies/TrophyList.vue';
-import TrophyVersionBar from '@/components/trophies/TrophyVersionBar.vue';
+import TrophyHeader from '@/components/trophies/TrophyHeader.vue';
+import GuideStats from '@/components/guide-editor/GuideStats.vue';
 import { useAsyncState } from '@/composables/useAsyncState';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
@@ -57,7 +58,7 @@ function link(title) {
     />
 
     <template v-else>
-      <TrophyVersionBar
+      <TrophyHeader
         :versions="versions"
         :active-id="active?.id"
         :list="list"
@@ -67,7 +68,9 @@ function link(title) {
         @add="adding = true"
         @remove="remove"
         @make-principal="makePrincipal"
-      />
+      >
+        <GuideStats />
+      </TrophyHeader>
 
       <p v-if="comparison" class="notice d-flex align-start gap-1 text-sm radius-1 px-2 py-1" :class="{ 'is-warn': !comparison.same }">
         <component :is="comparison.same ? Info : TriangleAlert" :size="16" class="shrink-0 notice__icon" />

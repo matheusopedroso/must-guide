@@ -6,23 +6,36 @@ import { useStoredRef } from '@/composables/useStoredRef';
 
 const TYPE_ORDER = Object.fromEntries(TROPHY_TYPES.map((t, i) => [t.id, i]));
 
-// Filtros (chips). test(trophy, note, stats)
+// Filtros (um <select> agrupado). test(trophy, note, stats) · group = <optgroup>
 const FILTERS = [
   { id: 'all', label: 'Todos', test: () => true },
-  ...TROPHY_TYPES.map((t) => ({ id: t.id, label: t.label, test: (tr) => tr.type === t.id })),
-  ...TROPHY_FLAGS.map((f) => ({ id: f.id, label: f.label, test: (tr, note) => note[f.id] })),
-  { id: 'tip', label: 'Com explicação', test: (tr, note) => hasRichContent(note.tip) },
-  { id: 'notip', label: 'Sem explicação', test: (tr, note) => !hasRichContent(note.tip) },
-  { id: 'pending', label: 'Faltam', needsProgress: true, test: (tr, note, stats) => stats && !stats.earned },
+  ...TROPHY_TYPES.map((t) => ({ id: t.id, group: 'Tipo', label: t.label, test: (tr) => tr.type === t.id })),
+  ...TROPHY_FLAGS.map((f) => ({ id: f.id, group: 'Marcação', label: f.label, test: (tr, note) => note[f.id] })),
+  { id: 'tip', group: 'Guia', label: 'Com explicação', test: (tr, note) => hasRichContent(note.tip) },
+  { id: 'notip', group: 'Guia', label: 'Sem explicação', test: (tr, note) => !hasRichContent(note.tip) },
+  {
+    id: 'pending',
+    group: 'Seu progresso',
+    label: 'Faltam',
+    needsProgress: true,
+    test: (tr, note, stats) => stats && !stats.earned,
+  },
+  {
+    id: 'earned',
+    group: 'Seu progresso',
+    label: 'Conquistados',
+    needsProgress: true,
+    test: (tr, note, stats) => stats?.earned,
+  },
 ];
 
 // Ordenações. compare(a, b, ctx) com ctx = { note(id), stats(id) }; empate mantém a ordem da PSN
 const SORTS = [
   { id: 'default', label: 'Ordem da PSN' },
-  { id: 'type', label: 'Tipo (platina → bronze)', compare: (a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type] },
+  { id: 'type', label: 'Tipo', compare: (a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type] },
   {
     id: 'rarity',
-    label: 'Mais raros primeiro',
+    label: 'Mais raros',
     needsProgress: true,
     compare: (a, b, c) => (c.stats(a.id)?.rate ?? 101) - (c.stats(b.id)?.rate ?? 101),
   },
@@ -34,7 +47,7 @@ const SORTS = [
   },
   {
     id: 'difficulty',
-    label: 'Mais difíceis primeiro',
+    label: 'Mais difíceis',
     compare: (a, b, c) => c.note(b.id).difficulty - c.note(a.id).difficulty,
   },
 ];
@@ -66,12 +79,19 @@ export function useTrophyListView({ list, progress, getNote }) {
     return normalizeName(`${note.chapter} ${htmlToPlain(note.tip)}`).includes(query.value);
   };
 
-  // Contagem dos filtros sobre a lista toda (sem a busca), escondendo os vazios
-  const filters = computed(() =>
-    available(FILTERS)
-      .map((f) => ({ ...f, count: list.value.trophies.filter((t) => f.test(t, getNote(t.id), stats(t.id))).length }))
-      .filter((f) => f.id === 'all' || f.count),
-  );
+  // Contagem dos filtros sobre a lista toda (sem a busca), escondendo os vazios.
+  // Saída agrupada para o <select>: [{ label, items }] (o "Todos" fica sem grupo)
+  const filters = computed(() => {
+    const groups = new Map();
+    for (const f of available(FILTERS)) {
+      const count = list.value.trophies.filter((t) => f.test(t, getNote(t.id), stats(t.id))).length;
+      if (!count && f.id !== 'all' && f.id !== filter.value) continue; // o escolhido fica mesmo zerado
+      const key = f.group ?? '';
+      if (!groups.has(key)) groups.set(key, { label: key, items: [] });
+      groups.get(key).items.push({ id: f.id, label: f.label, count });
+    }
+    return [...groups.values()];
+  });
 
   const sections = computed(() => {
     const f = FILTERS.find((x) => x.id === filter.value) ?? FILTERS[0];
@@ -86,6 +106,8 @@ export function useTrophyListView({ list, progress, getNote }) {
   });
 
   const visibleCount = computed(() => sections.value.reduce((n, g) => n + g.trophies.length, 0));
+  const total = computed(() => list.value.trophies.length);
+  const narrowed = computed(() => filter.value !== 'all' || !!search.value); // algo escondendo troféus
 
   // Mostrar tudo de novo (ex.: ir até um troféu citado que estava escondido pelo filtro/busca)
   function reset() {
@@ -93,5 +115,5 @@ export function useTrophyListView({ list, progress, getNote }) {
     search.value = '';
   }
 
-  return { search, filter, sort, sorts, filters, sections, visibleCount, stats, reset };
+  return { search, filter, sort, sorts, filters, sections, visibleCount, total, narrowed, stats, reset };
 }
