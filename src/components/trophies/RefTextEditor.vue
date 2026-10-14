@@ -8,6 +8,8 @@ import { EDITOR_ACTIONS } from '@/config/editor';
 import { trophyRefHtml } from '@/utils/trophyRef';
 
 // Editor de texto (Pell) que cita troféus: botão na barra ou "@" → lista → chip do troféu no texto.
+// Com um trecho selecionado (ex.: o nome do troféu escrito no texto), o botão ou Ctrl/⌘+K abre a lista já
+// buscando por ele e o trecho vira o link para o troféu (mantém o texto escolhido).
 // A lista de troféus vem do contexto (provideTrophyContext). Usado no "Como conseguir" e no Roadmap.
 const model = defineModel({ type: String, default: '' });
 defineProps({
@@ -15,16 +17,33 @@ defineProps({
   exclude: { type: [Number, String, Array], default: null }, // troféu(s) que não aparecem na lista
   autofocus: Boolean,
 });
-defineEmits(['keydown']);
+const emit = defineEmits(['keydown']);
 
 const ctx = useTrophyContext();
 const editor = useTemplateRef('editor');
 const picking = ref(false);
+const selection = ref(''); // texto selecionado que vai virar o link
 let fromTrigger = false;
 
 function openPicker(trigger = false) {
   fromTrigger = trigger;
+  selection.value = trigger ? '' : editor.value.selectedText();
   picking.value = true;
+}
+
+// Botão da barra / Ctrl+K: guarda a seleção antes de a lista tirar o foco
+function openFromSelection() {
+  editor.value.saveSelection();
+  openPicker(false);
+}
+
+function onKeydown(e) {
+  if (ctx && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    openFromSelection();
+    return;
+  }
+  emit('keydown', e);
 }
 
 const actions = ctx
@@ -32,19 +51,20 @@ const actions = ctx
       ...EDITOR_ACTIONS,
       {
         name: 'trophyRef',
-        title: 'Citar troféu (ou digite @)',
+        title: 'Citar troféu: digite @, ou selecione o nome no texto e toque aqui (Ctrl+K)',
         icon: Trophy,
-        result: () => {
-          editor.value.saveSelection();
-          openPicker(false);
-        },
+        result: openFromSelection,
       },
     ]
   : EDITOR_ACTIONS;
 
+// Com seleção: o trecho vira o chip (mesmo texto). Sem: entra o nome do troféu + espaço.
 function insertRef(trophy) {
   picking.value = false;
-  editor.value.insertHtml(`${trophyRefHtml(trophy)}&nbsp;`, { deleteBefore: fromTrigger ? 1 : 0 }); // tira o "@"
+  const label = selection.value;
+  const html = label ? trophyRefHtml(trophy, label) : `${trophyRefHtml(trophy)}&nbsp;`;
+  editor.value.insertHtml(html, { deleteBefore: fromTrigger ? 1 : 0 }); // tira o "@"
+  selection.value = '';
 }
 
 function cancelPick() {
@@ -63,13 +83,14 @@ defineExpose({ focus: () => editor.value?.focus() });
       :actions="actions"
       :placeholder="placeholder"
       :autofocus="autofocus"
-      @keydown="$emit('keydown', $event)"
+      @keydown="onKeydown"
       @trigger="ctx && openPicker(true)"
     />
     <TrophyRefPicker
       v-if="picking && ctx"
       :trophies="ctx.trophies.value"
       :exclude="exclude"
+      :initial-term="selection"
       class="ref-pop"
       @select="insertRef"
       @cancel="cancelPick"

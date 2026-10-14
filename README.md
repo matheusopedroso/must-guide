@@ -166,7 +166,10 @@ Formato (`src/utils/guideDraft.js`):
 `name` igual a um botão do Pell (`bold`, `italic`, `ulist`, `olist`, `quote`, `code`…) reaproveita o comportamento;
 para um botão novo, informe `result()` e, se tiver estado ligado/desligado, `state()`. Ícones vêm do lucide.
 
-**Referência a troféu:** botão de troféu na barra ou digitar `@` no texto → escolhe o troféu → entra um chip
+**Referência a troféu:** botão de troféu na barra ou digitar `@` no texto → escolhe o troféu → entra um chip.
+**Linkar um nome já escrito:** selecione o trecho (ex.: "Bounty Hunter") e toque no botão de troféu ou aperte
+**Ctrl/⌘+K** → a lista abre já buscando o trecho (nome igual em PT ou EN vem primeiro) → o trecho vira o chip,
+mantendo o texto que você escreveu. Formato do chip
 `<a href="#trofeu-ID" data-trophy="ID" data-type="gold" class="trophy-ref" contenteditable="false">Nome</a>`.
 Na leitura, tocar no chip rola até o troféu (tira o filtro) e destaca. Vale nas versões PS4/PS5 (mesmo `trophyId`).
 Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado das anotações em `useTrophyNotes` → `backlinks`).

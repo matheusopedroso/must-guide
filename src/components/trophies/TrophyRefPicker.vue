@@ -9,22 +9,33 @@ import { normalizeName } from '@/utils/text';
 const props = defineProps({
   trophies: { type: Array, required: true },
   exclude: { type: [Number, String, Array], default: null }, // o próprio troféu (ou vários: já escolhidos)
+  initialTerm: { type: String, default: '' }, // ex.: texto selecionado no editor
 });
 const emit = defineEmits(['select', 'cancel']);
 
-const term = ref('');
+const term = ref(props.initialTerm);
 const active = ref(0);
 const search = useTemplateRef('search');
 const list = useTemplateRef('list');
 
 const excluded = computed(() => new Set([props.exclude ?? []].flat()));
 
+// Ordem: nome igual (PT ou EN) → começa com → contém. Acha pelo inglês também (guias gringos).
 const results = computed(() => {
   const q = normalizeName(term.value);
-  // Acha também pelo nome em inglês (útil seguindo guias gringos)
-  return props.trophies.filter(
-    (t) => !excluded.value.has(t.id) && (!q || normalizeName(`${t.name} ${t.nameEn ?? ''}`).includes(q)),
-  );
+  const pool = props.trophies.filter((t) => !excluded.value.has(t.id));
+  if (!q) return pool;
+  const score = (t) => {
+    const names = [normalizeName(t.name ?? ''), normalizeName(t.nameEn ?? '')];
+    if (names.includes(q)) return 0;
+    if (names.some((n) => n.startsWith(q))) return 1;
+    return names.some((n) => n.includes(q)) ? 2 : 3;
+  };
+  return pool
+    .map((t) => [score(t), t])
+    .filter(([sc]) => sc < 3)
+    .sort((a, b) => a[0] - b[0]) // estável: empate mantém a ordem da PSN
+    .map(([, t]) => t);
 });
 
 watch(results, () => (active.value = 0));

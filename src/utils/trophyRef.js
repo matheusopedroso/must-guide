@@ -2,8 +2,9 @@ import { escapeHtml } from './html';
 
 // Referência a outro troféu dentro do texto do guia.
 // contenteditable="false": no editor vira um bloco único (apaga inteiro, não dá para editar o nome por dentro).
-export const trophyRefHtml = (trophy) =>
-  `<a href="#trofeu-${trophy.id}" data-trophy="${trophy.id}" data-type="${trophy.type}" class="trophy-ref" contenteditable="false">${escapeHtml(trophy.name || 'Troféu oculto')}</a>`;
+// label: texto do chip (ex.: o nome selecionado no texto, até em inglês); sem ele, o nome do troféu.
+export const trophyRefHtml = (trophy, label = '') =>
+  `<a href="#trofeu-${trophy.id}" data-trophy="${trophy.id}" data-type="${trophy.type}" class="trophy-ref" contenteditable="false">${escapeHtml(label || trophy.name || 'Troféu oculto')}</a>`;
 
 export const trophyAnchorId = (id) => `trofeu-${id}`;
 

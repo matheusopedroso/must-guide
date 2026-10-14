@@ -39,6 +39,9 @@ function saveSelection() {
   savedRange = sel.rangeCount && content.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
 }
 
+// Texto da seleção guardada (vazio se só havia o cursor)
+const selectedText = () => savedRange?.toString().replace(/\s+/g, ' ').trim() ?? '';
+
 function restoreSelection() {
   content.focus();
   if (!savedRange) return focusEnd();
@@ -131,7 +134,7 @@ watch(model, (value) => {
   empty.value = !hasRichContent(value);
 });
 
-defineExpose({ focus: () => content && focusEnd(), saveSelection, restoreSelection, insertHtml });
+defineExpose({ focus: () => content && focusEnd(), saveSelection, restoreSelection, selectedText, insertHtml });
 </script>
 
 <template>
