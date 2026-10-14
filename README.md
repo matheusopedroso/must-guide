@@ -45,7 +45,7 @@ must-guide/
 │  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, GameCover, EmptyState, PageHeader…
 │  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyItem, TrophyNoteEditor, TrophyCounts
+│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyItem, TrophyFlags, TrophyTip, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
 │  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes
 │  ├─ composables/             useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
