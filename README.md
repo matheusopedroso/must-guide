@@ -33,10 +33,10 @@ must-guide/
 │     │  ├─ providers/index.js lista de provedores e os secrets de cada um
 │     │  ├─ http.js            createApi, parseApiUrl, json, httpError, remember
 │     │  ├─ gamesApi.js        rotas /api/games (popular, search, game)
-│     │  ├─ trophiesApi.js     rotas /api/trophies (titles, list)
+│     │  ├─ trophiesApi.js     rotas /api/trophies (titles, list, progress)
 │     │  ├─ psn/auth.js        NPSSO → tokens (refresh automático, login único em paralelo)
 │     │  ├─ psn/client.js      GET autenticado na API de troféus (pt-BR)
-│     │  ├─ psn/trophies.js    jogos da conta + lista de troféus (descobre PS4/PS5)
+│     │  ├─ psn/trophies.js    jogos da conta, lista de troféus (descobre PS4/PS5) e progresso/raridade
 │     │  ├─ gameShape.js       formato único de jogo + siglas de plataforma
 │     │  └─ memoryCache.js
 │     ├─ config.js             provedor ativo e opções (região SP)
@@ -45,13 +45,14 @@ must-guide/
 │  ├─ components/ui/           BaseButton, BaseTabs, SearchInput, GameCover, EmptyState, PageHeader…
 │  ├─ components/layout/       AppHeader
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
-│  ├─ components/trophies/     PsnTitlePicker, TrophyList, TrophyItem, TrophyCounts
+│  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyItem, TrophyNoteEditor, TrophyCounts
 │  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
-│  ├─ composables/             useAsyncState, useGameSearch, useGameDetails, useGuideTabs, useQueryParam, useClickOutside, useDebounceFn, useTheme
-│  ├─ services/                api.js (cliente com cache da sessão), games.service, trophies.service
+│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes
+│  ├─ composables/             useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (rascunho no navegador)
 │  ├─ config/                  app, providers, guideTabs, trophies
-│  ├─ utils/                   cover.js (capa por provedor), text.js (comparar nomes de jogos)
-│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&abas=…&aba=…&psn=…)
+│  ├─ utils/                   cover, text (comparar nomes), trophies (comparar versões), guideDraft (formato do guia)
+│  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
 └─ firebase.json               Hosting + rewrites /api/games/** e /api/trophies/** → functions
 ```
@@ -72,10 +73,23 @@ Em produção o Hosting guarda as respostas na CDN (`s-maxage`), então a maiori
 |---|---|---|
 | `GET /api/trophies/titles` | jogos com troféus da conta do NPSSO | 5 min / sem CDN |
 | `GET /api/trophies/list/:npId?service=` | grupos + troféus (pt-BR) de qualquer jogo | 1 h / 24 h |
+| `GET /api/trophies/progress/:npId?service=` | conquistados, data e raridade na conta (`null` se não tem o jogo) | 1 min / sem CDN |
 
 Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO` vale ~2 meses:
 logado em playstation.com, abra https://ca.account.sony.com/api/v1/ssocookie e copie o `npsso`.
 Em produção: `firebase functions:secrets:set PSN_NPSSO`.
+
+## Rascunho do guia
+
+Enquanto não há banco, o guia em edição fica no navegador (`localStorage`, chave `mg:guide-draft:<jogo>`),
+já no formato do futuro documento do Firestore (`src/utils/guideDraft.js`):
+
+```js
+{ gameId, game, tabs: [], versions: [{ id, name, platform, service }], trophies: { [trophyId]: { tip, missable, online } } }
+```
+
+- `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).
+- Gravação agrupada (600 ms) e ao minimizar/sair da página.
 
 ## Trocar de provedor de jogos
 

@@ -11,14 +11,18 @@ import AddTabMenu from '@/components/guide-editor/AddTabMenu.vue';
 import TabPlaceholder from '@/components/guide-editor/TabPlaceholder.vue';
 import { useQueryParam } from '@/composables/useQueryParam';
 import { useGameDetails } from '@/composables/useGameDetails';
-import { useGuideTabs } from '@/composables/useGuideTabs';
+import { useGuideTabs } from '@/composables/guide/useGuideTabs';
+import { provideGuideDraft } from '@/composables/guide/useGuideDraft';
 import { APP_NAME } from '@/config/app';
 
-// Jogo e abas ficam na URL (?jogo=rawg-123&abas=coletaveis&aba=coletaveis):
-// recarregar ou voltar mantém o estado
+// Jogo e aba aberta ficam na URL (?jogo=rawg-123&aba=coletaveis).
+// O conteúdo do guia (abas, versões, dicas) fica no rascunho, salvo no navegador por jogo.
 const gameId = useQueryParam('jogo');
 const { game, loading, error, set: setGame } = useGameDetails(gameId);
-const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = useGuideTabs();
+const { draft, status: saveStatus } = provideGuideDraft(game);
+const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = useGuideTabs(draft);
+
+const SAVE_LABELS = { pending: 'Salvando…', saved: 'Rascunho salvo neste navegador', error: 'Não foi possível salvar o rascunho' };
 
 function selectGame(selected) {
   setGame(selected); // já temos os dados: evita buscar de novo
@@ -34,7 +38,11 @@ watch(game, (g) => {
 
 <template>
   <div class="container page">
-    <PageHeader title="Novo guia" back="/" :subtitle="gameId ? '' : 'Comece escolhendo o jogo.'" />
+    <PageHeader title="Novo guia" back="/" :subtitle="gameId ? '' : 'Comece escolhendo o jogo.'">
+      <template v-if="SAVE_LABELS[saveStatus]" #actions>
+        <span class="text-xs" :class="saveStatus === 'error' ? 'text-danger' : 'text-subtle'">{{ SAVE_LABELS[saveStatus] }}</span>
+      </template>
+    </PageHeader>
 
     <section v-if="!gameId" class="picker-wrap">
       <GamePicker autofocus @select="selectGame" />

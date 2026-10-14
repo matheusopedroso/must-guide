@@ -2,7 +2,8 @@ import { ref, shallowRef, watch } from 'vue';
 
 // Carrega dados a partir de uma fonte reativa, cancelando a requisição anterior.
 // source → valor (ex.: id). Valor vazio limpa o estado sem chamar o loader.
-export function useAsyncState(source, loader, { immediate = true } = {}) {
+// keepPrevious: mantém o dado anterior na tela enquanto o novo carrega.
+export function useAsyncState(source, loader, { immediate = true, keepPrevious = false } = {}) {
   const data = shallowRef(null);
   const loading = ref(false);
   const error = ref('');
@@ -15,6 +16,7 @@ export function useAsyncState(source, loader, { immediate = true } = {}) {
 
     controller = new AbortController();
     const { signal } = controller;
+    if (!keepPrevious) data.value = null;
     loading.value = true;
     try {
       data.value = await loader(value, { signal });

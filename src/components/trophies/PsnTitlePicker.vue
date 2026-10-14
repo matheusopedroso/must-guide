@@ -12,8 +12,13 @@ import { rankByName } from '@/utils/text';
 
 // Vincula o jogo à lista de troféus da PSN: pelos jogos da conta (melhor correspondência primeiro)
 // ou colando o código NPWR (jogos que a conta ainda não tem)
-const props = defineProps({ gameTitle: { type: String, default: '' } });
-const emit = defineEmits(['select']);
+const props = defineProps({
+  gameTitle: { type: String, default: '' },
+  title: { type: String, default: 'Vincular lista de troféus' },
+  exclude: { type: Array, default: () => [] }, // ids já ligados ao guia
+  cancelable: Boolean,
+});
+const emit = defineEmits(['select', 'cancel']);
 
 const term = ref(props.gameTitle);
 const code = ref('');
@@ -22,13 +27,14 @@ const codeError = ref('');
 const { data: titles, loading, error, reload } = useAsyncState(ref('me'), (_, opts) => fetchPsnTitles(opts));
 
 const results = computed(() => {
-  const list = titles.value ?? [];
+  const list = (titles.value ?? []).filter((t) => !props.exclude.includes(t.id));
   return term.value.trim() ? rankByName(list, term.value, (t) => t.name) : list;
 });
 
 function submitCode() {
   const id = code.value.trim().toUpperCase();
   if (!NP_ID_PATTERN.test(id)) return (codeError.value = 'Formato esperado: NPWR12345_00');
+  if (props.exclude.includes(id)) return (codeError.value = 'Essa lista já está no guia.');
   codeError.value = '';
   emit('select', { id, service: null });
 }
@@ -37,9 +43,12 @@ function submitCode() {
 <template>
   <div class="d-flex flex-column gap-3">
     <section class="surface radius-2 p-2 d-flex flex-column gap-2">
-      <div>
-        <h3>Vincular lista de troféus</h3>
-        <p class="text-sm text-muted mt-1">Escolha o jogo entre os que têm troféus na sua conta PSN.</p>
+      <div class="d-flex align-start justify-between gap-2">
+        <div>
+          <h3>{{ title }}</h3>
+          <p class="text-sm text-muted mt-1">Escolha o jogo entre os que têm troféus na sua conta PSN.</p>
+        </div>
+        <BaseButton v-if="cancelable" size="sm" variant="ghost" class="shrink-0" @click="emit('cancel')">Cancelar</BaseButton>
       </div>
 
       <SearchInput v-model="term" placeholder="Filtrar seus jogos" />

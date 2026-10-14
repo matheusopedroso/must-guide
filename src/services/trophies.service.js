@@ -10,3 +10,9 @@ export function fetchTrophyList(npId, service, opts) {
   const qs = service ? `?service=${service}` : '';
   return request(`/list/${encodeURIComponent(npId)}${qs}`, opts).then((d) => d.list);
 }
+
+// Progresso da conta no jogo (conquistados, raridade). null = a conta não tem o jogo
+export function fetchTrophyProgress(npId, service, opts) {
+  const qs = service ? `?service=${service}` : '';
+  return request(`/progress/${encodeURIComponent(npId)}${qs}`, { ...opts, noCache: true }).then((d) => d.progress);
+}

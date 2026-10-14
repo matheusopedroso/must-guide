@@ -93,6 +93,19 @@ select.input {
   &__count {
     opacity: 0.6;
   }
+
+  &--sm {
+    height: 28px;
+    padding-inline: space(1);
+    font-size: 12px;
+  }
+
+  // Alternância ligada (ex.: marcar troféu como perdível)
+  &.is-on {
+    background: var(--accent-soft);
+    border-color: transparent;
+    color: var(--accent);
+  }
 }
 
 .tag {

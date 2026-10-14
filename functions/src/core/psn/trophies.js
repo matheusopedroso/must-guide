@@ -77,5 +77,35 @@ export function createTrophyService(client) {
     };
   }
 
-  return { userTitles, trophyList };
+  // Progresso da conta do NPSSO num jogo: conquistados, data e raridade (% de jogadores).
+  // Jogo que a conta não tem → null (não é erro: a lista existe, só não há progresso).
+  async function userProgress(npId, service) {
+    if (!NP_ID_PATTERN.test(npId)) throw httpError(400, 'Código inválido. Formato: NPWR12345_00.');
+
+    const load = (svc) =>
+      client.get(`/users/me/npCommunicationIds/${npId}/trophyGroups/all/trophies`, { npServiceName: svc });
+
+    let data;
+    try {
+      ({ data } = await withService(service, load));
+    } catch (e) {
+      if (e.status === 404) return null;
+      throw e;
+    }
+
+    const trophies = {};
+    let earned = 0;
+    for (const t of data.trophies) {
+      if (t.earned) earned++;
+      trophies[t.trophyId] = {
+        earned: !!t.earned,
+        earnedAt: t.earnedDateTime ?? null,
+        rate: t.trophyEarnedRate != null ? Number(t.trophyEarnedRate) : null, // % de jogadores
+        rarity: t.trophyRare ?? null, // 0 ultra raro · 1 muito raro · 2 raro · 3 comum
+      };
+    }
+    return { earned, total: data.trophies.length, trophies };
+  }
+
+  return { userTitles, trophyList, userProgress };
 }
