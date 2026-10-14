@@ -1,0 +1,25 @@
+@use '../abstracts' as *;
+
+// Cores da dificuldade por faixa (config/guide.js → DIFFICULTY_BANDS).
+// A classe só define as variáveis; cada componente usa --diff-bg / --diff-fg como quiser.
+// 1–2 verde · 3–5 amarelo · 6–8 vermelho · 9–10 preto
+.diff--easy {
+  --diff-bg: #2f8a46;
+  --diff-fg: #ffffff;
+}
+
+.diff--medium {
+  --diff-bg: #e3b10b;
+  --diff-fg: #1f1e1d;
+}
+
+.diff--hard {
+  --diff-bg: #c8402e;
+  --diff-fg: #ffffff;
+}
+
+.diff--extreme {
+  --diff-bg: #111110;
+  --diff-fg: #ffffff;
+  --diff-edge: var(--border-strong); // contorno para o preto não sumir no tema escuro
+}

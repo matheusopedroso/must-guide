@@ -1,101 +1,57 @@
 <script setup>
+import { ref } from 'vue';
+import { Clock, Pencil, Repeat } from 'lucide-vue-next';
+import DifficultyBadge from './DifficultyBadge.vue';
+import GuideStatsModal from './GuideStatsModal.vue';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useGuideStats } from '@/composables/guide/useGuideStats';
-import { GUIDE_STATS } from '@/config/guide';
 
-// Dificuldade x/10, jogadas e horas numa linha. Tocar no número edita (vazio = "—").
-// No celular só ícone + valor + unidade (o nome fica no aria-label/tooltip).
+// Resumo da visão geral (dificuldade colorida pela faixa, jogadas, horas). Tocar abre o modal de edição.
 const { draft } = useGuideDraft();
-const { stats, update } = useGuideStats(draft);
-
-// Largura do número acompanha os dígitos ("3" colado no "/10", "999" cabe inteiro)
-const width = (v) => `${Math.max(String(v || '').length, 1) + 0.2}ch`;
+const { stats, filled, save } = useGuideStats(draft);
+const editing = ref(false);
 </script>
 
 <template>
-  <div class="stats d-flex flex-wrap gap-1" aria-label="Visão geral do guia">
-    <label
-      v-for="s in GUIDE_STATS"
-      :key="s.id"
-      class="stat d-inline-flex align-center gap-1 px-1 radius-1"
-      :class="{ 'is-empty': !stats[s.id] }"
-      :data-tooltip="`${s.label} (${s.min}–${s.max})`"
-    >
-      <component :is="s.icon" :size="14" :stroke-width="2" class="shrink-0" />
-      <span class="stat__label">{{ s.label }}</span>
-      <span class="d-inline-flex align-baseline">
-        <input
-          class="stat__input"
-          type="number"
-          inputmode="numeric"
-          :min="s.min"
-          :max="s.max"
-          :value="stats[s.id] || ''"
-          placeholder="—"
-          :aria-label="s.label"
-          :style="{ width: width(stats[s.id]) }"
-          @change="update(s.id, $event.target.value)"
-          @keydown.enter="$event.target.blur()"
-        />
-        <span v-if="s.suffix" class="stat__suffix">{{ s.suffix }}</span>
-      </span>
-    </label>
-  </div>
+  <button
+    type="button"
+    class="stats d-inline-flex align-center flex-wrap gap-1 radius-1 tooltip-left"
+    data-tooltip="Editar visão geral"
+    aria-label="Editar dificuldade, jogadas e horas"
+    @click="editing = true"
+  >
+    <template v-if="filled">
+      <DifficultyBadge v-if="stats.difficulty" :value="stats.difficulty" />
+      <span v-if="stats.playthroughs" class="tag"><Repeat :size="14" /> {{ stats.playthroughs }} {{ stats.playthroughs > 1 ? 'jogadas' : 'jogada' }}</span>
+      <span v-if="stats.hours" class="tag"><Clock :size="14" /> {{ stats.hours }} h</span>
+      <Pencil :size="14" class="stats__edit" />
+    </template>
+    <span v-else class="stats__empty d-inline-flex align-center gap-1 text-sm fw-500">
+      <Pencil :size="14" /> Dificuldade, jogadas e horas
+    </span>
+  </button>
+
+  <GuideStatsModal v-model="editing" :stats="stats" @save="save" />
 </template>
 
 <style lang="scss" scoped>
-.stat {
-  height: 32px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 13px;
-  cursor: text;
-  transition: box-shadow 0.15s;
+.stats {
+  min-height: 32px;
+  padding: $space-half;
+  transition: background 0.15s;
 
-  &:focus-within {
-    box-shadow: 0 0 0 2px var(--accent);
+  &:hover {
+    background: var(--surface-hover);
   }
 
-  &.is-empty {
-    background: var(--surface-2);
-    color: var(--text-muted);
+  &__edit {
+    margin-inline: $space-half;
+    color: var(--text-subtle);
   }
 
-  &__label {
-    font-weight: 500;
-
-    @include down(md) {
-      display: none;
-    }
-  }
-
-  &__input {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    font-weight: 700;
-    text-align: center;
-    -moz-appearance: textfield;
-
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-    }
-
-    &::placeholder {
-      color: inherit;
-    }
-
-    &:focus {
-      outline: none;
-    }
-  }
-
-  &__suffix {
-    font-weight: 600;
-    opacity: 0.8;
+  &__empty {
+    padding-inline: space(1);
+    color: var(--accent);
   }
 }
 </style>

@@ -42,16 +42,16 @@ must-guide/
 │     ├─ config.js             provedor ativo e opções (região SP)
 │     └─ handlers/             games.js (secrets do provedor ativo) · trophies.js (PSN_NPSSO)
 ├─ src/
-│  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), DropdownMenu, IconSelect, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal, VideoModal (YouTube no app), GameCover, EmptyState…
+│  ├─ components/ui/           BaseButton, BaseTabs, ScrollRail (trilho lateral), DropdownMenu, IconSelect, NumberStepper, SearchInput, RichTextEditor (Pell), RatingInput, ProgressBar, BaseModal (pilha, foco, arrastar p/ fechar), VideoModal (YouTube no app), GameCover, EmptyState…
 │  ├─ components/layout/       AppHeader, AppLogo
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyHeader (lista + versões + visão geral), TrophyList, TrophyToolbar, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
-│  ├─ components/guide-editor/ SelectedGameCard, GuideStats (dificuldade/jogadas/horas), AddTabMenu, TabPlaceholder, tabs/TrophiesTab
+│  ├─ components/guide-editor/ SelectedGameCard, GuideStats (resumo) + GuideStatsModal (edição), DifficultyPicker, DifficultyBadge, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
 │  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
-│  ├─ composables/             useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
+│  ├─ composables/             useModalStack (Esc/voltar fecham o modal de cima), useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (rascunho no navegador)
 │  ├─ config/                  app, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
-│  ├─ utils/                   cover, text, trophies, guideDraft, html (filtro de HTML do editor), trophyRef, url
+│  ├─ utils/                   cover, text, trophies, difficulty (faixa/cor 1–10), guideDraft, html (filtro de HTML do editor), trophyRef, url
 │  ├─ assets/brand/logo.js     paths do logo (usados pelo AppLogo)
 │  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
 │  └─ styles/                  abstracts · base · layout · components · utilities
@@ -120,6 +120,17 @@ Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado 
 | `src/components/layout/AppLogo.vue` | logo no app, cores pelo tema (`--logo-primary`, `--logo-accent`) |
 
 Cores: terracota `#C96442` (escuro: `#D97757`) e laranja `#FF914D`. A URL do site para as tags de compartilhamento tem padrão no `vite.config.js` (`DEFAULT_SITE_URL`) e pode ser trocada por `VITE_SITE_URL` no `.env.local`.
+
+## Dificuldade do guia (1–10)
+
+Faixas em `DIFFICULTY_BANDS` (`src/config/guide.js`): 1–2 Fácil (verde) · 3–5 Média (amarelo) · 6–8 Difícil (vermelho) · 9–10 Extrema (preto).
+`difficultyClass(n)` (`src/utils/difficulty.js`) devolve `diff--<faixa>`, que só define `--diff-bg`/`--diff-fg`
+(`src/styles/components/_difficulty.scss`), então qualquer elemento pode usar a cor.
+
+## Modais
+
+`BaseModal` (v-model, `title`, `description`, `wide`, slot `#footer`): no celular sobe de baixo e fecha arrastando;
+Esc, tocar fora e o "voltar" do celular fecham só o de cima (`useModalStack`); o foco entra no modal e volta ao fechar.
 
 ## Dica ao passar o mouse
 
