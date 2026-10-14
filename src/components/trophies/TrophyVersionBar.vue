@@ -20,26 +20,27 @@ const label = (v) => v.platform || v.id;
 </script>
 
 <template>
-  <div class="surface radius-2 d-flex flex-column">
-    <div class="d-flex align-center gap-2 p-2">
-      <img v-if="list?.icon" :src="list.icon" alt="" class="list-icon radius-1 shrink-0" />
-      <div v-else class="list-icon radius-1 shrink-0" />
+  <div class="vbar surface radius-2">
+    <!-- Lista aberta: ícone, nome, contagem e o seu progresso numa linha -->
+    <div class="d-flex align-center gap-2 px-2 py-1">
+      <img v-if="list?.icon" :src="list.icon" alt="" class="vbar__icon radius-1 shrink-0" />
+      <div v-else class="vbar__icon radius-1 shrink-0" />
       <div class="flex-1 min-w-0">
-        <p class="text-xs text-subtle fw-600">
+        <p class="text-xs text-subtle fw-600 truncate">
           Troféus PSN{{ list?.platform ? ` · ${list.platform}` : '' }}{{ isPrincipal && versions.length > 1 ? ' · principal' : '' }}
         </p>
-        <h3 v-if="list" class="line-clamp-2">{{ list.name }}</h3>
+        <h3 v-if="list" class="vbar__name truncate" :title="list.name">{{ list.name }}</h3>
         <p v-else class="text-sm text-muted">{{ loading ? 'Carregando troféus…' : activeId }}</p>
-        <TrophyCounts v-if="list" :counts="list.counts" class="mt-1" />
+      </div>
+      <TrophyCounts v-if="list" :counts="list.counts" class="d-none d-md-flex shrink-0" />
+      <div v-if="progress" class="vbar__progress d-flex flex-column gap-1 shrink-0" :title="`Você conquistou ${progress.earned} de ${progress.total}`">
+        <span class="text-xs text-muted fw-500">Você: {{ progress.earned }}/{{ progress.total }}</span>
+        <ProgressBar :value="progress.earned" :max="progress.total" />
       </div>
     </div>
 
-    <div v-if="progress" class="d-flex align-center gap-2 px-2 pb-2">
-      <ProgressBar :value="progress.earned" :max="progress.total" class="flex-1" />
-      <span class="text-xs text-muted fw-500 shrink-0">Você: {{ progress.earned }}/{{ progress.total }}</span>
-    </div>
-
-    <div class="d-flex align-center flex-wrap gap-1 p-2 border-top">
+    <!-- Versões (PS4/PS5…) -->
+    <div class="d-flex align-center gap-1 px-2 py-1 border-top">
       <div class="d-flex flex-wrap gap-1 flex-1" role="group" aria-label="Versões do jogo">
         <button
           v-for="(v, i) in versions"
@@ -56,22 +57,49 @@ const label = (v) => v.platform || v.id;
         <button type="button" class="chip chip--sm" @click="$emit('add')"><Plus :size="14" /> Versão</button>
       </div>
 
-      <div class="d-flex gap-1">
-        <BaseButton v-if="!isPrincipal" :icon="Star" size="sm" variant="ghost" @click="$emit('make-principal', activeId)">
-          Principal
-        </BaseButton>
-        <BaseButton :icon="Trash2" icon-only size="sm" variant="danger" aria-label="Remover versão" @click="$emit('remove', activeId)" />
-      </div>
+      <BaseButton
+        v-if="!isPrincipal"
+        :icon="Star"
+        icon-only
+        size="sm"
+        variant="ghost"
+        aria-label="Tornar versão principal"
+        data-tooltip="Tornar principal"
+        @click="$emit('make-principal', activeId)"
+      />
+      <BaseButton
+        :icon="Trash2"
+        icon-only
+        size="sm"
+        variant="danger"
+        class="tooltip-left"
+        aria-label="Remover versão"
+        data-tooltip="Remover versão"
+        @click="$emit('remove', activeId)"
+      />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.list-icon {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  background: var(--surface-2);
-}
+.vbar {
+  &__icon {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    background: var(--surface-2);
+  }
 
+  &__name {
+    font-size: 16px;
+  }
+
+  &__progress {
+    width: 96px;
+
+    @include up(md) {
+      width: 160px;
+    }
+  }
+}
 </style>

@@ -17,17 +17,23 @@ const meta = computed(() =>
 </script>
 
 <template>
-  <div class="selected surface radius-2 d-flex align-center gap-2 p-2">
+  <div class="selected surface radius-2 d-flex align-center gap-2 px-2 py-1">
     <template v-if="game">
       <GameCover :src="game.cover" :title="game.title" size="sm" eager class="selected__cover shrink-0" />
       <div class="flex-1 min-w-0">
-        <p class="text-xs text-subtle fw-600">Jogo</p>
-        <h2 class="selected__title line-clamp-2">{{ game.title }}</h2>
-        <p v-if="meta" class="text-sm text-muted truncate">{{ meta }}</p>
+        <h2 class="selected__title truncate">{{ game.title }}</h2>
+        <p v-if="meta" class="text-xs text-muted truncate">{{ meta }}</p>
       </div>
-      <BaseButton :icon="ArrowLeftRight" size="sm" variant="ghost" class="shrink-0" @click="$emit('change')">
-        Trocar
-      </BaseButton>
+      <BaseButton
+        :icon="ArrowLeftRight"
+        icon-only
+        size="sm"
+        variant="ghost"
+        class="shrink-0 tooltip-left"
+        aria-label="Trocar jogo"
+        data-tooltip="Trocar jogo"
+        @click="$emit('change')"
+      />
     </template>
 
     <template v-else-if="loading">
@@ -42,17 +48,14 @@ const meta = computed(() =>
 
 <style lang="scss" scoped>
 .selected {
+  // Compacto: capa pequena e título numa linha
   &__cover {
-    width: 56px;
+    width: 40px;
     aspect-ratio: 3 / 4;
-
-    @include up(md) {
-      width: 64px;
-    }
   }
 
   &__title {
-    font-size: 19px;
+    font-size: 17px;
   }
 }
 

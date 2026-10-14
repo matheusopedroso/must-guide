@@ -46,11 +46,11 @@ must-guide/
 │  ├─ components/layout/       AppHeader, AppLogo
 │  ├─ components/games/        GameCard, GameCardSkeleton, GameGrid, GamePicker (select com pesquisa)
 │  ├─ components/trophies/     PsnTitlePicker, TrophyVersionBar, TrophyList, TrophyToolbar, TrophyGuideSummary, TrophyItem, TrophyMetaTags, TrophyDetailsEditor, TrophyFlags, TrophyTip, TrophyRefPicker, TrophyCounts
-│  ├─ components/guide-editor/ SelectedGameCard, AddTabMenu, TabPlaceholder, tabs/TrophiesTab
-│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem)
+│  ├─ components/guide-editor/ SelectedGameCard, GuideStats (dificuldade/jogadas/horas), AddTabMenu, TabPlaceholder, tabs/TrophiesTab
+│  ├─ composables/guide/       useGuideDraft (rascunho + gravação agrupada), useGuideTabs, useTrophyVersions, useTrophyNotes, useTrophyContext, useTrophyListView (busca/filtro/ordem), useGuideStats
 │  ├─ composables/             useStoredRef (preferências no navegador), useAsyncState, useGameSearch, useGameDetails, useQueryParam, useClickOutside, useDebounceFn, useTheme
 │  ├─ services/                api.js (cliente com cache da sessão), games, trophies, draft (rascunho no navegador)
-│  ├─ config/                  app, providers, guideTabs, trophies, editor (botões do Pell)
+│  ├─ config/                  app, providers, guide (stats), guideTabs, trophies, editor (botões do Pell)
 │  ├─ utils/                   cover, text, trophies, guideDraft, html (filtro de HTML do editor), trophyRef, url
 │  ├─ assets/brand/logo.js     paths do logo (usados pelo AppLogo)
 │  ├─ pages/                   HomePage, GuideEditPage (/guia/novo?jogo=…&aba=…)
@@ -87,7 +87,8 @@ já no formato do futuro documento do Firestore (`src/utils/guideDraft.js`):
 
 ```js
 { gameId, game, tabs: [], versions: [{ id, name, platform, service }],
-  trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } } }
+  trophies: { [trophyId]: { tip, when, difficulty, chapter, video, story, missable, online } },
+  stats: { difficulty, playthroughs, hours } }   // visão geral (0 = não informado; limites em config/guide.js)
 ```
 
 - `versions[0]` é a versão principal; as anotações valem para todas (ligadas pelo `trophyId`).
