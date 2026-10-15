@@ -16,7 +16,7 @@ import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailM
 import { provideCollectibleContext, useCollected } from '@/composables/guide/useCollectibles';
 import { collectiblesOf } from '@/utils/collectibles';
 import { parseGuideId } from '@/utils/guideIds';
-import DlcGuideList from '@/components/guides/DlcGuideList.vue';
+import GuideLinkList from '@/components/guides/GuideLinkList.vue';
 import { useDlcGuides } from '@/composables/guide/useDlcGuides';
 import { useGuide } from '@/composables/guide/useGuide';
 import { useTrophyData } from '@/composables/guide/useTrophyData';
@@ -168,7 +168,7 @@ async function share() {
             @open-trophy="openTrophy"
             @open-trophies="tab = 'trofeus'"
           />
-          <DlcGuideList v-if="dlcGuides.length" :items="dlcGuides" />
+          <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="DLCs" />
         </div>
         <SectionsView
           v-else-if="activeSectionTab"
@@ -195,7 +195,7 @@ async function share() {
             @focused="focus = null"
           />
           <!-- As DLCs têm guia próprio: os troféus delas ficam lá -->
-          <DlcGuideList v-if="dlcGuides.length" :items="dlcGuides" />
+          <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="DLCs" />
         </div>
       </div>
 

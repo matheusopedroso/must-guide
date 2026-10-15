@@ -2,8 +2,11 @@ import { ref, watch } from 'vue';
 import { fetchGame } from '@/services/games.service';
 import { isPartialSnapshot } from '@/utils/guideDraft';
 
-// Jogos já conhecidos na sessão (ex.: escolhido no seletor antes de mudar de página)
+// Jogos já conhecidos na sessão (ex.: escolhido no seletor ou tocado na lista antes de mudar de página)
 const known = new Map();
+
+// Quem já tem o jogo em mãos (card da lista) guarda antes de navegar: a página abre na hora, sem requisição
+export const rememberGame = (game) => game?.id && !known.has(game.id) && known.set(game.id, game);
 
 // Jogo escolhido a partir do id (ex.: vindo da URL).
 // Se o objeto já veio do seletor (set), usa direto — sem nova requisição, mesmo depois de trocar de página.
@@ -38,7 +41,11 @@ export function useGameDetails(gameId, { saved } = {}) {
       error.value = '';
       if (!id) return (game.value = null);
       if (game.value?.id === id) return;
-      if (known.has(id)) return (game.value = known.get(id));
+      if (known.has(id)) {
+        game.value = known.get(id);
+        if (game.value.partial) enrich(id, game.value); // veio de lista/busca: completa o resumo
+        return;
+      }
 
       const copy = saved?.(id);
       if (copy?.title) {

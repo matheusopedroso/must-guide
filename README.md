@@ -198,6 +198,14 @@ coletáveis, dificuldade e status próprios — como no PSNProfiles.
 - **Regras:** `guides/{guideId}` exige `guideId` (ou `gameId`, nos antigos) igual ao id do documento. Rode
   `firebase deploy --only firestore` depois de atualizar o `firestore.rules`.
 
+## Página do jogo (`/jogo/:id`)
+
+Os cards do início abrem a página do jogo, com ou sem guia (`GamePage`, mesmo formato da leitura do guia):
+hero (`DetailHero`, compartilhado com o `GuideHero`), "Sobre o jogo" (`GameAbout`, também na Visão geral do guia)
++ ficha e, à direita, o cartão do guia: **Ler guia** ou, sem guia, **Criar guia** (admin / sem Firebase).
+Embaixo, os guias das DLCs (`GuideLinkList`, a mesma lista da leitura). O card guarda o jogo antes de navegar
+(`rememberGame`): a página abre na hora e só busca o que falta (resumo). A leitura do guia tem "Ver página do jogo".
+
 ## Trocar o jogo do guia
 
 O id do guia é o id do jogo (`rawg-123`, `igdb-456`). No editor, o botão ⇄ do card do jogo num guia com conteúdo abre

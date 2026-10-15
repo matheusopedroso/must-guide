@@ -16,6 +16,7 @@ const routes = [
     beforeEnter: (to) => (to.query.jogo ? { name: 'guide-edit', params: { id: to.query.jogo }, query: { aba: to.query.aba } } : true),
   },
   { path: '/guia/:id/editar', name: 'guide-edit', component: GuideEditPage, meta: { title: 'Editar guia' } },
+  { path: '/jogo/:id', name: 'game', component: () => import('@/pages/GamePage.vue'), meta: { title: 'Jogo', immersive: true } },
   { path: '/guia/:id', name: 'guide-view', component: () => import('@/pages/GuideViewPage.vue'), meta: { title: 'Guia', immersive: true } }, // celular: sem a barra do topo (imagem até o alto)
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ];

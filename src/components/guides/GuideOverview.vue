@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { Clock, Gauge, Gem, Repeat, Trophy } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import GameAbout from '@/components/games/GameAbout.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import TrophyCounts from '@/components/trophies/TrophyCounts.vue';
 import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
@@ -21,7 +22,6 @@ const props = defineProps({
 });
 defineEmits(['open-trophy', 'open-trophies']);
 
-const expanded = ref(false);
 const stats = computed(() => props.guide.stats ?? {});
 
 // Uma passada: dicas escritas + troféus de cada marcação
@@ -55,19 +55,7 @@ const PLAY_ROWS = [
     <div class="overview__grid">
       <!-- Sobre o jogo + ficha -->
       <div class="d-flex flex-column gap-3 min-w-0">
-        <div class="d-flex flex-column gap-2">
-          <p class="kicker">{{ guide.dlc ? 'Sobre o jogo base' : 'Sobre o jogo' }}</p>
-          <div v-if="game?.genres?.length" class="d-flex flex-wrap gap-1">
-            <span v-for="g in game.genres.slice(0, 4)" :key="g" class="pill">{{ g }}</span>
-          </div>
-          <template v-if="game?.summary">
-            <p class="overview__summary" :class="{ 'line-clamp-5': !expanded }">{{ game.summary }}</p>
-            <button v-if="game.summary.length > 360" type="button" class="link-btn text-sm fw-600 align-self-start" @click="expanded = !expanded">
-              {{ expanded ? 'Mostrar menos' : 'Ler mais' }}
-            </button>
-          </template>
-          <p v-else-if="game" class="text-muted text-sm">Sem descrição do jogo.</p>
-        </div>
+        <GameAbout :game="game" :title="guide.dlc ? 'Sobre o jogo base' : 'Sobre o jogo'" />
 
         <div class="label-row">
           <span class="kicker">Versões</span>
@@ -166,16 +154,6 @@ const PLAY_ROWS = [
       align-items: start;
     }
   }
-
-  &__summary {
-    color: var(--text-muted);
-    line-height: 1.65;
-    white-space: pre-line;
-  }
-}
-
-.line-clamp-5 {
-  @include clamp-lines(5);
 }
 
 .card {
@@ -187,17 +165,5 @@ const PLAY_ROWS = [
   &__row {
     min-height: 32px;
   }
-}
-
-.link-btn {
-  color: var(--accent);
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.align-self-start {
-  align-self: flex-start;
 }
 </style>

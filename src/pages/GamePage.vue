@@ -1,134 +1,166 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { BookOpen, ExternalLink, Plus, Trash2 } from 'lucide-vue-next';
-import BackButton from '@/components/ui/BackButton.vue';
+import { computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { BookOpen, ExternalLink, FileQuestion, MessageSquareText, Pencil, Plus } from 'lucide-vue-next';
+import PageBar from '@/components/ui/PageBar.vue';
+import DetailHero from '@/components/ui/DetailHero.vue';
+import ActionIcon from '@/components/ui/ActionIcon.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import GameCover from '@/components/ui/GameCover.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
-import LoadingState from '@/components/ui/LoadingState.vue';
-import StatusPicker from '@/components/games/StatusPicker.vue';
-import GuideCard from '@/components/guides/GuideCard.vue';
-import { useLibraryStore } from '@/stores/library';
-import { useGuidesStore } from '@/stores/guides';
+import ProviderCredit from '@/components/ui/ProviderCredit.vue';
+import GameAbout from '@/components/games/GameAbout.vue';
+import GuideLinkList from '@/components/guides/GuideLinkList.vue';
+import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
+import { useGameDetails } from '@/composables/useGameDetails';
+import { useGuide } from '@/composables/guide/useGuide';
+import { useDlcGuides } from '@/composables/guide/useDlcGuides';
+import { useAuth } from '@/composables/useAuth';
+import { GUIDE_STATUS, summarizeGuide } from '@/utils/guideDraft';
+import { providerInfo } from '@/config/providers';
+import { APP_NAME } from '@/config/app';
 
-const props = defineProps({ id: { type: String, required: true } });
-
+// Página do jogo (/jogo/:id), aberta pelos cards do início — com ou sem guia. Mesmo formato da leitura do guia:
+// PageBar → hero (capa, título, ano, plataformas, ações) → sobre o jogo + ficha à esquerda e, à direita,
+// o cartão do guia (ler / criar). Embaixo, os guias das DLCs. Sem guia: quem edita cria daqui.
+const route = useRoute();
 const router = useRouter();
-const library = useLibraryStore();
-const guidesStore = useGuidesStore();
+const gameId = computed(() => String(route.params.id ?? ''));
 
-const game = ref(null);
-const loading = ref(true);
-const saving = ref(false);
-const showFullSummary = ref(false);
+const { game, loading, error } = useGameDetails(gameId);
+const { guide: rawGuide, loading: guideLoading } = useGuide(gameId); // guia do jogo: id do guia = id do jogo
+const { items: dlcGuides } = useDlcGuides(gameId);
+const { enabled, isAdmin } = useAuth();
 
-const entry = computed(() => library.get(props.id));
-const guides = computed(() => guidesStore.listFor(props.id));
-const status = computed({
-  get: () => entry.value?.status ?? 'backlog',
-  set: async (value) => {
-    saving.value = true;
-    try {
-      await library.update(props.id, { status: value });
-    } finally {
-      saving.value = false;
-    }
-  },
-});
+const canEdit = computed(() => !enabled || isAdmin.value);
+const guide = computed(() => (rawGuide.value ? summarizeGuide(rawGuide.value) : null));
+const viewRoute = computed(() => ({ name: 'guide-view', params: { id: gameId.value } }));
+const editRoute = computed(() => ({ name: 'guide-edit', params: { id: gameId.value } }));
+const source = computed(() => providerInfo(game.value?.provider));
+const meta = computed(() => [game.value?.kind, game.value?.year, game.value?.platforms?.join(' · ')]);
+const facts = computed(() =>
+  [
+    { label: 'Lançamento', value: game.value?.year },
+    { label: 'Plataformas', value: game.value?.platforms?.join(' · ') },
+    { label: 'Tipo', value: game.value?.kind },
+    { label: 'Nota', value: game.value?.rating && `${game.value.rating}/100` },
+  ].filter((f) => f.value),
+);
 
-// Biblioteca (cache) + catálogo + guias do jogo em paralelo
-onMounted(async () => {
-  try {
-    const [g] = await Promise.all([library.getGame(props.id), library.load(), guidesStore.loadList(props.id)]);
-    game.value = g ?? entry.value;
-  } finally {
-    loading.value = false;
-  }
-});
+watch(game, (g) => g && (document.title = `${g.title} · ${APP_NAME}`), { immediate: true });
 
-async function removeGame() {
-  if (!confirm('Remover este jogo da biblioteca? Os guias continuam salvos.')) return;
-  await library.remove(props.id);
-  router.replace({ name: 'library' });
-}
+// Voltar: de onde veio; aberto direto → início
+const back = () => (window.history.state?.back ? router.back() : router.push({ name: 'home' }));
 </script>
 
 <template>
-  <div class="container page">
-    <LoadingState v-if="loading" />
+  <div class="game-page">
+    <PageBar :title="game?.title ?? 'Jogo'" :share="false" class="game-page__bar" @back="back" />
 
-    <EmptyState v-else-if="!game" title="Jogo não encontrado" text="Ele pode ter sido removido da biblioteca.">
-      <BaseButton to="/">Voltar à biblioteca</BaseButton>
-    </EmptyState>
+    <div v-if="loading && !game" class="game-page__skeleton" aria-busy="true" />
+
+    <div v-else-if="!game" class="container game-page__empty">
+      <EmptyState :icon="FileQuestion" title="Jogo não encontrado" :text="error || 'Não deu para carregar este jogo.'">
+        <BaseButton :to="{ name: 'home' }">Ir para o início</BaseButton>
+      </EmptyState>
+    </div>
 
     <template v-else>
-      <BackButton to="/" class="mb-2" />
+      <DetailHero :title="game.title" kicker="Jogo" :cover="game.cover" :meta="meta">
+        <template v-if="guide?.status === 'published'" #labels>
+          <span class="badge badge--success"><BookOpen :size="12" /> Tem guia</span>
+        </template>
+        <template #actions>
+          <ActionIcon v-if="guide" :icon="BookOpen" label="Ler guia" :to="viewRoute" />
+          <ActionIcon v-if="canEdit" :icon="guide ? Pencil : Plus" :label="guide ? 'Editar guia' : 'Criar guia'" :to="editRoute" />
+          <ActionIcon v-if="game.sourceUrl && source" :icon="ExternalLink" :label="source.name" :href="game.sourceUrl" />
+        </template>
+      </DetailHero>
 
-      <section class="hero d-flex gap-3 mb-4">
-        <GameCover :cover-id="game.coverId" :title="game.title" eager class="hero__cover shrink-0 radius-2" />
-        <div class="d-flex flex-column gap-2 min-w-0 flex-1">
-          <div>
-            <h1>{{ game.title }}</h1>
-            <p class="text-muted mt-1">
-              {{ [game.year, ...(game.platforms ?? []).slice(0, 4)].filter(Boolean).join(' · ') }}
-            </p>
+      <div class="container game-page__content d-flex flex-column gap-5">
+        <div class="game-page__grid">
+          <div class="d-flex flex-column gap-3 min-w-0">
+            <GameAbout :game="game" />
+            <dl v-if="facts.length" class="facts">
+              <div v-for="f in facts" :key="f.label">
+                <dt>{{ f.label }}</dt>
+                <dd>{{ f.value }}</dd>
+              </div>
+            </dl>
           </div>
 
-          <div v-if="game.genres?.length" class="d-flex flex-wrap gap-1">
-            <span v-for="genre in game.genres" :key="genre" class="tag">{{ genre }}</span>
-          </div>
-
-          <StatusPicker v-if="entry" v-model="status" :disabled="saving" />
-
-          <div class="d-flex flex-wrap gap-1">
-            <BaseButton v-if="game.igdbUrl" :icon="ExternalLink" size="sm" variant="ghost" :href="game.igdbUrl">IGDB</BaseButton>
-            <BaseButton v-if="entry" :icon="Trash2" size="sm" variant="danger" @click="removeGame">Remover</BaseButton>
-          </div>
-        </div>
-      </section>
-
-      <section v-if="game.summary" class="mb-4">
-        <p class="summary text-muted" :class="{ 'line-clamp-3': !showFullSummary }">{{ game.summary }}</p>
-        <button type="button" class="text-sm text-accent fw-500 mt-1" @click="showFullSummary = !showFullSummary">
-          {{ showFullSummary ? 'Mostrar menos' : 'Ler mais' }}
-        </button>
-      </section>
-
-      <section>
-        <div class="d-flex align-center justify-between gap-2 mb-2">
-          <h2>Guias</h2>
-          <BaseButton :to="{ name: 'guide-new', params: { gameId: id } }" :icon="Plus" size="sm">Novo guia</BaseButton>
+          <!-- Guia do jogo (lugar do "Para platinar" na leitura) -->
+          <aside class="guide-card surface radius-2 p-2 d-flex flex-column gap-2">
+            <p class="kicker">Guia de troféus</p>
+            <p v-if="guideLoading" class="text-sm text-muted">Procurando guia…</p>
+            <template v-else-if="guide">
+              <div class="d-flex align-center flex-wrap gap-1 text-sm text-muted">
+                <span class="badge" :class="`badge--${GUIDE_STATUS[guide.status].tone}`">{{ GUIDE_STATUS[guide.status].label }}</span>
+                <DifficultyBadge v-if="guide.difficulty" :value="guide.difficulty" show-label />
+                <span class="d-inline-flex align-center gap-1"><MessageSquareText :size="14" /> {{ guide.tips }} dica(s)</span>
+              </div>
+              <BaseButton :to="viewRoute" :icon="BookOpen" variant="primary" class="w-100">Ler guia</BaseButton>
+            </template>
+            <template v-else>
+              <p class="text-sm text-muted">Ainda não tem guia para este jogo.</p>
+              <BaseButton v-if="canEdit" :to="editRoute" :icon="Plus" variant="primary" class="w-100">Criar guia</BaseButton>
+            </template>
+          </aside>
         </div>
 
-        <div v-if="guides.length" class="d-flex flex-column gap-2">
-          <GuideCard v-for="g in guides" :key="g.id" :guide="g" :show-game="false" />
-        </div>
-        <EmptyState v-else :icon="BookOpen" title="Nenhum guia ainda" text="Crie o roteiro de troféus deste jogo." />
-      </section>
+        <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="Guias de DLC" />
+        <ProviderCredit v-if="game.provider" :providers="[game.provider]" />
+      </div>
     </template>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.hero {
-  flex-direction: column;
+.game-page {
+  margin-top: calc(-1 * var(--nav-space)); // sobe por baixo da navegação (o fundo do hero aparece atrás)
+  padding-bottom: space(8);
 
-  @include up(sm) {
-    flex-direction: row;
+  &__bar {
+    margin-top: calc(var(--nav-space) + var(--pbar-gap));
+    margin-bottom: calc(-1 * (var(--pbar-height) + var(--nav-space) + var(--pbar-gap))); // fica por cima do hero
   }
 
-  &__cover {
-    width: 160px;
-    box-shadow: var(--shadow);
+  &__skeleton {
+    height: 480px;
+    background: linear-gradient(180deg, var(--surface-2), var(--bg));
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  &__empty {
+    padding-top: calc(var(--nav-space) + var(--pbar-gap) + var(--pbar-height) + #{space(4)});
+  }
+
+  &__content {
+    max-width: calc(1040px + #{space(6)});
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: space(3);
 
     @include up(md) {
-      width: 200px;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: space(5);
+      align-items: start;
     }
   }
 }
 
-.summary {
-  max-width: 720px;
+.guide-card {
+  @include up(md) {
+    position: sticky;
+    top: calc(var(--nav-offset) + 96px); // abaixo da PageBar
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.6;
+  }
 }
 </style>
