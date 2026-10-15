@@ -1,4 +1,5 @@
 import { createApiClient } from './api';
+import { matchScore } from '@/utils/text';
 
 const request = createApiClient('/api/trophies');
 
@@ -22,9 +23,14 @@ export function fetchTrophyProgress(npId, service, opts) {
 
 // Busca automática da lista pelo nome do jogo (sua conta + perfis de referência do servidor). Rota privada.
 // → [{ id, name, platform, service, icon, counts, score, sources: ['Sua conta' | ID da PSN] }]
+// FIND_VERSION muda a URL quando a regra da busca muda (o navegador guarda a resposta por 10 min).
+// Confere de novo aqui com a mesma regra (matchScore): resposta antiga guardada não traz lista errada.
+const FIND_VERSION = 2;
 export function findTrophyLists(title, platform = '', opts) {
-  const qs = new URLSearchParams({ q: title, ...(platform && { platform }) });
-  return request(`/find?${qs}`, { ...opts, auth: true }).then((d) => d.results);
+  const qs = new URLSearchParams({ q: title, v: FIND_VERSION, ...(platform && { platform }) });
+  return request(`/find?${qs}`, { ...opts, auth: true }).then((d) =>
+    d.results.map((r) => ({ ...r, score: matchScore(r.name, title) })).filter((r) => r.score >= 60),
+  );
 }
 
 // Jogos de outra pessoa pelo ID da PSN → { player: { onlineId, avatar }, titles }. Serve para vincular jogos que a

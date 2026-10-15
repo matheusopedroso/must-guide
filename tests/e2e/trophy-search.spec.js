@@ -31,3 +31,15 @@ test('vincular lista: busca automática pelo nome', async ({ page }) => {
   await page.locator('.titles .title').click();
   await expect(page.locator('.trophy')).toHaveCount(10);
 });
+
+// Resposta antiga guardada pelo navegador (regra velha casava nome só em japonês): o app confere de novo
+test('busca automática: o app descarta lista que não combina com o nome', async ({ page }) => {
+  await seed(page, []);
+  const r = (id, name, platform) => ({ id, name, platform, service: 'trophy2', icon: null, counts: { platinum: 1, gold: 0, silver: 0, bronze: 1 }, score: 80, sources: ['Hakoom'] });
+  await page.route('**/api/trophies/find**', (route) =>
+    route.fulfill({ json: { results: [r('NPWR40002_00', 'Split Fiction™', 'PS5'), r('NPWR40003_00', '五等分の花嫁 ごとぱずストーリー', 'PS4')] } }),
+  );
+  await page.goto('/jogo/rawg-1005?aba=trofeus');
+  await expect(page.locator('#game-trophies')).toContainText('Split Fiction');
+  await expect(page.locator('#game-trophies [aria-label="Versão"]')).toHaveCount(0);
+});
