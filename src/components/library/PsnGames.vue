@@ -123,50 +123,53 @@ const PLAT = TROPHY_TYPE_MAP.platinum;
 
       <!-- Lista -->
       <ul class="d-flex flex-column gap-1">
-        <li v-for="g in shown" :key="g.id" class="row surface radius-2 d-flex align-center gap-2 p-1" :class="{ 'is-plat': isPlatinum(g) }">
-          <img v-if="g.icon" :src="g.icon" alt="" class="row__icon radius-1 shrink-0" loading="lazy" />
-          <div v-else class="row__icon radius-1 shrink-0" />
+        <li v-for="g in shown" :key="g.id" class="row surface radius-2 d-flex flex-column gap-2 p-2" :class="{ 'is-plat': isPlatinum(g) }">
+          <!-- Topo: ícone, nome e troféus; ações no canto superior direito (como no troféu do guia) -->
+          <div class="d-flex align-start gap-2">
+            <img v-if="g.icon" :src="g.icon" alt="" class="row__icon radius-1 shrink-0" loading="lazy" />
+            <div v-else class="row__icon radius-1 shrink-0" />
 
-          <div class="d-flex flex-column gap-1 flex-1 min-w-0">
-            <span class="d-flex align-center flex-wrap gap-1 min-w-0">
-              <strong class="truncate">{{ g.name }}</strong>
-              <span v-for="p in platformsOf(g)" :key="p" class="tag">{{ p }}</span>
-              <span v-if="isPlatinum(g)" class="badge" :style="{ color: PLAT.color }"><Trophy :size="12" /> Platinado</span>
-            </span>
-            <span class="d-flex align-center flex-wrap gap-2 text-xs text-muted">
-              <TrophyCounts :counts="g.earned ?? {}" />
-              <span>de {{ Object.values(g.counts).reduce((a, b) => a + b, 0) }}</span>
-              <span v-if="g.lastPlayed">· {{ formatDate(g.lastPlayed) }}</span>
-            </span>
-            <span class="d-flex align-center gap-2">
-              <ProgressBar :value="g.progress" :max="100" tone="earned" class="flex-1" />
-              <span class="row__pct text-xs fw-600 shrink-0">{{ g.progress }}%</span>
-            </span>
+            <div class="d-flex flex-column gap-1 flex-1 min-w-0">
+              <span class="d-flex align-center flex-wrap gap-1 min-w-0">
+                <strong class="row__name">{{ g.name }}</strong>
+                <span v-for="p in platformsOf(g)" :key="p" class="tag">{{ p }}</span>
+                <span v-if="isPlatinum(g)" class="badge" :style="{ color: PLAT.color }"><Trophy :size="12" /> Platinado</span>
+              </span>
+              <span class="d-flex align-center flex-wrap gap-2 text-xs text-muted">
+                <TrophyCounts :counts="g.earned ?? {}" />
+                <span>de {{ Object.values(g.counts).reduce((a, b) => a + b, 0) }}</span>
+                <span v-if="g.lastPlayed">· {{ formatDate(g.lastPlayed) }}</span>
+              </span>
+            </div>
+
+            <div class="d-flex gap-1 shrink-0">
+              <BaseButton
+                v-if="guideByList.get(g.id)"
+                :to="{ name: 'guide-view', params: { id: guideByList.get(g.id) } }"
+                :icon="BookOpen"
+                icon-only
+                size="sm"
+                class="row__action is-filled tooltip-left"
+                :aria-label="`Ver guia de ${g.name}`"
+                data-tooltip="Ver guia"
+              />
+              <BaseButton
+                :to="{ name: 'home', query: { q: g.name.replace(/[™®]/g, '') } }"
+                :icon="Search"
+                icon-only
+                size="sm"
+                class="row__action tooltip-left"
+                :aria-label="`Procurar ${g.name}`"
+                data-tooltip="Procurar o jogo"
+              />
+            </div>
           </div>
 
-          <span class="row__action d-flex justify-end shrink-0">
-            <BaseButton
-              v-if="guideByList.get(g.id)"
-              :to="{ name: 'guide-view', params: { id: guideByList.get(g.id) } }"
-              :icon="BookOpen"
-              size="sm"
-              variant="ghost"
-              class="shrink-0"
-            >
-              Guia
-            </BaseButton>
-            <BaseButton
-              v-else
-              :to="{ name: 'home', query: { q: g.name.replace(/[™®]/g, '') } }"
-              :icon="Search"
-              icon-only
-              size="sm"
-              variant="ghost"
-              class="shrink-0 tooltip-left"
-              :aria-label="`Procurar ${g.name}`"
-              data-tooltip="Procurar o jogo"
-            />
-          </span>
+          <!-- Progresso na largura toda -->
+          <div class="d-flex align-center gap-2">
+            <ProgressBar :value="g.progress" :max="100" tone="earned" class="flex-1" />
+            <span class="row__pct text-xs fw-600 shrink-0">{{ g.progress }}%</span>
+          </div>
         </li>
       </ul>
       <p v-if="!filtered.length" class="text-sm text-muted">Nenhum jogo com esses filtros.</p>
@@ -224,15 +227,18 @@ const PLAT = TROPHY_TYPE_MAP.platinum;
   }
 
   &__icon {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     object-fit: cover;
     background: var(--surface-2);
   }
 
-  // Mesma largura com "Guia" ou a lupa: as barras terminam alinhadas
-  &__action {
-    width: 80px;
+  &__name {
+    line-height: 1.3;
+  }
+
+  &__action.is-filled {
+    color: var(--accent);
   }
 
   &__pct {

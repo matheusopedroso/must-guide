@@ -64,7 +64,7 @@ test('biblioteca: meus jogos da PSN com filtros', async ({ page }) => {
   await expect(rows).toHaveCount(5);
   await expect(page.locator('.stat:has-text("Platinas")')).toContainText('2'); // Tsushima e Astro (100%)
   await expect(rows.first()).toContainText('Ghost of Yōtei'); // mais recente primeiro
-  await expect(rows.first().locator('a:has-text("Guia")')).toHaveAttribute('href', '/guia/rawg-1002'); // já tem guia
+  await expect(rows.first().locator('[aria-label^="Ver guia"]')).toHaveAttribute('href', '/guia/rawg-1002'); // já tem guia
 
   await page.click('.chip:has-text("Platinados")');
   await expect(rows).toHaveCount(2);
