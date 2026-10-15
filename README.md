@@ -247,12 +247,24 @@ Guardado junto com os coletáveis (`usePersonalProgress`: navegador `mg:collecte
 `users/{uid}/progress/{guideId}` → `{ collected, trophies, editedAt }`). Contexto: `useTrophyChecklist`
 (provido por `useGuideReader`; o editor não tem checklist).
 
-## Coletáveis (modelo do IGN)
+## Coletáveis (modelo do IGN + PowerPyx)
 
-Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar e
-até 4 imagens (links). No editor: digite o nome + Enter para adicionar rápido e complete os detalhes no lápis.
-Na leitura: cartão com Tipo | Local, descrição, imagens e a caixa **para marcar** (verde = coletado), progresso
-geral e por região e "Esconder coletados".
+Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar,
+até 4 imagens (links), vídeo (YouTube com tempo toca no app), marcas **Perdível** e **Não conta para o troféu** e o
+**crédito** de quem fez as imagens/vídeo (nome + link). No editor: digite o nome + Enter para adicionar rápido e
+complete os detalhes no lápis. Toda seção (de qualquer aba) aceita um **vídeo** — vira o botão "Ver vídeo" no título.
+
+**Leitura:**
+- Topo: "x de y coletáveis", um chip por tipo (`Artefato 3/12`) que também **filtra** a lista, o chip **Perdíveis**,
+  "Esconder coletados" e **Compacto** (uma linha por coletável que abre ao tocar — bom para 100+). As duas opções
+  ficam guardadas no navegador.
+- **Numeração por tipo no guia todo**, na ordem ("Artefato #4", como o contador do jogo); os que não contam ficam sem número.
+- Em cada região: a contagem por tipo (`Artefato 0/7 · Pingente 0/3`) e no índice o progresso da região.
+- Cartão: "Artefato #4" | nome | marcas, Tipo | Local, descrição, imagens, vídeo, crédito e a caixa **para marcar**.
+
+**Créditos do guia:** no editor (aba Troféus, ao lado de "Dificuldade, jogadas e horas") — nome, link e o que fez.
+Na leitura aparecem no fim da página, em todas as abas, junto com os nomes citados nos coletáveis (sem repetir).
+Lógica em `src/utils/collectibles.js` (`collectiblesOf` com número, `summarizeByType`, `matchesFilter`, `creditsOf`).
 
 **Marcar no meio do guia:** em qualquer texto (Detonado, Roadmap, Guia…) o botão da **joia** cita um coletável
 (com o nome selecionado, o trecho vira o link). Na leitura o chip tem uma caixinha: tocar nela marca/desmarca e vale
@@ -260,8 +272,10 @@ para o guia todo (a aba Coletáveis mostra igual); tocar no nome abre os detalhe
 
 **Progresso por pessoa:** sempre no navegador (`mg:collected:<guideId>`) e, logado, também em
 `users/{uid}/progress/{guideId}` (só a própria pessoa lê/grava — `firestore.rules`), agrupado em 1,5 s; vale a cópia
-editada por último. Peças: `src/components/collectibles/`, `useCollectibles.js` (contexto), `usePersonalProgress.js`,
-`src/utils/collectibles.js`, `src/services/progress.service.js`.
+editada por último. Peças: `src/components/collectibles/` (`CollectiblesOverview`, `CollectibleCard`…),
+`useCollectibleView.js` (filtro/compacto/contagens da leitura), `useCollectibles.js` (contexto), `usePersonalProgress.js`,
+`src/utils/collectibles.js`, `src/services/progress.service.js`, `GuideCredits.vue` / `GuideCreditsEditor.vue`,
+`ui/VideoButton.vue` (YouTube no app, outro site em nova aba).
 
 ## Guias de DLC (um guia separado por DLC)
 
@@ -426,9 +440,9 @@ npm run test:all                 # os dois — rode antes de cada commit
 
 - **Unidade** (`tests/unit`, Vitest + jsdom): funções de `src/utils` — o que passa e o que sai no filtro do texto,
   varinha, troféu sozinho vira cartão, cópia do jogo, guia antigo → páginas, recorte jogo base/DLC, "onde aparece",
-  plano do backup, busca no guia.
+  plano do backup, busca no guia, numeração/resumo/créditos dos coletáveis.
 - **Ponta a ponta** (`tests/e2e`, Playwright): DLC, Guia em páginas, ferramentas do texto (contador, cartão, botões
-  PS/Xbox, caixa de aviso, spoiler, imagem), página do troféu, busca no guia, checklist, apagar, trocar o jogo, backup e página do jogo.
+  PS/Xbox, caixa de aviso, spoiler, imagem), página do troféu, busca no guia, coletáveis (filtro, compacto, créditos), checklist, apagar, trocar o jogo, backup e página do jogo.
 - **Sem internet e sem as suas chaves:** `playwright.config.js` sobe o Vite com `tests/mocks/vite.config.js`
   (Firebase de mentira no localStorage — `tests/mocks/firebase`) e simula RAWG, IGDB e PSN no servidor
   (`tests/mocks/network`, via `NODE_OPTIONS`). As variáveis do teste vencem o `.env.local`.

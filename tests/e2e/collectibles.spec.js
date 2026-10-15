@@ -1,0 +1,85 @@
+import { expect, test } from '@playwright/test';
+import { readDraft, seed, yoteiGuide } from './helpers.js';
+
+const item = (id, name, type, extra = {}) => ({ id, name, type, location: '', description: '', images: [], ...extra });
+
+const guide = () =>
+  yoteiGuide({
+    tabs: ['coletaveis'],
+    credits: [{ id: 'k1', name: 'PowerPyx', url: 'https://www.powerpyx.com/', role: 'Rota' }],
+    collectibles: [
+      {
+        id: 'r1',
+        title: 'Floresta',
+        body: '',
+        trophies: [],
+        video: 'https://youtu.be/abcdefghijk?t=30',
+        items: [
+          item('a', 'Mapa velho', 'Artefato'),
+          item('b', 'Pingente da Ana', 'Pingente', { missable: true, credit: { name: 'Ana', url: 'https://ana.dev/' } }),
+          item('x', 'Quadrinho', 'Artefato', { uncounted: true }),
+        ],
+      },
+      { id: 'r2', title: 'Vila', body: '', trophies: [], items: [item('c', 'Carta', 'Artefato', { video: 'https://youtu.be/abcdefghijk' })] },
+    ],
+  });
+
+// Aba Coletáveis no modelo do PowerPyx: resumo por tipo (filtra), numeração por tipo, marcas, compacto e créditos
+test('coletáveis: resumo, numeração, filtro, compacto e créditos', async ({ page }) => {
+  await seed(page, [guide()]);
+  await page.goto('/guia/rawg-1002?aba=coletaveis');
+
+  const chips = page.locator('[aria-label="Filtrar coletáveis"] .chip');
+  await expect(chips).toHaveText([/Todos/, /Artefato\s*0\/2/, /Pingente\s*0\/1/, /Perdíveis\s*1/]);
+  await expect(page.locator('.ccard#coletavel-c .ccard__name')).toContainText('Artefato #2');
+  await expect(page.locator('.ccard#coletavel-x')).toContainText('Não conta');
+  await expect(page.locator('.ccard#coletavel-b')).toContainText('Perdível');
+  await expect(page.locator('.ccard#coletavel-b a:has-text("Ana")')).toHaveAttribute('href', 'https://ana.dev/');
+  await expect(page.locator('#secao-r1 .btn:has-text("Ver vídeo")')).toBeVisible(); // vídeo da região
+
+  // Filtro por tipo: só a região com Pingente
+  await chips.filter({ hasText: 'Pingente' }).click();
+  await expect(page.locator('.ccard')).toHaveCount(1);
+  await expect(page.locator('section[id^="secao-"]')).toHaveCount(1);
+  await chips.filter({ hasText: 'Todos' }).click();
+
+  // Compacto: linha com número; marcar pela caixa
+  await page.getByLabel('Compacto').check();
+  await expect(page.locator('.ccard.is-compact')).toHaveCount(4);
+  await page.click('.ccard#coletavel-a .ccard__box');
+  await expect(chips.filter({ hasText: 'Artefato' })).toContainText('1/2');
+  await page.click('.ccard#coletavel-c .ccard__summary');
+  await expect(page.locator('.ccard#coletavel-c .btn:has-text("Ver vídeo")')).toBeVisible();
+
+  // Créditos no fim: os do guia + o nome citado no coletável
+  await expect(page.locator('.credits li')).toHaveText([/PowerPyx\s*· Rota/, /Ana\s*· Imagens\/vídeos dos coletáveis/]);
+});
+
+test('coletáveis no editor: marcas, vídeo e crédito; créditos do guia', async ({ page }) => {
+  await seed(page, [guide()]);
+  await page.goto('/guia/rawg-1002/editar?aba=coletaveis');
+
+  await page.click('.clist__row:has-text("Mapa velho") button:has-text("Mapa velho")');
+  const modal = page.locator('.modal:has-text("Crédito das imagens")');
+  await modal.getByLabel('Perdível').check();
+  await modal.locator('input[placeholder^="https://youtu.be"]').fill('youtu.be/abcdefghijk?t=95');
+  await modal.getByLabel('Nome do crédito').fill('PowerPyx');
+  await modal.getByLabel('Nome do crédito').dispatchEvent('change'); // nome conhecido → completa o link
+  await expect(modal.getByLabel('Link do crédito')).toHaveValue('https://www.powerpyx.com/');
+  await modal.locator('button:has-text("Salvar")').click();
+
+  await expect
+    .poll(async () => (await readDraft(page, 'rawg-1002'))?.collectibles?.[0]?.items?.[0])
+    .toMatchObject({ missable: true, video: 'https://youtu.be/abcdefghijk?t=95', credit: { name: 'PowerPyx', url: 'https://www.powerpyx.com/' } });
+
+  // Créditos do guia (aba Troféus, ao lado da visão geral)
+  await page.goto('/guia/rawg-1002/editar');
+  await page.click('.credits-btn');
+  const credits = page.locator('.modal:has-text("Créditos do guia")');
+  await credits.locator('button:has-text("Adicionar crédito")').click();
+  await credits.getByLabel('Nome do crédito 2').fill('Bia');
+  await credits.getByLabel('O que fez 2').fill('Revisão');
+  await credits.locator('button:has-text("Salvar")').click();
+  await expect(page.locator('.credits-btn')).toContainText('2');
+  await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.credits?.map((c) => c.name)).toEqual(['PowerPyx', 'Bia']);
+});

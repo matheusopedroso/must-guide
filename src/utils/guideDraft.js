@@ -48,6 +48,7 @@ export const createDraft = (game, { dlc = null } = {}) => ({
   walkthrough: [],
   missables: [],
   online: [],
+  credits: [], // créditos do guia: [{ id, name, url, role }] — utils/collectibles (createCredit)
   updatedAt: null, // ISO da última edição (decide entre a cópia do navegador e a da nuvem)
 });
 
@@ -75,6 +76,7 @@ export const isBlankDraft = (d) =>
   !d.tabs.length &&
   !Object.keys(d.trophies).length &&
   !Object.values(d.stats).some(Boolean) &&
+  !d.credits?.length &&
   !SECTION_KEYS.some((k) => d[k]?.length);
 
 // Mais recente entre duas cópias (pelo updatedAt)

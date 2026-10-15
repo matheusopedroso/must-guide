@@ -1,0 +1,31 @@
+import { computed, ref } from 'vue';
+import { useCollectibleContext } from './useCollectibles';
+import { useStoredRef } from '@/composables/useStoredRef';
+import { matchesFilter, summarizeByType } from '@/utils/collectibles';
+
+// Leitura da aba Coletáveis: progresso (geral, por tipo e por região), filtro (tipo ou perdíveis),
+// "Esconder coletados" e modo compacto (os dois guardados no navegador). sections: ref das regiões preenchidas.
+// Os itens vêm do contexto (já com o número por tipo: "Artefato #4"); sem contexto, os da própria seção.
+export function useCollectibleView(sections) {
+  const col = useCollectibleContext();
+  const isDone = (id) => !!col?.collected?.value.has(id);
+  const hideDone = useStoredRef('mg:hide-collected', false);
+  const compact = useStoredRef('mg:collectibles-compact', false);
+  const filter = ref(''); // '' · 'missable' · 'type:<tipo>'
+
+  const full = (it) => col?.byId.value.get(it.id) ?? it;
+  const itemsOf = (s) => (s.items ?? []).map(full);
+  const all = computed(() => sections.value.flatMap(itemsOf));
+
+  const countOf = (list) => ({ done: list.filter((i) => isDone(i.id)).length, total: list.length });
+  const overall = computed(() => countOf(all.value));
+  const byType = computed(() => summarizeByType(all.value, isDone));
+  const missable = computed(() => all.value.filter((i) => i.missable).length);
+
+  // Itens visíveis de uma região (filtro + esconder coletados)
+  const shown = (s) => itemsOf(s).filter((it) => matchesFilter(it, filter.value) && !(hideDone.value && isDone(it.id)));
+  const regionCount = (s) => countOf(itemsOf(s));
+  const regionTypes = (s) => summarizeByType(itemsOf(s), isDone);
+
+  return { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, regionCount, regionTypes };
+}

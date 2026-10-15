@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, useTemplateRef } from 'vue';
-import { ArrowDown, ArrowUp, FileOutput, Plus, Quote, Trash2 } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, CirclePlay, FileOutput, Plus, Quote, Trash2 } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import RefTextEditor from '@/components/trophies/RefTextEditor.vue';
@@ -8,6 +8,7 @@ import TrophyRefPicker from '@/components/trophies/TrophyRefPicker.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleListEditor from '@/components/collectibles/CollectibleListEditor.vue';
 import { sectionWords } from '@/utils/sections';
+import { normalizeUrl } from '@/utils/url';
 import { useClickOutside } from '@/composables/useClickOutside';
 
 // Uma seção no editor (etapa do Roadmap, seção do Guia): título, texto corrido (cita troféus com @)
@@ -79,6 +80,19 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
         <BaseButton :icon="Trash2" icon-only size="sm" variant="danger" class="tooltip-left" :aria-label="`Remover ${w.name}`" :data-tooltip="`Remover ${w.name}`" @click="emit('remove')" />
       </div>
     </header>
+
+    <!-- Vídeo da seção (como o vídeo de cada capítulo do PowerPyx): botão no título, na leitura -->
+    <label class="section__video d-flex align-center gap-1">
+      <CirclePlay :size="16" class="shrink-0 text-subtle" />
+      <input
+        :value="section.video ?? ''"
+        class="input"
+        type="url"
+        :placeholder="`Vídeo ${w.of} ${w.name} (YouTube, opcional)`"
+        :aria-label="`Vídeo ${w.of} ${w.name}`"
+        @change="emit('update', { video: normalizeUrl($event.target.value) })"
+      />
+    </label>
 
     <RefTextEditor
       :model-value="section.body"

@@ -1,13 +1,14 @@
 <script setup>
-import { reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { ImagePlus, Trash2, X } from 'lucide-vue-next';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import { MAX_IMAGES } from '@/utils/collectibles';
+import { MAX_IMAGES, cleanCredit, creditsOf } from '@/utils/collectibles';
 import { normalizeUrl } from '@/utils/url';
+import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 
-// Edição de um coletável (editor): nome, tipo, local/checkpoint, descrição e imagens (links).
-// Edita uma cópia e grava só no "Salvar".
+// Edição de um coletável (editor): nome, tipo, local/checkpoint, descrição, imagens (links), vídeo,
+// marcas (perdível / não conta) e crédito de quem fez as imagens/vídeo. Edita uma cópia e grava só no "Salvar".
 const open = defineModel({ type: Boolean, default: false });
 const props = defineProps({
   item: { type: Object, default: null },
@@ -15,10 +16,21 @@ const props = defineProps({
 });
 const emit = defineEmits(['save', 'remove']);
 
-const form = reactive({ name: '', type: '', location: '', description: '', images: [] });
+const EMPTY = { name: '', type: '', location: '', description: '', images: [], video: '', missable: false, uncounted: false, creditName: '', creditUrl: '' };
+const form = reactive({ ...EMPTY });
 watch(open, (v) => {
-  if (v && props.item) Object.assign(form, { ...props.item, images: [...(props.item.images ?? [])] });
+  if (!v || !props.item) return;
+  const { credit, images, ...rest } = props.item;
+  Object.assign(form, EMPTY, rest, { images: [...(images ?? [])], creditName: credit?.name ?? '', creditUrl: credit?.url ?? '' });
 });
+
+// Créditos já usados no guia (lista do guia + outros coletáveis): sugestão no nome; escolher um preenche o link
+const { draft } = useGuideDraft();
+const knownCredits = computed(() => creditsOf(draft.value));
+function onCreditName() {
+  const known = knownCredits.value.find((c) => c.name.toLowerCase() === form.creditName.trim().toLowerCase());
+  if (known?.url && !form.creditUrl.trim()) form.creditUrl = known.url;
+}
 
 const addImage = () => form.images.length < MAX_IMAGES && form.images.push('');
 
@@ -29,6 +41,10 @@ function save() {
     location: form.location.trim(),
     description: form.description.trim(),
     images: form.images.map((u) => normalizeUrl(u.trim())).filter(Boolean),
+    video: normalizeUrl(form.video),
+    missable: form.missable,
+    uncounted: form.uncounted,
+    credit: cleanCredit({ name: form.creditName, url: form.creditUrl }),
   });
   open.value = false;
 }
@@ -45,7 +61,7 @@ function save() {
       <div class="grid-2">
         <label class="field">
           <span class="field__label">Tipo</span>
-          <input v-model="form.type" class="input" list="collectible-types" placeholder="Ex.: Legacy Item, Documento" />
+          <input v-model="form.type" class="input" list="collectible-types" placeholder="Ex.: Artefato, Pingente" />
           <datalist id="collectible-types">
             <option v-for="t in types" :key="t" :value="t" />
           </datalist>
@@ -55,6 +71,14 @@ function save() {
           <input v-model="form.location" class="input" placeholder="Ex.: 06 Central Camp" />
         </label>
       </div>
+
+      <div class="d-flex flex-wrap gap-3">
+        <label class="checkbox text-sm"><input v-model="form.missable" type="checkbox" /> Perdível</label>
+        <label class="checkbox text-sm"><input v-model="form.uncounted" type="checkbox" /> Não conta para o troféu</label>
+      </div>
+      <p class="text-xs text-subtle">
+        A numeração ("{{ form.type || 'Tipo' }} #4") é automática, por tipo e na ordem do guia. Os que não contam ficam sem número.
+      </p>
 
       <label class="field">
         <span class="field__label">Como achar</span>
@@ -72,6 +96,30 @@ function save() {
           Adicionar imagem
         </BaseButton>
       </div>
+
+      <label class="field">
+        <span class="field__label">Vídeo (YouTube com o tempo toca no app)</span>
+        <input v-model="form.video" class="input" type="url" placeholder="https://youtu.be/…?t=95" />
+      </label>
+
+      <fieldset class="field">
+        <legend class="field__label mb-1">Crédito das imagens/vídeo</legend>
+        <div class="grid-2">
+          <input
+            v-model="form.creditName"
+            class="input"
+            list="credit-names"
+            placeholder="Nome (ex.: PowerPyx)"
+            aria-label="Nome do crédito"
+            @change="onCreditName"
+          />
+          <datalist id="credit-names">
+            <option v-for="c in knownCredits" :key="c.id" :value="c.name" />
+          </datalist>
+          <input v-model="form.creditUrl" class="input" type="url" placeholder="Link (opcional)" aria-label="Link do crédito" />
+        </div>
+        <span class="text-xs text-subtle">Aparece no cartão e entra sozinho nos créditos do guia.</span>
+      </fieldset>
     </form>
 
     <template #footer>
@@ -92,6 +140,10 @@ function save() {
   @include down(sm) {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+fieldset {
+  border: 0;
 }
 
 .thumb {

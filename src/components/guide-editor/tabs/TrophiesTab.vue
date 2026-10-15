@@ -7,6 +7,7 @@ import PsnTitlePicker from '@/components/trophies/PsnTitlePicker.vue';
 import TrophyList from '@/components/trophies/TrophyList.vue';
 import TrophyHeader from '@/components/trophies/TrophyHeader.vue';
 import GuideStats from '@/components/guide-editor/GuideStats.vue';
+import GuideCreditsEditor from '@/components/guide-editor/GuideCreditsEditor.vue';
 import { useAsyncState } from '@/composables/useAsyncState';
 import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
@@ -87,7 +88,10 @@ function link(title) {
         @remove="remove"
         @make-principal="makePrincipal"
       >
-        <GuideStats />
+        <div class="d-flex align-center flex-wrap gap-1 ml-auto">
+          <GuideStats />
+          <GuideCreditsEditor />
+        </div>
       </TrophyHeader>
 
       <p v-if="comparison" class="notice d-flex align-start gap-1 text-sm radius-1 px-2 py-1" :class="{ 'is-warn': !comparison.same }">

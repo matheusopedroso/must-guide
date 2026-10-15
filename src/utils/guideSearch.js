@@ -3,7 +3,6 @@ import { TROPHY_TYPE_MAP } from '@/config/trophies';
 import { filledPages, pageName } from './pages';
 import { filledSections, sectionLabel } from './sections';
 import { htmlToPlain } from './html';
-import { collectiblesOf } from './collectibles';
 
 // Busca dentro de um guia (leitura): texto das seções de todas as abas (e páginas), troféus (nome PT/EN,
 // descrição, dica, capítulo) e coletáveis (nome, tipo, local, descrição). Sem acento e sem maiúsculas.

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { ArrowDown, ArrowUp, Image, Pencil, Plus } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, CirclePlay, Image, Pencil, Plus, TriangleAlert } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import CollectibleItemModal from './CollectibleItemModal.vue';
 
@@ -41,8 +41,11 @@ defineExpose({ edit: (id) => (editingId.value = id) });
           <span class="fw-600 truncate">{{ it.name || 'Sem nome' }}</span>
           <span class="text-xs text-muted truncate">{{ [it.type, it.location].filter(Boolean).join(' · ') || 'Toque para completar os detalhes' }}</span>
         </button>
-        <span v-if="it.images?.length" class="d-inline-flex align-center gap-1 text-xs text-subtle" :title="`${it.images.length} imagem(ns)`">
-          <Image :size="14" /> {{ it.images.length }}
+        <span class="d-inline-flex align-center gap-1 text-xs text-subtle shrink-0">
+          <TriangleAlert v-if="it.missable" :size="14" class="text-warning" aria-label="Perdível" />
+          <span v-if="it.uncounted" title="Não conta para o troféu">não conta</span>
+          <CirclePlay v-if="it.video" :size="14" aria-label="Tem vídeo" />
+          <template v-if="it.images?.length"><Image :size="14" :aria-label="`${it.images.length} imagem(ns)`" /> {{ it.images.length }}</template>
         </span>
         <BaseButton :icon="ArrowUp" icon-only size="sm" variant="ghost" :disabled="i === 0" aria-label="Subir" @click="emit('move', it.id, -1)" />
         <BaseButton :icon="ArrowDown" icon-only size="sm" variant="ghost" :disabled="i === items.length - 1" aria-label="Descer" @click="emit('move', it.id, 1)" />

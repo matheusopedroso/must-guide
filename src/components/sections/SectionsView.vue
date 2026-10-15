@@ -4,12 +4,12 @@ import { useRoute } from 'vue-router';
 import RefText from '@/components/trophies/RefText.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleCard from '@/components/collectibles/CollectibleCard.vue';
-import ProgressBar from '@/components/ui/ProgressBar.vue';
+import CollectiblesOverview from '@/components/collectibles/CollectiblesOverview.vue';
+import VideoButton from '@/components/ui/VideoButton.vue';
 import ButtonStyleToggle from '@/components/trophies/ButtonStyleToggle.vue';
-import { useCollectibleContext } from '@/composables/guide/useCollectibles';
+import { useCollectibleView } from '@/composables/guide/useCollectibleView';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { countDone, useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
-import { useStoredRef } from '@/composables/useStoredRef';
 import { sectionLabel, sectionWords } from '@/utils/sections';
 import { TROPHY_FLAGS } from '@/config/trophies';
 
@@ -35,13 +35,11 @@ const visible = computed(() =>
   })),
 );
 
-// Coletáveis (cfg.items): progresso pessoal e opção de esconder os já coletados (preferência no navegador)
-const col = useCollectibleContext();
-const isDone = (id) => !!col?.collected?.value.has(id);
-const hideDone = useStoredRef('mg:hide-collected', false);
-const countOf = (list = []) => ({ done: list.filter((i) => isDone(i.id)).length, total: list.length });
-const overall = computed(() => countOf(props.sections.flatMap((s) => s.items ?? [])));
-const shown = (list = []) => (hideDone.value ? list.filter((i) => !isDone(i.id)) : list);
+// Coletáveis (cfg.items): progresso (geral, por tipo, por região), filtro, esconder coletados e modo compacto
+const cv = props.cfg.items ? useCollectibleView(computed(() => props.sections)) : null;
+const { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, regionCount, regionTypes } = cv ?? {};
+// Com filtro: só as regiões que têm algum coletável dele
+const listed = computed(() => (filter?.value ? visible.value.filter((s) => shown(s).length) : visible.value));
 const w = computed(() => sectionWords(props.cfg));
 // Checklist de quem lê: troféus feitos em cada seção
 const checklist = useTrophyChecklist();
@@ -73,31 +71,51 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
       <SectionTrophyGrid :trophies="flagged" :progress="progress" @open="$emit('open-trophy', $event)" />
     </section>
 
-    <!-- Coletáveis: progresso geral -->
-    <div v-if="cfg.items && overall.total" class="surface radius-2 p-2 d-flex flex-column gap-1">
-      <div class="d-flex align-center justify-between flex-wrap gap-1">
-        <span class="text-sm"><strong>{{ overall.done }}</strong> de {{ overall.total }} coletáveis</span>
-        <label class="checkbox text-sm"><input v-model="hideDone" type="checkbox" /> Esconder coletados</label>
-      </div>
-      <ProgressBar :value="overall.done" :max="overall.total" tone="earned" />
-    </div>
+    <!-- Coletáveis: progresso geral, por tipo (filtra) e opções -->
+    <CollectiblesOverview
+      v-if="cv && overall.total"
+      v-model:filter="filter"
+      v-model:hide-done="hideDone"
+      v-model:compact="compact"
+      :overall="overall"
+      :by-type="byType"
+      :missable="missable"
+    />
 
     <ButtonStyleToggle v-if="hasKeys" />
 
     <!-- Índice: só com 2+ seções -->
     <nav v-if="visible.length > 1" class="d-flex flex-wrap gap-1" aria-label="Seções">
-      <button v-for="s in visible" :key="s.id" type="button" class="pill" @click="goToStage(s)">{{ s.label }}</button>
+      <button v-for="s in visible" :key="s.id" type="button" class="pill" @click="goToStage(s)">
+        {{ s.label }}
+        <span v-if="cv && s.items?.length" class="text-subtle">{{ regionCount(s).done }}/{{ regionCount(s).total }}</span>
+      </button>
     </nav>
 
-    <section v-for="s in visible" :id="anchor(s)" :key="s.id" class="section surface radius-2 p-2 d-flex flex-column gap-2">
-      <h2 class="section-heading d-flex align-center justify-between gap-1">
-        {{ s.label }}
-        <span v-if="cfg.items && s.items?.length" class="text-sm fw-600 text-subtle">{{ countOf(s.items).done }}/{{ s.items.length }}</span>
-      </h2>
+    <p v-if="filter && !listed.length" class="text-sm text-muted">Nenhum coletável com este filtro{{ hideDone ? ' (ou já foram coletados)' : '' }}.</p>
+
+    <section v-for="s in listed" :id="anchor(s)" :key="s.id" class="section surface radius-2 p-2 d-flex flex-column gap-2">
+      <div class="d-flex align-center flex-wrap gap-1">
+        <h2 class="section-heading flex-1">{{ s.label }}</h2>
+        <VideoButton v-if="s.video" :url="s.video" :title="s.label" size="sm" variant="ghost" />
+        <span v-if="cv && s.items?.length" class="text-sm fw-600 text-subtle">{{ regionCount(s).done }}/{{ regionCount(s).total }}</span>
+      </div>
+      <!-- Contagem por tipo da região (linha do PowerPyx: "7 Artefatos | 3 Pingentes") -->
+      <p v-if="cv && regionTypes(s).length > 1" class="d-flex flex-wrap gap-1">
+        <span v-for="t in regionTypes(s)" :key="t.type" class="tag">{{ t.type || 'Sem tipo' }} {{ t.done }}/{{ t.total }}</span>
+      </p>
       <RefText :html="s.body" class="section__body" @trophy="$emit('open-trophy', $event)" />
-      <div v-if="cfg.items && s.items?.length" class="d-flex flex-column gap-2">
-        <CollectibleCard v-for="it in shown(s.items)" :key="it.id" :item="it" :collected="isDone(it.id)" :can-toggle="!!col?.toggle" @toggle="col.toggle" />
-        <p v-if="!shown(s.items).length" class="text-sm text-muted">Tudo coletado aqui. ✓</p>
+      <div v-if="cv && s.items?.length" class="d-flex flex-column" :class="compact ? 'gap-1' : 'gap-2'">
+        <CollectibleCard
+          v-for="it in shown(s)"
+          :key="it.id"
+          :item="it"
+          :collected="isDone(it.id)"
+          :can-toggle="!!col?.toggle"
+          :compact="compact"
+          @toggle="col.toggle"
+        />
+        <p v-if="!shown(s).length" class="text-sm text-muted">{{ filter ? 'Nada deste filtro aqui.' : 'Tudo coletado aqui. ✓' }}</p>
       </div>
       <template v-if="s.trophyItems.length">
         <p class="kicker">

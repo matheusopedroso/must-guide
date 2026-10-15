@@ -16,6 +16,7 @@ import PagedSectionsView from '@/components/sections/PagedSectionsView.vue';
 import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailModal.vue';
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
 import GuideSearchModal from '@/components/guides/GuideSearchModal.vue';
+import GuideCredits from '@/components/guides/GuideCredits.vue';
 import { useDlcGuides } from '@/composables/guide/useDlcGuides';
 import { useGuideReader } from '@/composables/guide/useGuideReader';
 import { useQueryParam } from '@/composables/useQueryParam';
@@ -216,6 +217,8 @@ async function share() {
           <!-- As DLCs têm guia próprio: os troféus delas ficam lá -->
           <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="DLCs" />
         </div>
+
+        <GuideCredits :guide="guide" class="mt-5" />
       </div>
 
       <CollectibleDetailModal v-model="openCollectible" />
