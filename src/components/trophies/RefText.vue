@@ -3,6 +3,7 @@ import { computed, onMounted, useTemplateRef, watch } from 'vue';
 import { hasRichContent, sanitizeHtml, textToHtml } from '@/utils/html';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
+import { useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 import { fillTrophyCard, promoteLoneTrophyRefs } from '@/utils/trophyRef';
 import { fullImageSrc } from '@/utils/textBlocks';
 
@@ -17,6 +18,7 @@ const emit = defineEmits(['trophy', 'text']);
 
 const collectibles = useCollectibleContext();
 const trophyCtx = useTrophyContext();
+const checklist = useTrophyChecklist();
 const root = useTemplateRef('root');
 const safeHtml = computed(() => (hasRichContent(props.html) ? sanitizeHtml(textToHtml(props.html)) : ''));
 
@@ -44,11 +46,11 @@ function paintTrophyCards() {
   const stats = trophyCtx.progress?.value?.trophies ?? {};
   for (const el of cards) {
     const id = Number(el.dataset.trophyCard);
-    if (byId.has(id)) fillTrophyCard(el, byId.get(id), stats[id]);
+    if (byId.has(id)) fillTrophyCard(el, byId.get(id), stats[id], checklist ? checklist.isDone(id) : !!stats[id]?.earned);
   }
 }
 onMounted(paintTrophyCards);
-watch([safeHtml, () => trophyCtx?.trophies.value, () => trophyCtx?.progress?.value], paintTrophyCards, { flush: 'post' });
+watch([safeHtml, () => trophyCtx?.trophies.value, () => trophyCtx?.progress?.value, () => checklist?.checked.value], paintTrophyCards, { flush: 'post' });
 
 const BOX_AREA = 28; // px da esquerda do chip que valem como "caixinha"
 

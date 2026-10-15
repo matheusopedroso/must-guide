@@ -35,7 +35,8 @@ export const controllerKeyHtml = (key) =>
 
 // Monta o cartão do troféu (leitura) com o mesmo visual da grade "Troféus desta seção" (.trophy-tile):
 // ícone (check verde se você tem), troféu na cor do tipo + nome e descrição. DOM com textContent: nada vira HTML.
-export function fillTrophyCard(el, trophy, stats) {
+// done: feito no checklist de quem lê (marcado ou conquistado); sem checklist, o conquistado na PSN
+export function fillTrophyCard(el, trophy, stats, done = !!stats?.earned) {
   const make = (tag, cls, text) => {
     const node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -43,7 +44,7 @@ export function fillTrophyCard(el, trophy, stats) {
     return node;
   };
   const type = TROPHY_TYPE_MAP[trophy.type] ?? TROPHY_TYPE_MAP.bronze;
-  const earned = !!stats?.earned;
+  const earned = done;
 
   const icon = make('span', 'trophy-tile__icon');
   if (trophy.icon) {

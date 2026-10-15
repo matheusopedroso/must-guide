@@ -12,6 +12,7 @@ import { hasRichContent } from '@/utils/html';
 import { trophyAnchorId } from '@/utils/trophyRef';
 import { parseYoutube } from '@/utils/url';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
+import { useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 
 // Card do troféu em 3 partes: topo (ícone, nome, descrição, ações) · meio (guia, se preenchido) · rodapé (badges e etiquetas)
 const props = defineProps({
@@ -27,6 +28,10 @@ const emit = defineEmits(['update-note']);
 const update = (patch) => emit('update-note', props.trophy.id, patch);
 
 const ctx = useTrophyContext();
+// Leitura: checklist de quem lê (feito = marcado ou conquistado na PSN)
+const checklist = useTrophyChecklist();
+const done = computed(() => (checklist ? checklist.isDone(props.trophy.id) : !!props.stats?.earned));
+const earnedOnPsn = computed(() => !!props.stats?.earned);
 const editingTip = ref(false);
 const editingDetails = ref(false);
 const revealed = ref(false);
@@ -53,7 +58,7 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
 </script>
 
 <template>
-  <li :id="trophyAnchorId(trophy.id)" class="trophy surface radius-2" :class="{ 'is-blurred': blurred, 'is-earned': stats?.earned }">
+  <li :id="trophyAnchorId(trophy.id)" class="trophy surface radius-2" :class="{ 'is-blurred': blurred, 'is-earned': done }">
     <!-- Topo -->
     <header class="trophy__head p-2">
       <div
@@ -62,7 +67,7 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
         @click="reveal"
       >
         <img v-if="trophy.icon" :src="trophy.icon" alt="" loading="lazy" decoding="async" class="spoil" />
-        <span v-if="stats?.earned" class="trophy__check d-flex align-center justify-center" aria-label="Conquistado">
+        <span v-if="done" class="trophy__check d-flex align-center justify-center" :aria-label="earnedOnPsn ? 'Conquistado' : 'Feito'">
           <Check :size="12" :stroke-width="3" />
         </span>
       </div>
@@ -91,6 +96,19 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
       </div>
 
       <div class="trophy__actions d-flex gap-1">
+        <button
+          v-if="readonly && checklist"
+          type="button"
+          class="trophy-tile__toggle d-flex align-center justify-center radius-full shrink-0"
+          :class="{ 'is-on': done }"
+          :disabled="earnedOnPsn"
+          :aria-pressed="done"
+          :aria-label="done ? 'Desmarcar' : 'Marcar como feito'"
+          :data-tooltip="earnedOnPsn ? 'Conquistado na PSN' : done ? 'Feito' : 'Marcar como feito'"
+          @click="checklist.toggle(trophy.id)"
+        >
+          <Check :size="14" :stroke-width="3" />
+        </button>
         <template v-if="note.video">
           <BaseButton
             v-if="isYoutubeVideo"

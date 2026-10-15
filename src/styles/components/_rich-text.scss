@@ -1,3 +1,4 @@
+@use 'sass:list';
 @use '../abstracts' as *;
 
 // Conteúdo formatado (editor e leitura) — mesmo visual nos dois
@@ -125,5 +126,47 @@
 
   img {
     max-height: 240px; // no editor, menor para não atrapalhar a escrita
+  }
+}
+
+// Caixa de aviso (div.callout[data-kind] — config/callouts.js): faixa na cor do tipo, fundo claro e o rótulo no topo
+$callouts: (
+  warning: ('Atenção', warning),
+  missable: ('Perdível', danger),
+  tip: ('Dica', success),
+  note: ('Nota', info),
+);
+
+.rich-text .callout {
+  margin: space(2) 0;
+  padding: space(2);
+  border-left: 4px solid var(--info);
+  border-radius: $r1;
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+
+  > * + * {
+    margin-top: space(1);
+  }
+
+  &::before {
+    display: block;
+    margin-bottom: space(1);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+@each $kind, $v in $callouts {
+  .rich-text .callout[data-kind='#{$kind}'] {
+    $tone: list.nth($v, 2);
+    border-left-color: var(--#{$tone});
+    background: color-mix(in srgb, var(--#{$tone}) 10%, transparent);
+
+    &::before {
+      content: list.nth($v, 1);
+      color: var(--#{$tone});
+    }
   }
 }

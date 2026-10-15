@@ -10,6 +10,7 @@ import { TROPHY_FLAGS } from '@/config/trophies';
 import { hasRichContent } from '@/utils/html';
 import { formatDate } from '@/utils/date';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
+import { countDone, useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 
 // Aba "Visão geral" da leitura (como a aba Detalhes do Must Watch):
 // sobre o jogo + ficha à esquerda, cartão "Para platinar" à direita e, embaixo,
@@ -36,6 +37,10 @@ const summary = computed(() => {
   }
   return { total: trophies.length, tips, flags: TROPHY_FLAGS.map((f) => ({ ...f, trophies: byFlag[f.id] })).filter((f) => f.trophies.length) };
 });
+
+// Checklist de quem lê: troféus feitos (marcados ou conquistados) na lista aberta
+const checklist = useTrophyChecklist();
+const checklistCount = computed(() => (checklist && props.list ? countDone(props.list.trophies.map((t) => t.id), checklist.isDone) : null));
 
 // Coletáveis do guia e quantos você já marcou
 const col = useCollectibleContext();
@@ -119,6 +124,12 @@ const PLAY_ROWS = [
         <div v-if="collectibles" class="card__row d-flex align-center justify-between gap-1">
           <span class="d-inline-flex align-center gap-1 text-sm text-muted"><Gem :size="16" /> Coletáveis</span>
           <span class="text-sm fw-600">{{ collectibles.done }}/{{ collectibles.total }}</span>
+        </div>
+        <div v-if="checklistCount?.total" class="d-flex flex-column gap-1">
+          <span class="d-flex justify-between text-xs text-muted">
+            Seu checklist <strong :class="{ 'text-earned': checklistCount.done === checklistCount.total }">{{ checklistCount.done }}/{{ checklistCount.total }}</strong>
+          </span>
+          <ProgressBar :value="checklistCount.done" :max="checklistCount.total" tone="earned" />
         </div>
         <div v-if="list" class="d-flex flex-column gap-1">
           <span class="text-xs text-muted">Guia: {{ summary.tips }} de {{ summary.total }} troféus com dica</span>

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Check, CirclePlay, EyeOff, FileQuestion, ListChecks, Pencil, Share2 } from 'lucide-vue-next';
+import { Check, CircleCheck, CirclePlay, EyeOff, FileQuestion, ListChecks, Pencil, Share2 } from 'lucide-vue-next';
 import PageBar from '@/components/ui/PageBar.vue';
 import DetailHero from '@/components/ui/DetailHero.vue';
 import ActionIcon from '@/components/ui/ActionIcon.vue';
@@ -37,8 +37,12 @@ const toast = useToast();
 const guideId = computed(() => String(route.params.id ?? ''));
 const trophyId = computed(() => Number(route.params.trophyId));
 
-const { guide, loading, error, game, canEdit, title: guideTitle, getNote, backlinks, list, progress, listLoading, listError, openCollectible } =
-  useGuideReader(guideId);
+const {
+  guide, loading, error, game, canEdit, title: guideTitle, getNote, backlinks, list, progress, listLoading, listError, openCollectible,
+  checked, toggleChecked, isEarned,
+} = useGuideReader(guideId);
+// Checklist de quem lê: marcado à mão (conquistado na PSN já conta)
+const isChecked = computed(() => checked.value.has(trophyId.value));
 
 const trophies = computed(() => list.value?.trophies ?? []);
 const index = computed(() => trophies.value.findIndex((t) => t.id === trophyId.value));
@@ -126,6 +130,7 @@ async function share() {
       >
         <template #labels>
           <span v-if="stats?.earned" class="badge badge--success"><Check :size="12" /> Você tem</span>
+          <span v-else-if="isChecked" class="badge badge--success"><Check :size="12" /> Feito</span>
           <span v-for="f in flags" :key="f.id" class="badge" :class="`badge--${f.tone}`"><component :is="f.icon" :size="12" /> {{ f.label }}</span>
           <span v-if="trophy.hidden" class="badge"><EyeOff :size="12" /> Oculto</span>
         </template>
@@ -139,6 +144,13 @@ async function share() {
           <p v-if="nameEn" class="text-sm text-subtle mt-1" lang="en">{{ nameEn }}</p>
         </template>
         <template #actions>
+          <ActionIcon
+            v-if="!isEarned(trophyId)"
+            :icon="CircleCheck"
+            :label="isChecked ? 'Feito' : 'Marcar feito'"
+            :active="isChecked"
+            @click="toggleChecked(trophyId)"
+          />
           <ActionIcon :icon="ListChecks" label="Na lista" :to="listRoute" />
           <ActionIcon v-if="note.video && isYoutube" :icon="CirclePlay" label="Vídeo" @click="videoOpen = true" />
           <ActionIcon v-else-if="note.video" :icon="CirclePlay" label="Vídeo" :href="note.video" />

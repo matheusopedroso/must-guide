@@ -1,7 +1,7 @@
 import { escapeHtml } from './html';
 
 // Coletável (aba Coletáveis, dentro de cada região/seção): nome, tipo ("Legacy Item"), local/checkpoint,
-// descrição (texto simples) e imagens (links). O progresso (marcado ou não) é de cada pessoa — ver useCollected.
+// descrição (texto simples) e imagens (links). O progresso (marcado ou não) é de cada pessoa — ver usePersonalProgress.
 export const MAX_IMAGES = 4;
 
 export const createCollectible = (name = '') => ({

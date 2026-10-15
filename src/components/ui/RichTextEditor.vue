@@ -116,6 +116,40 @@ function toggleWrap(cls) {
   return 'on';
 }
 
+// Caixa de aviso no parágrafo do cursor: sem caixa → envolve o parágrafo (e deixa um parágrafo livre
+// embaixo para sair dela); na caixa do mesmo tipo → tira a caixa; de outro tipo → troca o tipo.
+// → 'on' | 'off' | 'changed' | 'empty'
+function toggleCallout(kind) {
+  restoreSelection();
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !content.contains(sel.anchorNode)) return 'empty';
+  let block = sel.getRangeAt(0).startContainer;
+  while (block && block.parentNode !== content) block = block.parentNode;
+  if (!block || block === content) return 'empty';
+
+  let result;
+  if (block.matches?.('div.callout')) {
+    if (block.dataset.kind === kind) {
+      block.replaceWith(...block.childNodes);
+      result = 'off';
+    } else {
+      block.dataset.kind = kind;
+      result = 'changed';
+    }
+  } else {
+    const box = document.createElement('div');
+    box.className = 'callout';
+    box.dataset.kind = kind;
+    block.replaceWith(box);
+    box.append(block.nodeType === Node.TEXT_NODE ? Object.assign(document.createElement('p'), { textContent: block.data }) : block);
+    if (!box.nextSibling) box.after(Object.assign(document.createElement('p'), { innerHTML: '<br>' }));
+    result = 'on';
+  }
+  content.dispatchEvent(new Event('input', { bubbles: true }));
+  savedRange = null;
+  return result;
+}
+
 function insertBlock(html) {
   restoreSelection();
   const sel = window.getSelection();
@@ -192,7 +226,7 @@ watch(model, (value) => {
   empty.value = !hasRichContent(value);
 });
 
-defineExpose({ focus: () => content && focusEnd(), saveSelection, restoreSelection, selectedText, insertHtml, toggleWrap });
+defineExpose({ focus: () => content && focusEnd(), saveSelection, restoreSelection, selectedText, insertHtml, toggleWrap, toggleCallout });
 </script>
 
 <template>

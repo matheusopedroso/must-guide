@@ -168,6 +168,31 @@ a.trophy-ref.trophy-count b,
     font-size: 14px;
     font-weight: 600;
   }
+
+  // Checklist de quem lê: círculo que marca o troféu como feito
+  &__toggle {
+    width: 28px;
+    height: 28px;
+    margin-right: $space-half;
+    border: 2px solid var(--border-strong);
+    color: transparent;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+    &:hover:not(:disabled):not(.is-on) {
+      border-color: var(--earned);
+      color: color-mix(in srgb, var(--earned) 60%, transparent);
+    }
+
+    &.is-on {
+      border-color: var(--earned);
+      background: var(--earned);
+      color: #fff;
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+  }
 }
 
 // Troféu na cor do tipo (o mesmo desenho do ícone da grade), para o cartão montado fora do Vue

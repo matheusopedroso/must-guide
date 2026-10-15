@@ -8,6 +8,7 @@ import ProgressBar from '@/components/ui/ProgressBar.vue';
 import ButtonStyleToggle from '@/components/trophies/ButtonStyleToggle.vue';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
+import { countDone, useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 import { useStoredRef } from '@/composables/useStoredRef';
 import { sectionLabel, sectionWords } from '@/utils/sections';
 import { TROPHY_FLAGS } from '@/config/trophies';
@@ -42,6 +43,10 @@ const countOf = (list = []) => ({ done: list.filter((i) => isDone(i.id)).length,
 const overall = computed(() => countOf(props.sections.flatMap((s) => s.items ?? [])));
 const shown = (list = []) => (hideDone.value ? list.filter((i) => !isDone(i.id)) : list);
 const w = computed(() => sectionWords(props.cfg));
+// Checklist de quem lê: troféus feitos em cada seção
+const checklist = useTrophyChecklist();
+const trophyCount = (s) => (checklist && s.trophyItems.length ? countDone(s.trophyItems.map((t) => t.id), checklist.isDone) : null);
+
 // Texto com botões de controle: mostra a escolha PlayStation / Xbox
 const hasKeys = computed(() => props.sections.some((s) => s.body?.includes('btn-key')));
 const flag = computed(() => TROPHY_FLAGS.find((f) => f.id === props.cfg.flag) ?? null);
@@ -95,7 +100,11 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
         <p v-if="!shown(s.items).length" class="text-sm text-muted">Tudo coletado aqui. ✓</p>
       </div>
       <template v-if="s.trophyItems.length">
-        <p class="kicker">Troféus {{ w.this }} {{ w.name }} · {{ s.trophyItems.length }}</p>
+        <p class="kicker">
+          Troféus {{ w.this }} {{ w.name }} ·
+          <template v-if="trophyCount(s)">{{ trophyCount(s).done }}/{{ trophyCount(s).total }} feitos</template>
+          <template v-else>{{ s.trophyItems.length }}</template>
+        </p>
         <SectionTrophyGrid :trophies="s.trophyItems" :progress="progress" @open="$emit('open-trophy', $event)" />
       </template>
     </section>

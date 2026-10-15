@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import SectionsView from './SectionsView.vue';
 import PrevNextNav from '@/components/ui/PrevNextNav.vue';
 import { pageName } from '@/utils/pages';
+import { countDone, useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 
 // Aba paginada na leitura (Guia — como o IGN e o TrueAchievements): sumário das páginas (ao lado no desktop,
 // seletor no celular), a página aberta com as suas seções (SectionsView) e anterior/próxima no fim.
@@ -22,6 +23,13 @@ const route = useRoute();
 const router = useRouter();
 const index = computed(() => Math.min(Math.max(Number(route.query.pagina) - 1 || 0, 0), props.pages.length - 1));
 const page = computed(() => props.pages[index.value]);
+
+// Checklist: troféus feitos de cada página (os das seções dela, sem repetir)
+const checklist = useTrophyChecklist();
+const pageCount = (p) => {
+  const ids = [...new Set(p.sections.flatMap((s) => s.trophies))];
+  return checklist && ids.length ? countDone(ids, checklist.isDone) : null;
+};
 const prev = computed(() => (index.value > 0 ? { i: index.value - 1, name: pageName(props.pages[index.value - 1], index.value - 1) } : null));
 const next = computed(() =>
   index.value < props.pages.length - 1 ? { i: index.value + 1, name: pageName(props.pages[index.value + 1], index.value + 1) } : null,
@@ -52,7 +60,10 @@ async function go(i) {
             @click="go(i)"
           >
             <span class="toc-item__n shrink-0">{{ i + 1 }}</span>
-            <span class="min-w-0">{{ pageName(p, i) }}</span>
+            <span class="min-w-0 flex-1">{{ pageName(p, i) }}</span>
+            <span v-if="pageCount(p)" class="toc-item__count shrink-0" :class="{ 'is-done': pageCount(p).done === pageCount(p).total }">
+              {{ pageCount(p).done }}/{{ pageCount(p).total }}
+            </span>
           </button>
         </li>
       </ol>
@@ -136,6 +147,17 @@ async function go(i) {
     background: var(--accent-soft);
     color: var(--accent);
     font-weight: 600;
+  }
+
+  &__count {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+
+    &.is-done {
+      color: var(--earned);
+      opacity: 1;
+    }
   }
 
   &__n {

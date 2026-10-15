@@ -223,6 +223,21 @@ direto à seção: `?aba=…&pagina=…#secao-…`), **Citado nas dicas de** (ou
   `<figure class="guide-img"><img src loading="lazy"><figcaption>` (`utils/textBlocks.js`); o filtro só aceita
   imagem dentro desse bloco (imagem colada de site sai). Na leitura, tocar abre a versão grande (IGDB: `t_1080p`).
 
+### Caixas de aviso
+
+Botão de aviso na barra → **Atenção / Perdível / Dica / Nota** (`config/callouts.js`): o parágrafo do cursor vira
+`<div class="callout" data-kind="…">` (o mesmo tipo de novo tira; outro tipo troca). Na leitura: faixa na cor do
+tipo, fundo claro e o rótulo no topo (`_rich-text.scss`). Tipo novo: config + SCSS (mesmo id).
+
+## Checklist de quem lê
+
+Na leitura, cada troféu tem um círculo para **marcar como feito** (grade das seções, aba Troféus e página do troféu
+"Marcar feito"); o cartão no texto acompanha. Feito = marcado **ou** conquistado na PSN (esse não desmarca).
+Progresso: "x/y feitos" em cada seção, por página no sumário do Guia e "Seu checklist" na Visão geral.
+Guardado junto com os coletáveis (`usePersonalProgress`: navegador `mg:collected:<guideId>` e, logado,
+`users/{uid}/progress/{guideId}` → `{ collected, trophies, editedAt }`). Contexto: `useTrophyChecklist`
+(provido por `useGuideReader`; o editor não tem checklist).
+
 ## Coletáveis (modelo do IGN)
 
 Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar e
@@ -234,9 +249,9 @@ geral e por região e "Esconder coletados".
 (com o nome selecionado, o trecho vira o link). Na leitura o chip tem uma caixinha: tocar nela marca/desmarca e vale
 para o guia todo (a aba Coletáveis mostra igual); tocar no nome abre os detalhes.
 
-**Progresso por pessoa:** sempre no navegador (`mg:collected:<jogo>`) e, logado, também em
-`users/{uid}/progress/{jogo}` (só a própria pessoa lê/grava — `firestore.rules`), agrupado em 1,5 s; vale a cópia
-editada por último. Peças: `src/components/collectibles/`, `useCollectibles.js` (contexto + `useCollected`),
+**Progresso por pessoa:** sempre no navegador (`mg:collected:<guideId>`) e, logado, também em
+`users/{uid}/progress/{guideId}` (só a própria pessoa lê/grava — `firestore.rules`), agrupado em 1,5 s; vale a cópia
+editada por último. Peças: `src/components/collectibles/`, `useCollectibles.js` (contexto), `usePersonalProgress.js`,
 `src/utils/collectibles.js`, `src/services/progress.service.js`.
 
 ## Guias de DLC (um guia separado por DLC)

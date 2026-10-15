@@ -1,5 +1,6 @@
 // HTML do editor (Pell): filtro de segurança, conversão de texto antigo e checagem de vazio.
 import { CONTROLLER_KEY_IDS } from '@/config/controllerKeys';
+import { CALLOUT_IDS } from '@/config/callouts';
 
 // Tags permitidas → atributos permitidos (com validação do valor). O resto é removido (o texto de dentro é mantido).
 const TROPHY_REF = /^#trofeu-\d+$/;
@@ -9,7 +10,14 @@ const TROPHY_TYPE = (v) => ['platinum', 'gold', 'silver', 'bronze'].includes(v);
 const ALLOWED = {
   P: {}, BR: {},
   // Cartão do troféu no texto (<div class="trophy-card" data-trophy-card="12" data-type="gold">)
-  DIV: { class: (v) => v === 'trophy-card', 'data-trophy-card': (v) => /^\d+$/.test(v), 'data-type': TROPHY_TYPE, contenteditable: (v) => v === 'false' },
+  // e caixa de aviso (<div class="callout" data-kind="warning"><p>…</p></div> — config/callouts)
+  DIV: {
+    class: (v) => v === 'trophy-card' || v === 'callout',
+    'data-trophy-card': (v) => /^\d+$/.test(v),
+    'data-type': TROPHY_TYPE,
+    'data-kind': (v) => CALLOUT_IDS.has(v),
+    contenteditable: (v) => v === 'false',
+  },
   // Contador sem troféu (<span class="count-tag">5/6 Associados</span>), botão de controle
   // (<span class="btn-key" data-key="face-down" title="Cruz / A">Cruz</span> — config/controllerKeys)
   // e spoiler (<span class="spoiler">trecho escondido até tocar</span>)
@@ -93,6 +101,10 @@ export function sanitizeHtml(html = '') {
   clean(doc.body, doc);
   // Parágrafos vazios que sobram de listas (o navegador gera <p><ul>…</ul></p>)
   for (const p of doc.body.querySelectorAll('p:empty')) p.remove();
+  // Parágrafo vazio no fim (o editor deixa um depois de caixa, imagem ou cartão para continuar escrevendo)
+  while (doc.body.lastElementChild?.matches('p') && !doc.body.lastElementChild.textContent.trim() && !doc.body.lastElementChild.querySelector('img, [contenteditable]')) {
+    doc.body.lastElementChild.remove();
+  }
   return doc.body.innerHTML;
 }
 

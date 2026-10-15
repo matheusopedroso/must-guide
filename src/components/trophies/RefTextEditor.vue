@@ -1,12 +1,13 @@
 <script setup>
 import { computed, ref, useTemplateRef } from 'vue';
-import { EyeOff, Gamepad2, Gem, Hash, IdCard, ImagePlus, Trophy, WandSparkles } from 'lucide-vue-next';
+import { EyeOff, Gamepad2, Gem, Hash, IdCard, ImagePlus, MessageSquareWarning, Trophy, WandSparkles } from 'lucide-vue-next';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import TrophyRefPicker from './TrophyRefPicker.vue';
 import CollectiblePicker from '@/components/collectibles/CollectiblePicker.vue';
 import CounterInsertForm from './CounterInsertForm.vue';
 import ControllerKeyPicker from './ControllerKeyPicker.vue';
 import ImageInsertForm from '@/components/guide-editor/ImageInsertForm.vue';
+import CalloutPicker from '@/components/guide-editor/CalloutPicker.vue';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { imageBlockHtml } from '@/utils/textBlocks';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
@@ -38,7 +39,7 @@ const guideDraft = useGuideDraft();
 const collectibles = useCollectibleContext();
 const toast = useToast();
 const editor = useTemplateRef('editor');
-const picking = ref(null); // null | 'trophy' | 'collectible' | 'card' | 'counter' | 'key' | 'image'
+const picking = ref(null); // null | 'trophy' | 'collectible' | 'card' | 'counter' | 'key' | 'image' | 'callout'
 // Jogo do guia em edição (imagens do jogo para o texto); fora do editor do guia, só por link
 const gameId = computed(() => guideDraft?.draft.value?.gameId ?? '');
 const selection = ref(''); // texto selecionado que vai virar o link
@@ -67,6 +68,7 @@ function onKeydown(e) {
 
 const actions = [
   ...EDITOR_ACTIONS,
+  { name: 'callout', title: 'Caixa de aviso (Atenção, Perdível, Dica, Nota) no parágrafo do cursor', icon: MessageSquareWarning, result: () => openFromSelection('callout') },
   { name: 'image', title: 'Imagem no texto (do jogo ou por link), com legenda', icon: ImagePlus, result: () => openFromSelection('image') },
   {
     name: 'spoiler',
@@ -123,6 +125,12 @@ function insertCard(trophy) {
   picking.value = null;
   editor.value.insertHtml(trophyCardHtml(trophy), { block: true });
   selection.value = '';
+}
+
+// Caixa de aviso: no parágrafo onde o cursor estava
+function applyCallout(kind) {
+  picking.value = null;
+  if (editor.value.toggleCallout(kind) === 'empty') toast.show('Coloque o cursor no parágrafo que vai virar a caixa.', 'info');
 }
 
 // Imagem: bloco depois do parágrafo do cursor
@@ -183,6 +191,7 @@ defineExpose({ focus: () => editor.value?.focus() });
       @select="insertCard"
       @cancel="cancelPick"
     />
+    <CalloutPicker v-if="picking === 'callout'" class="ref-pop" @select="applyCallout" @cancel="cancelPick" />
     <ImageInsertForm v-if="picking === 'image'" :game-id="gameId" class="ref-pop" @insert="insertImage" @cancel="cancelPick" />
     <ControllerKeyPicker v-if="picking === 'key'" class="ref-pop" @select="insertKey" @cancel="cancelPick" />
     <CounterInsertForm

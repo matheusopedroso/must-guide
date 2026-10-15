@@ -23,7 +23,7 @@ export function saveDraft(draft) {
   }
 }
 
-// Tira o guia deste navegador: rascunho e coletáveis marcados (mg:collected:<guideId>, useCollected)
+// Tira o guia deste navegador: rascunho e progresso pessoal (mg:collected:<guideId>, usePersonalProgress)
 export function deleteDraft(guideId) {
   try {
     localStorage.removeItem(key(guideId));
