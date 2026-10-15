@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Check, ChevronDown, TriangleAlert } from 'lucide-vue-next';
+import { Check, ChevronDown, Pencil, TriangleAlert } from 'lucide-vue-next';
+import BaseButton from '@/components/ui/BaseButton.vue';
 import VideoButton from '@/components/ui/VideoButton.vue';
 import RefText from '@/components/trophies/RefText.vue';
 import { collectibleAnchorId, collectibleTag, cleanCredit } from '@/utils/collectibles';
 import { normalizeUrl } from '@/utils/url';
+import { useEditLinks } from '@/composables/guide/useEditLinks';
 
 // Cartão do coletável na leitura (modelo do IGN + numeração do PowerPyx): "Artefato #4", nome, marcas
 // (Perdível, Não conta), Tipo | Local, descrição, imagens, vídeo, crédito e a caixa para marcar.
@@ -40,6 +42,10 @@ const doneCount = computed(() => props.items.filter((it) => props.isDone(it.id))
 const allDone = computed(() => doneCount.value === props.items.length);
 // Caixa da linha compacta: marca os que faltam ou, tudo marcado, desmarca todos
 const toggleAll = () => props.items.filter((it) => props.isDone(it.id) === allDone.value).forEach((it) => emit('toggle', it.id));
+
+// Lápis (quem pode editar): abre o editor com a janela deste coletável
+const links = useEditLinks();
+const editTo = computed(() => links?.collectible(lead.value) ?? null);
 
 const expanded = ref(false);
 const open = computed(() => !props.compact || expanded.value);
@@ -79,6 +85,7 @@ const open = computed(() => !props.compact || expanded.value);
           <ChevronDown v-if="hasBody" :size="16" class="ccard__chevron" />
         </span>
       </button>
+      <BaseButton v-if="editTo" :to="editTo" :icon="Pencil" icon-only size="sm" variant="ghost" class="shrink-0" :aria-label="`Editar ${name}`" />
     </div>
 
     <header v-else class="ccard__name d-flex align-center gap-1 px-2 py-1" :class="{ 'is-group': group }">
@@ -93,9 +100,20 @@ const open = computed(() => !props.compact || expanded.value);
         <span class="ccard__side text-xs fw-700">{{ tag }}</span>
         <span class="flex-1 text-center">{{ name }}</span>
       </template>
-      <span class="ccard__side d-flex justify-end gap-1">
+      <span class="ccard__side d-flex align-center justify-end gap-1">
         <span v-if="missable" class="badge badge--warning"><TriangleAlert :size="12" /> Perdível</span>
         <span v-if="!group && lead.uncounted" class="badge" data-tooltip="Aparece no jogo, mas não conta para o troféu">Não conta</span>
+        <BaseButton
+          v-if="editTo"
+          :to="editTo"
+          :icon="Pencil"
+          icon-only
+          size="sm"
+          variant="ghost"
+          class="ccard__edit tooltip-left"
+          :aria-label="`Editar ${name}`"
+          data-tooltip="Editar coletável"
+        />
       </span>
     </header>
 

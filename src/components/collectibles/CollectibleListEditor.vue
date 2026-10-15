@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useQueryParam } from '@/composables/useQueryParam';
 import { ArrowDown, ArrowUp, CirclePlay, CornerDownRight, Image, Pencil, Plus, TriangleAlert } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import CollectibleItemModal from './CollectibleItemModal.vue';
@@ -27,6 +28,19 @@ const modalOpen = computed({
   get: () => !!editingId.value,
   set: (v) => !v && (editingId.value = null),
 });
+
+// Vindo do lápis da leitura (?coletavel=…): abre a janela deste coletável, se for desta região, e tira o
+// parâmetro da URL (não reabre ao gravar nem ao recarregar)
+const target = useQueryParam('coletavel');
+watch(
+  [target, () => props.items.length],
+  ([id]) => {
+    if (!id || !props.items.some((i) => i.id === id)) return;
+    editingId.value = id;
+    target.value = '';
+  },
+  { immediate: true },
+);
 
 defineExpose({ edit: (id) => (editingId.value = id) });
 </script>

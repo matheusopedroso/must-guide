@@ -1,5 +1,6 @@
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { Plus } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
@@ -57,6 +58,26 @@ const flaggedCount = computed(() =>
 );
 
 const coveredCount = computed(() => trophies.value.filter((t) => covered.value.has(t.id)).length);
+
+// Vindo do lápis da leitura (#secao-…): rola até a seção e pisca a borda. Espera o rascunho carregar
+// (a seção pode ainda não existir) e faz uma vez só.
+const route = useRoute();
+let jumped = false;
+watch(
+  [() => route.hash, sections],
+  async ([hash, list]) => {
+    const id = hash.startsWith('#secao-') ? hash.slice(7) : '';
+    if (jumped || !id || !list.some((s) => s.id === id)) return;
+    jumped = true;
+    await nextTick();
+    const el = document.querySelector(`[data-section="${id}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: 'start' });
+    el.classList.add('is-flash');
+    setTimeout(() => el.classList.remove('is-flash'), 1600);
+  },
+  { immediate: true },
+);
 
 async function addSection() {
   const id = add();

@@ -138,6 +138,13 @@ Classes de texto das páginas de detalhe em `src/styles/components/_detail-page.
 No celular (rota com `meta.immersive`): sem a barra de navegação do topo, a imagem do jogo nítida (1280px) na largura
 da tela até o alto, voltar/compartilhar redondos por cima e a PageBar completa só depois de rolar — como no Must Watch.
 
+### Editar direto da leitura
+
+Quem pode editar vê um **lápis** em cada seção (todas as abas) e em cada coletável. A seção abre o editor na mesma
+aba e página, rolando até ela com a borda piscando (`#secao-…`); o coletável abre a aba Coletáveis já com a janela
+dele aberta (`?coletavel=…`, que sai da URL depois de abrir). Links montados em `useEditLinks.js` (contexto provido
+pelo `useGuideReader`); sem permissão, o lápis não aparece.
+
 ### Busca no guia
 
 Lupa na `PageBar` da leitura ou a tecla **/** (fora de campos de texto) abrem `GuideSearchModal`: busca no texto de

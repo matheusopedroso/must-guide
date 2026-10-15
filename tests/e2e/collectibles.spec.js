@@ -3,7 +3,7 @@ import { readDraft, seed, yoteiGuide } from './helpers.js';
 
 const item = (id, name, type, extra = {}) => ({ id, name, type, location: '', description: '', images: [], ...extra });
 
-const guide = () =>
+const guide = (extra = {}) =>
   yoteiGuide({
     tabs: ['coletaveis'],
     credits: [{ id: 'k1', name: 'PowerPyx', url: 'https://www.powerpyx.com/', role: 'Rota' }],
@@ -31,6 +31,7 @@ const guide = () =>
         ],
       },
     ],
+    ...extra,
   });
 
 // Aba Coletáveis no modelo do PowerPyx: resumo por tipo (filtra), numeração por tipo, marcas, compacto e créditos
@@ -127,4 +128,35 @@ test('coletáveis no editor: marcas, vídeo e crédito; créditos do guia', asyn
   await credits.locator('button:has-text("Salvar")').click();
   await expect(page.locator('.credits-btn')).toContainText('2');
   await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.credits?.map((c) => c.name)).toEqual(['PowerPyx', 'Bia']);
+});
+
+// Lápis na leitura → editor já no ponto certo (seção rolada e destacada; coletável com a janela aberta)
+test('coletáveis: editar direto da leitura', async ({ page }) => {
+  await seed(page, [guide()]);
+  await page.goto('/guia/rawg-1002?aba=coletaveis');
+
+  await page.click('#secao-r2 [aria-label="Editar Vila"]');
+  await expect(page).toHaveURL(/\/editar\?aba=coletaveis#secao-r2$/);
+  await expect(page.locator('[data-section="r2"]')).toBeInViewport();
+
+  await page.goBack();
+  await page.click('.ccard#coletavel-b [aria-label="Editar Pingente da Ana"]');
+  await expect(page.locator('.modal input[placeholder^="Ex.: Cruciform"]')).toHaveValue('Pingente da Ana');
+  await expect(page).not.toHaveURL(/coletavel=/); // abriu uma vez e saiu da URL
+
+  // Aba paginada (Guia): o lápis leva para a mesma página do editor
+  await seed(page, [guide({ guide: [
+    { id: 'p1', title: 'Início', sections: [{ id: 's1', title: 'Prólogo', body: '<p>Oi.</p>', trophies: [] }] },
+    { id: 'p2', title: 'Cap 2', sections: [{ id: 's2', title: 'Ponte', body: '<p>Siga.</p>', trophies: [] }] },
+  ] })]);
+  await page.goto('/guia/rawg-1002?aba=guia&pagina=2');
+  await page.click('[aria-label="Editar Ponte"]');
+  await expect(page).toHaveURL(/editar\?aba=guia&pagina=2#secao-s2$/);
+  await expect(page.locator('[data-section="s2"]')).toBeVisible();
+
+  // Sem permissão de editar: sem lápis
+  await seed(page, [guide()], { admin: false, local: false });
+  await page.goto('/guia/rawg-1002?aba=coletaveis');
+  await expect(page.locator('.ccard').first()).toBeVisible();
+  await expect(page.locator('[aria-label^="Editar"]')).toHaveCount(0);
 });

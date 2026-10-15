@@ -141,6 +141,14 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
 
 <style lang="scss" scoped>
 .section {
+  scroll-margin-top: calc(var(--nav-offset) + 72px); // abaixo das abas grudadas
+  transition: box-shadow 0.3s;
+
+  // Aberta pelo lápis da leitura: destaca por um instante
+  &.is-flash {
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
   &__title {
     flex: 1 1 0;
     min-width: 0;

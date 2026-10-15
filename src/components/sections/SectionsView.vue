@@ -6,8 +6,11 @@ import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleCard from '@/components/collectibles/CollectibleCard.vue';
 import CollectiblesOverview from '@/components/collectibles/CollectiblesOverview.vue';
 import VideoButton from '@/components/ui/VideoButton.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
+import { Pencil } from 'lucide-vue-next';
 import ButtonStyleToggle from '@/components/trophies/ButtonStyleToggle.vue';
 import { useCollectibleView } from '@/composables/guide/useCollectibleView';
+import { useEditLinks } from '@/composables/guide/useEditLinks';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { countDone, useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 import { sectionLabel, sectionWords } from '@/utils/sections';
@@ -41,6 +44,8 @@ const { col, isDone, hideDone, compact, filter, overall, byType, missable, shown
 // Com filtro: só as regiões que têm algum coletável dele
 const listed = computed(() => (filter?.value ? visible.value.filter((s) => shown(s).length) : visible.value));
 const w = computed(() => sectionWords(props.cfg));
+// Lápis (quem pode editar): abre o editor nesta seção
+const edit = useEditLinks();
 // Checklist de quem lê: troféus feitos em cada seção
 const checklist = useTrophyChecklist();
 const trophyCount = (s) => (checklist && s.trophyItems.length ? countDone(s.trophyItems.map((t) => t.id), checklist.isDone) : null);
@@ -99,6 +104,17 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
       <div class="d-flex align-center flex-wrap gap-1">
         <h2 class="section-heading flex-1">{{ s.label }}</h2>
         <VideoButton v-if="s.video" :url="s.video" :title="s.label" size="sm" variant="ghost" />
+        <BaseButton
+          v-if="edit?.section(s.id)"
+          :to="edit.section(s.id)"
+          :icon="Pencil"
+          icon-only
+          size="sm"
+          variant="ghost"
+          class="tooltip-left"
+          :aria-label="`Editar ${s.label}`"
+          :data-tooltip="`Editar ${w.thisOne} ${w.name}`"
+        />
         <span v-if="cv && s.items?.length" class="text-sm fw-600 text-subtle">{{ regionCount(s).done }}/{{ regionCount(s).total }}</span>
       </div>
       <!-- Contagem por tipo da região (linha do PowerPyx: "7 Artefatos | 3 Pingentes"), mesmo com um tipo só

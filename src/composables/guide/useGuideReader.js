@@ -6,6 +6,7 @@ import { useTrophyData } from './useTrophyData';
 import { useTrophyNotes } from './useTrophyNotes';
 import { useTrophyVersions } from './useTrophyVersions';
 import { provideCollectibleContext } from './useCollectibles';
+import { provideEditLinks } from './useEditLinks';
 import { usePersonalProgress } from './usePersonalProgress';
 import { provideTrophyChecklist } from './useTrophyChecklist';
 import { collectiblesOf } from '@/utils/collectibles';
@@ -44,6 +45,7 @@ export function useGuideReader(guideId) {
   provideTrophyChecklist({ checked, toggle: toggleChecked, isDone, isEarned });
 
   const canEdit = computed(() => !enabled || isAdmin.value || source.value === 'local');
+  provideEditLinks(canEdit, guideId); // lápis da leitura → editor no ponto certo
   const isDlc = computed(() => !!guide.value?.dlc);
   const title = computed(() => (guide.value?.dlc ? guide.value.dlc.name || 'DLC' : (guide.value?.game?.title ?? 'Guia')));
 

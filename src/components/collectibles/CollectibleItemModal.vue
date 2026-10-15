@@ -23,16 +23,21 @@ const emit = defineEmits(['save', 'remove']);
 
 const EMPTY = { name: '', type: '', location: '', description: '', images: [], video: '', missable: false, uncounted: false, samePlace: false, creditName: '', creditUrl: '' };
 const form = reactive({ ...EMPTY });
-watch(open, (v) => {
-  if (!v || !props.item) return;
-  const { credit, images, ...rest } = props.item;
-  Object.assign(form, EMPTY, rest, {
-    description: textToHtml(rest.description ?? ''), // texto antigo (simples) → parágrafos
-    images: [...(images ?? [])],
-    creditName: credit?.name ?? '',
-    creditUrl: credit?.url ?? '',
-  });
-});
+// Imediato: a janela pode nascer já aberta (lápis da leitura → ?coletavel=)
+watch(
+  open,
+  (v) => {
+    if (!v || !props.item) return;
+    const { credit, images, ...rest } = props.item;
+    Object.assign(form, EMPTY, rest, {
+      description: textToHtml(rest.description ?? ''), // texto antigo (simples) → parágrafos
+      images: [...(images ?? [])],
+      creditName: credit?.name ?? '',
+      creditUrl: credit?.url ?? '',
+    });
+  },
+  { immediate: true },
+);
 
 // Créditos já usados no guia (lista do guia + outros coletáveis): sugestão no nome; escolher um preenche o link
 const { draft } = useGuideDraft();
