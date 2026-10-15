@@ -37,3 +37,22 @@ export const EDITOR_ACTIONS = [
     result: () => exec('removeFormat') && exec('formatBlock', '<p>'),
   },
 ];
+
+// Conjuntos de botões do editor de texto (RefTextEditor → prop tools). A ordem dos botões é sempre a da
+// barra completa; aqui só se escolhe quais aparecem. Nomes: os de EDITOR_ACTIONS e os do RefTextEditor
+// (callout, image, spoiler, controllerKey, trophyRef, autoLink, trophyCard, counter, collectibleRef).
+// Sem "trophyRef", o "@" e o Ctrl+K também não citam troféu.
+export const EDITOR_TOOLSETS = {
+  full: null, // tudo (abas de seções: Guia, Roadmap, Coletáveis…)
+  // Dica do troféu: texto médio, sem subtítulo nem cartão de troféu (já está no troféu)
+  tip: ['bold', 'italic', 'ulist', 'olist', 'link', 'clear', 'callout', 'image', 'spoiler', 'controllerKey', 'trophyRef', 'autoLink', 'counter', 'collectibleRef'],
+  // "Como achar" do coletável: texto curto
+  collectible: ['bold', 'italic', 'link', 'clear', 'spoiler', 'controllerKey', 'trophyRef', 'collectibleRef'],
+};
+
+// tools: nome de um conjunto ('full', 'tip'…) ou a lista de nomes → Set dos permitidos (null = todos)
+export function resolveTools(tools = 'full') {
+  const list = Array.isArray(tools) ? tools : EDITOR_TOOLSETS[tools];
+  if (list === undefined) throw new Error(`Conjunto de botões desconhecido: ${tools}`);
+  return list ? new Set(list) : null;
+}

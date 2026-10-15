@@ -13,7 +13,7 @@ import { imageBlockHtml } from '@/utils/textBlocks';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { collectibleRefHtml } from '@/utils/collectibles';
-import { EDITOR_ACTIONS } from '@/config/editor';
+import { EDITOR_ACTIONS, resolveTools } from '@/config/editor';
 import { autoLinkTrophies, controllerKeyHtml, counterHtml, trophyCardHtml, trophyRefHtml } from '@/utils/trophyRef';
 import { useToast } from '@/composables/useToast';
 
@@ -26,11 +26,13 @@ import { useToast } from '@/composables/useToast';
 // Cartão (bloco no texto, como o TrueAchievements): escolhe o troféu e ele entra entre os parágrafos; na leitura
 // mostra ícone, descrição, raridade e se você já tem. Contador (#): "6/18 Chefes derrotados", ligado ou não a um troféu.
 // As listas vêm do contexto (provideTrophyContext / provideCollectibleContext). Usado em todas as abas de texto.
+// tools: quais botões aparecem — conjunto de config/editor (EDITOR_TOOLSETS: 'full', 'tip', 'collectible') ou lista de nomes.
 const model = defineModel({ type: String, default: '' });
 const props = defineProps({
   placeholder: { type: String, default: '' },
   exclude: { type: [Number, String, Array], default: null }, // troféu(s) que não aparecem na lista
   autofocus: Boolean,
+  tools: { type: [String, Array], default: 'full' },
 });
 const emit = defineEmits(['keydown']);
 
@@ -58,7 +60,7 @@ function openFromSelection(kind = 'trophy') {
 }
 
 function onKeydown(e) {
-  if (ctx && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+  if (canCite && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault();
     openFromSelection('trophy');
     return;
@@ -66,7 +68,7 @@ function onKeydown(e) {
   emit('keydown', e);
 }
 
-const actions = [
+const allActions = [
   ...EDITOR_ACTIONS,
   { name: 'callout', title: 'Caixa de aviso (Atenção, Perdível, Dica, Nota) no parágrafo do cursor', icon: MessageSquareWarning, result: () => openFromSelection('callout') },
   { name: 'image', title: 'Imagem no texto (do jogo ou por link), com legenda', icon: ImagePlus, result: () => openFromSelection('image') },
@@ -101,6 +103,11 @@ const actions = [
       ]
     : []),
 ];
+
+// Só os botões escolhidos (a barra é montada uma vez, na abertura do editor)
+const allowed = resolveTools(props.tools);
+const actions = allowed ? allActions.filter((a) => allowed.has(a.name)) : allActions;
+const canCite = !!ctx && (!allowed || allowed.has('trophyRef')); // "@" e Ctrl+K
 
 // Spoiler: o trecho selecionado fica escondido na leitura até tocar
 function toggleSpoiler() {
@@ -181,7 +188,7 @@ defineExpose({ focus: () => editor.value?.focus() });
       :placeholder="placeholder"
       :autofocus="autofocus"
       @keydown="onKeydown"
-      @trigger="ctx && openPicker(true)"
+      @trigger="canCite && openPicker(true)"
     />
     <TrophyRefPicker
       v-if="picking === 'card' && ctx"

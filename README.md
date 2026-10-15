@@ -382,6 +382,11 @@ Formato do chip
 Na leitura, tocar no chip rola até o troféu (tira o filtro) e destaca. Vale nas versões PS4/PS5 (mesmo `trophyId`).
 Cada troféu mostra **"Citado em:"** com os troféus que o mencionam (calculado das anotações em `useTrophyNotes` → `backlinks`).
 
+**Barra customizável:** `RefTextEditor` recebe `tools` — o nome de um conjunto de `EDITOR_TOOLSETS`
+(`src/config/editor.js`) ou a lista de botões. `full` (padrão, abas de seções), `tip` (dica do troféu: sem subtítulo
+nem cartão) e `collectible` ("como achar": negrito, itálico, link, limpar, spoiler, controle, troféu e coletável).
+A ordem é sempre a da barra completa; sem `trophyRef`, o "@" e o Ctrl+K não citam troféu.
+Ex.: `<RefTextEditor v-model="texto" :tools="['bold', 'italic', 'controllerKey']" />`.
 ## Marca (logo, ícones, compartilhamento)
 
 | Arquivo | Uso |

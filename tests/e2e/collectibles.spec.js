@@ -87,7 +87,9 @@ test('coletáveis no editor: marcas, vídeo e crédito; créditos do guia', asyn
   const modal = page.locator('.modal:has-text("Crédito das imagens")');
   await modal.getByLabel('Perdível', { exact: true }).check();
   await modal.locator('input[placeholder^="https://youtu.be"]').fill('youtu.be/abcdefghijk?t=95');
-  // Como achar: mesmo editor das abas, com os botões do controle
+  // Como achar: mesmo editor das abas, com a barra reduzida (conjunto "collectible") e os botões do controle
+  await expect(modal.locator('.rte__btn')).toHaveCount(8);
+  await expect(modal.locator('.rte__btn[aria-label="Subtítulo"]')).toHaveCount(0);
   await modal.locator('.rte__content').click();
   await page.keyboard.type('Aperte ');
   await modal.locator('.rte__btn[aria-label^="Botão do controle"]').click();

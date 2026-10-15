@@ -101,7 +101,7 @@ function save() {
         <div class="field">
           <span class="field__label">Como achar</span>
           <!-- Mesmo editor das abas: botões do controle, troféus, spoiler… -->
-          <RefTextEditor v-model="form.description" placeholder="Onde fica e como chegar até ele. Use o controle na barra para botões (△, R2…)." />
+          <RefTextEditor v-model="form.description" tools="collectible" placeholder="Onde fica e como chegar até ele. Use o controle na barra para botões (△, R2…)." />
         </div>
 
         <div class="field">

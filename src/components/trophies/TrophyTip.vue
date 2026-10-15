@@ -39,6 +39,7 @@ watch(editing, (open) => {
       <RefTextEditor
         :model-value="tip"
         :exclude="trophyId"
+        tools="tip"
         placeholder="Onde, quando e como pegar este troféu. Digite @ para citar outro troféu…"
         autofocus
         @update:model-value="emit('update', { tip: $event })"
