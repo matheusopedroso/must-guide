@@ -30,6 +30,6 @@ test('checklist de troféus', async ({ page }) => {
   await expect(page.locator('aside.card')).toContainText('Seu checklist 2/10');
 
   await expect
-    .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('mg:collected:rawg-1002')).trophies.sort()))
+    .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('mg:collected:rawg-1002'))?.trophies?.slice().sort()))
     .toEqual([1, 2]);
 });

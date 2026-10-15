@@ -25,7 +25,7 @@ test('contador, cartão do troféu e troféus citados entram na seção', async 
   await page.keyboard.type('mestre');
   await page.keyboard.press('Enter');
 
-  await expect.poll(async () => (await readDraft(page, 'rawg-1002')).guide[0].sections[0].trophies.sort()).toEqual([2, 9]);
+  await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.guide?.[0]?.sections?.[0]?.trophies?.slice().sort()).toEqual([2, 9]);
   const body = (await readDraft(page, 'rawg-1002')).guide[0].sections[0].body;
   expect(body).toContain('<b>6/50</b> Santuário de bambu');
   expect(body).toContain('data-trophy-card="2"');
@@ -44,7 +44,7 @@ test('botão do controle no estilo PlayStation ou Xbox', async ({ page }) => {
   await page.keyboard.press('End');
   await tool(page, 'Botão do controle');
   await page.click('.keys button[aria-label="Círculo"]');
-  await expect.poll(async () => (await readDraft(page, 'rawg-1002')).guide[0].sections[0].body).toContain('data-key="face-right"');
+  await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.guide?.[0]?.sections?.[0]?.body ?? '').toContain('data-key="face-right"');
 
   await page.goto('/guia/rawg-1002?aba=guia');
   await expect(page.locator('.paged .btn-key')).toHaveCount(1);
@@ -81,7 +81,7 @@ test('caixa de aviso, spoiler e imagem do jogo', async ({ page }) => {
   await page.fill('.img-form input[placeholder^="Ex.:"]', 'Mapa da região');
   await page.click('.img-form button:has-text("Inserir")');
 
-  await expect.poll(async () => (await readDraft(page, 'igdb-101')).guide[0].sections[0].body).toContain('figcaption');
+  await expect.poll(async () => (await readDraft(page, 'igdb-101'))?.guide?.[0]?.sections?.[0]?.body ?? '').toContain('figcaption');
   const body = (await readDraft(page, 'igdb-101')).guide[0].sections[0].body;
   expect(body).toContain('<div class="callout" data-kind="missable"><p>Cuidado aqui.</p></div>');
   expect(body).toContain('<span class="spoiler">o tio.</span>');

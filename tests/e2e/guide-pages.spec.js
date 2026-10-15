@@ -25,7 +25,9 @@ test('guia em páginas: editar e ler', async ({ page }) => {
   await page.click('.menu__item:has-text("Página 2")');
   await expect(page.locator('.section .section__title')).toHaveCount(1);
 
-  await expect.poll(async () => (await readDraft(page, 'rawg-1002')).guide.map((p) => p.sections.map((s) => s.title))).toEqual([
+  // O navegador grava ~0,6 s depois da edição (antes disso ainda está o formato antigo, sem páginas):
+  // ?. para a checagem tentar de novo em vez de dar erro
+  await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.guide?.map((p) => p.sections?.map((s) => s.title))).toEqual([
     ['Introdução'],
     ['', 'O começo'],
   ]);

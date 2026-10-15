@@ -42,7 +42,8 @@ export async function seed(page, guides = [], { user = true, admin = true, cloud
   );
 }
 
-// Lê um guia gravado no navegador
+// Lê um guia gravado no navegador. O app grava ~0,6 s depois de cada edição: em expect.poll, use ?.
+// (um erro dentro do poll não é tentado de novo — só um valor diferente do esperado)
 export const readDraft = (page, id) => page.evaluate((id) => JSON.parse(localStorage.getItem(`mg:guide-draft:${id}`)), id);
 
 // Imagens do IGDB (sem internet nos testes): devolve um SVG no lugar
