@@ -1,15 +1,16 @@
 <script setup>
 import { ref, useTemplateRef } from 'vue';
-import { Gem, Hash, IdCard, Trophy, WandSparkles } from 'lucide-vue-next';
+import { Gamepad2, Gem, Hash, IdCard, Trophy, WandSparkles } from 'lucide-vue-next';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import TrophyRefPicker from './TrophyRefPicker.vue';
 import CollectiblePicker from '@/components/collectibles/CollectiblePicker.vue';
 import CounterInsertForm from './CounterInsertForm.vue';
+import ControllerKeyPicker from './ControllerKeyPicker.vue';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { collectibleRefHtml } from '@/utils/collectibles';
 import { EDITOR_ACTIONS } from '@/config/editor';
-import { autoLinkTrophies, counterHtml, trophyCardHtml, trophyRefHtml } from '@/utils/trophyRef';
+import { autoLinkTrophies, controllerKeyHtml, counterHtml, trophyCardHtml, trophyRefHtml } from '@/utils/trophyRef';
 import { useToast } from '@/composables/useToast';
 
 // Editor de texto (Pell) que cita troféus: botão na barra ou "@" → lista → chip do troféu no texto.
@@ -33,7 +34,7 @@ const ctx = useTrophyContext();
 const collectibles = useCollectibleContext();
 const toast = useToast();
 const editor = useTemplateRef('editor');
-const picking = ref(null); // null | 'trophy' | 'collectible' | 'card' | 'counter'
+const picking = ref(null); // null | 'trophy' | 'collectible' | 'card' | 'counter' | 'key'
 const selection = ref(''); // texto selecionado que vai virar o link
 let fromTrigger = false;
 
@@ -60,6 +61,7 @@ function onKeydown(e) {
 
 const actions = [
   ...EDITOR_ACTIONS,
+  { name: 'controllerKey', title: 'Botão do controle (✕, ○, L1… — cada pessoa vê no estilo PlayStation ou Xbox)', icon: Gamepad2, result: () => openFromSelection('key') },
   ...(ctx
     ? [
         {
@@ -100,6 +102,13 @@ function autoLink() {
 function insertCard(trophy) {
   picking.value = null;
   editor.value.insertHtml(trophyCardHtml(trophy), { block: true });
+  selection.value = '';
+}
+
+// Botão do controle: no cursor (sem espaço extra: costuma vir colado ao texto, "aperte ✕ para…")
+function insertKey(key) {
+  picking.value = null;
+  editor.value.insertHtml(controllerKeyHtml(key));
   selection.value = '';
 }
 
@@ -147,6 +156,7 @@ defineExpose({ focus: () => editor.value?.focus() });
       @select="insertCard"
       @cancel="cancelPick"
     />
+    <ControllerKeyPicker v-if="picking === 'key'" class="ref-pop" @select="insertKey" @cancel="cancelPick" />
     <CounterInsertForm
       v-if="picking === 'counter'"
       :trophies="ctx?.trophies.value ?? []"

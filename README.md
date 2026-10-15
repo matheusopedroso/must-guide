@@ -189,6 +189,15 @@ No editor de qualquer aba de texto:
 - **Troféu citado entra na lista da seção:** chip, contador ou cartão novo no texto → o troféu vai sozinho para
   "Troféus desta seção" (`useSections.update`). Tirar da lista continua valendo enquanto não for citado de novo.
 
+### Botões do controle no texto (PlayStation / Xbox)
+
+Botão do controle na barra do editor → grade com ação (✕ ○ □ △), gatilhos, analógicos, direcional e sistema.
+O texto guarda a **posição genérica** (`<span class="btn-key" data-key="face-down">Cruz</span>` — ids em
+`src/config/controllerKeys.js`) e cada pessoa vê no estilo que escolher: ✕ ↔ A, ○ ↔ B, L1 ↔ LB, Options ↔ Menu…
+A escolha (`useButtonStyle`, guardada no navegador) vai para `<html data-buttons="ps|xbox">` e o desenho sai do CSS
+(`styles/components/_controller-keys.scss`, formas em SVG e letras — sem logotipos). Na leitura, texto com botões
+mostra a escolha PlayStation / Xbox. Para um botão novo: adicione na config e o desenho no SCSS (mesmo id).
+
 ## Coletáveis (modelo do IGN)
 
 Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar e

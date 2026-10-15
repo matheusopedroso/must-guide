@@ -25,6 +25,11 @@ export function counterHtml({ done, total, label, trophy }) {
     : `<span class="count-tag" contenteditable="false">${inner}</span>`;
 }
 
+// Botão de controle no texto: guarda a posição genérica (data-key); o desenho sai do CSS no estilo escolhido
+// por quem lê (PlayStation ou Xbox). O texto ("Cruz") fica por baixo para busca e leitores de tela.
+export const controllerKeyHtml = (key) =>
+  `<span class="btn-key" data-key="${key.id}" title="${escapeHtml(key.ps === key.xbox ? key.ps : `${key.ps} / ${key.xbox}`)}" contenteditable="false">${escapeHtml(key.ps)}</span>`;
+
 // Monta o cartão completo dentro do bloco (leitura). DOM com textContent: nada do texto vira HTML.
 export function fillTrophyCard(el, trophy, stats) {
   const make = (tag, cls, text) => {
@@ -95,7 +100,7 @@ export function autoLinkTrophies(html, trophies, { exclude = [] } = {}) {
   const tpl = document.createElement('template');
   tpl.innerHTML = html;
   const walker = document.createTreeWalker(tpl.content, NodeFilter.SHOW_TEXT, {
-    acceptNode: (n) => (n.parentElement?.closest('a, code, .count-tag, .trophy-card') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT), // fora de links, contadores e cartões
+    acceptNode: (n) => (n.parentElement?.closest('a, code, .count-tag, .trophy-card, .btn-key') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT), // fora de links, contadores e cartões
   });
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);

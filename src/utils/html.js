@@ -1,4 +1,5 @@
 // HTML do editor (Pell): filtro de segurança, conversão de texto antigo e checagem de vazio.
+import { CONTROLLER_KEY_IDS } from '@/config/controllerKeys';
 
 // Tags permitidas → atributos permitidos (com validação do valor). O resto é removido (o texto de dentro é mantido).
 const TROPHY_REF = /^#trofeu-\d+$/;
@@ -9,8 +10,14 @@ const ALLOWED = {
   P: {}, BR: {},
   // Cartão do troféu no texto (<div class="trophy-card" data-trophy-card="12" data-type="gold">)
   DIV: { class: (v) => v === 'trophy-card', 'data-trophy-card': (v) => /^\d+$/.test(v), 'data-type': TROPHY_TYPE, contenteditable: (v) => v === 'false' },
-  // Contador sem troféu (<span class="count-tag">5/6 Associados</span>)
-  SPAN: { class: (v) => v === 'count-tag', contenteditable: (v) => v === 'false' },
+  // Contador sem troféu (<span class="count-tag">5/6 Associados</span>) e botão de controle
+  // (<span class="btn-key" data-key="face-down" title="Cruz / A">Cruz</span> — config/controllerKeys)
+  SPAN: {
+    class: (v) => v === 'count-tag' || v === 'btn-key',
+    'data-key': (v) => CONTROLLER_KEY_IDS.has(v),
+    title: (v) => v.length <= 60,
+    contenteditable: (v) => v === 'false',
+  },
   B: {}, STRONG: {}, I: {}, EM: {}, U: {}, S: {}, STRIKE: {}, CODE: {},
   H3: {}, H4: {}, UL: {}, OL: {}, LI: {}, BLOCKQUOTE: {}, HR: {},
   // Link externo, referência a troféu (<a href="#trofeu-12" data-trophy="12" data-type="gold" class="trophy-ref">)

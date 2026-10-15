@@ -1,0 +1,144 @@
+@use 'sass:list';
+@use 'sass:map';
+@use '../abstracts' as *;
+
+// Botões de controle no texto (span.btn-key[data-key] — config/controllerKeys.js). O guia guarda a posição
+// genérica; aqui cada uma é desenhada no estilo escolhido por quem lê: <html data-buttons="ps|xbox">
+// (padrão PlayStation). O texto do span ("Cruz") fica escondido: o desenho é o ::before.
+// Só formas e letras genéricas, nas cores de cada controle.
+
+$key-bg: #1f1f1e;
+$key-fg: #f2f0ea;
+
+// Formas (máscaras SVG, traço preto = área pintada)
+$svg-open: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-linecap='round' stroke-linejoin='round'%3E";
+$svg-close: '%3C/svg%3E';
+$shapes: (
+  cross: "%3Cpath d='M6.5 6.5l11 11M17.5 6.5l-11 11' stroke-width='3'/%3E",
+  circle: "%3Ccircle cx='12' cy='12' r='6.5' stroke-width='2.75'/%3E",
+  square: "%3Crect x='6.25' y='6.25' width='11.5' height='11.5' rx='1' stroke-width='2.75'/%3E",
+  triangle: "%3Cpath d='M12 5.5 19 18H5z' stroke-width='2.5'/%3E",
+  up: "%3Cpath d='M12 5 18 13H6z' fill='black' stroke-width='1.5'/%3E%3Crect x='9.5' y='13' width='5' height='6' fill='black' stroke='none'/%3E",
+  down: "%3Cpath d='M12 19 18 11H6z' fill='black' stroke-width='1.5'/%3E%3Crect x='9.5' y='5' width='5' height='6' fill='black' stroke='none'/%3E",
+  left: "%3Cpath d='M5 12 13 6v12z' fill='black' stroke-width='1.5'/%3E%3Crect x='13' y='9.5' width='6' height='5' fill='black' stroke='none'/%3E",
+  right: "%3Cpath d='M19 12 11 6v12z' fill='black' stroke-width='1.5'/%3E%3Crect x='5' y='9.5' width='6' height='5' fill='black' stroke='none'/%3E",
+  dpad: "%3Cpath d='M9.5 3.5h5v6h6v5h-6v6h-5v-6h-6v-5h6z' fill='black' stroke-width='1'/%3E",
+);
+
+@mixin shape($name) {
+  $url: url('#{$svg-open}#{map.get($shapes, $name)}#{$svg-close}');
+  content: '';
+  mask: $url center / 16px no-repeat;
+  -webkit-mask: $url center / 16px no-repeat;
+}
+
+// Botões de ação: forma do PlayStation · letra do Xbox, cada um na sua cor
+$face: (
+  face-down: (cross, #7cb2e8, 'A', #5dc21e),
+  face-right: (circle, #ff6b6b, 'B', #f0524f),
+  face-left: (square, #e79ad0, 'X', #3d8fe0),
+  face-up: (triangle, #45d6a0, 'Y', #f2c230),
+);
+
+// Botões com texto: (PlayStation, Xbox, formato)
+$labeled: (
+  l1: ('L1', 'LB', pill),
+  r1: ('R1', 'RB', pill),
+  l2: ('L2', 'LT', pill),
+  r2: ('R2', 'RT', pill),
+  l3: ('L3', 'LS', stick),
+  r3: ('R3', 'RS', stick),
+  lstick: ('L', 'L', stick),
+  rstick: ('R', 'R', stick),
+  options: ('OPTIONS', 'MENU', pill),
+  share: ('CREATE', 'VIEW', pill),
+  touchpad: ('TOUCHPAD', 'VIEW', pill),
+  home: ('PS', 'XBOX', pill),
+);
+
+$dpad: (
+  dpad: dpad,
+  dpad-up: up,
+  dpad-down: down,
+  dpad-left: left,
+  dpad-right: right,
+);
+
+.btn-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -5px;
+  min-width: 22px;
+  height: 22px;
+  margin-inline: 2px;
+  border-radius: $r-full;
+  background: $key-bg;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  font-size: 0; // o texto guardado não aparece; o desenho é o ::before
+  user-select: none;
+  cursor: default;
+
+  &::before {
+    display: block;
+    width: 16px;
+    height: 16px;
+    background: $key-fg;
+  }
+}
+
+// Ação
+@each $id, $v in $face {
+  .btn-key[data-key='#{$id}']::before {
+    @include shape(list.nth($v, 1));
+    background: list.nth($v, 2);
+  }
+
+  [data-buttons='xbox'] .btn-key[data-key='#{$id}']::before {
+    content: list.nth($v, 3);
+    mask: none;
+    -webkit-mask: none;
+    width: auto;
+    height: auto;
+    background: none;
+    color: list.nth($v, 4);
+    font: 800 12px/1 $font-sans;
+  }
+}
+
+// Texto (gatilhos, analógicos, sistema)
+@each $id, $v in $labeled {
+  .btn-key[data-key='#{$id}'] {
+    @if list.nth($v, 3) == pill {
+      padding-inline: 6px;
+      border-radius: 6px;
+    } @else {
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35); // analógico: anel
+    }
+
+    &::before {
+      content: list.nth($v, 1);
+      width: auto;
+      height: auto;
+      background: none;
+      color: $key-fg;
+      font: 700 10px/1 $font-sans;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  [data-buttons='xbox'] .btn-key[data-key='#{$id}']::before {
+    content: list.nth($v, 2);
+  }
+}
+
+// Direcional
+@each $id, $shape in $dpad {
+  .btn-key[data-key='#{$id}'] {
+    border-radius: 6px;
+
+    &::before {
+      @include shape($shape);
+    }
+  }
+}

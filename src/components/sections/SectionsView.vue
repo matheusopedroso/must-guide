@@ -4,6 +4,7 @@ import RefText from '@/components/trophies/RefText.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleCard from '@/components/collectibles/CollectibleCard.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
+import ButtonStyleToggle from '@/components/trophies/ButtonStyleToggle.vue';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useStoredRef } from '@/composables/useStoredRef';
@@ -40,6 +41,8 @@ const countOf = (list = []) => ({ done: list.filter((i) => isDone(i.id)).length,
 const overall = computed(() => countOf(props.sections.flatMap((s) => s.items ?? [])));
 const shown = (list = []) => (hideDone.value ? list.filter((i) => !isDone(i.id)) : list);
 const w = computed(() => sectionWords(props.cfg));
+// Texto com botões de controle: mostra a escolha PlayStation / Xbox
+const hasKeys = computed(() => props.sections.some((s) => s.body?.includes('btn-key')));
 const flag = computed(() => TROPHY_FLAGS.find((f) => f.id === props.cfg.flag) ?? null);
 const anchor = (s) => `secao-${s.id}`;
 const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -64,6 +67,8 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
       </div>
       <ProgressBar :value="overall.done" :max="overall.total" tone="earned" />
     </div>
+
+    <ButtonStyleToggle v-if="hasKeys" />
 
     <!-- Índice: só com 2+ seções -->
     <nav v-if="visible.length > 1" class="d-flex flex-wrap gap-1" aria-label="Seções">
