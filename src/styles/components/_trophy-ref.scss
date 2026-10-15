@@ -188,18 +188,13 @@ a.trophy-ref.trophy-count b,
 }
 
 // Troféu no meio do texto (como o TrueAchievements): bloco entre os parágrafos com o visual do .trophy-tile,
-// da largura de uma coluna da grade. No editor (e antes de carregar a lista) mostra só o troféu e o nome.
+// na largura inteira do texto. No editor (e antes de carregar a lista) mostra só o troféu e o nome.
 .trophy-card {
   margin: space(2) 0;
-  max-width: 100%;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   user-select: none;
-
-  @include up(md) {
-    max-width: calc(50% - #{$space-half});
-  }
 
   // Ainda sem os dados: troféu na cor do tipo + nome, no mesmo cartão
   &:not(.is-filled) {
