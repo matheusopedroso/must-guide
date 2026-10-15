@@ -9,17 +9,22 @@ export const DRAFT_VERSION = 1;
 // Dados do jogo guardados no próprio guia: abrir, editar e ler não dependem da API de jogos (nem do provedor
 // ativo — trocar RAWG ⇄ IGDB não "perde" os guias). Só entram campos preenchidos, por cima da cópia salva:
 // um jogo vindo da busca (sem resumo) não apaga o resumo já guardado.
-const GAME_FIELDS = ['id', 'provider', 'providerId', 'title', 'slug', 'summary', 'cover', 'year', 'platforms', 'genres', 'sourceUrl', 'kind'];
+const GAME_FIELDS = ['id', 'provider', 'providerId', 'title', 'slug', 'summary', 'cover', 'year', 'platforms', 'genres', 'sourceUrl', 'kind', 'backdrop', 'trailer', 'timeToBeat', 'detailed'];
 const filled = (v) => v != null && v !== '' && !(Array.isArray(v) && !v.length);
+
+// detailed = versão dos detalhes guardados: subir quando os detalhes ganharem campos novos (as cópias antigas
+// são completadas uma vez). 2 = fundo, trailer e tempo para zerar.
+const DETAIL_VERSION = 2;
 
 export function gameSnapshot(game, saved = null) {
   const snap = { ...saved };
   for (const key of GAME_FIELDS) if (filled(game?.[key])) snap[key] = game[key];
+  if (game?.partial === false) snap.detailed = DETAIL_VERSION; // veio dos detalhes da API
   return snap;
 }
 
-// Cópia incompleta (antiga: só id, título e capa; ou da busca: sem resumo) → vale completar com a API
-export const isPartialSnapshot = (g) => !g?.summary || !('year' in g || 'platforms' in g);
+// Cópia incompleta (antiga, ou da busca sem os detalhes) → vale completar com a API
+export const isPartialSnapshot = (g) => (g?.detailed ?? 0) < DETAIL_VERSION;
 
 // dlc: { groupId, name, icon } → guia separado da DLC (guideId "jogo~grupo", parentId = jogo)
 export const createDraft = (game, { dlc = null } = {}) => ({

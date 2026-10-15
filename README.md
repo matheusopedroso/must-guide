@@ -206,6 +206,19 @@ hero (`DetailHero`, compartilhado com o `GuideHero`), "Sobre o jogo" (`GameAbout
 Embaixo, os guias das DLCs (`GuideLinkList`, a mesma lista da leitura). O card guarda o jogo antes de navegar
 (`rememberGame`): a página abre na hora e só busca o que falta (resumo). A leitura do guia tem "Ver página do jogo".
 
+## Detalhes extras do jogo e dos troféus
+
+- **IGDB (`getById`, 3 consultas em paralelo, 24 h de cache):** `backdrop` (artwork horizontal → fundo do topo,
+  `backdropSrc`), `trailer` (YouTube → botão Trailer da página do jogo), `timeToBeat` (`game_time_to_beats`:
+  história, extras e 100%, em horas) e `related` (edições do mesmo jogo, remasters, remakes, ports, expansões e DLCs
+  → "Outras versões e relacionados"). RAWG: `background_image_additional`, `playtime` (média) e sem relacionados.
+- **Tempo do guia:** sem horas informadas no guia, o "Para platinar" mostra a estimativa de 100% (marcada como estimativa).
+- **Cópia do jogo no guia:** guarda também fundo, trailer e tempo; `detailed` = versão dos detalhes
+  (`DETAIL_VERSION` em `src/utils/guideDraft.js`) → cópias antigas são completadas uma vez.
+- **PSN:** troféus de PS5 com contador trazem `target` (ex.: 50) e o seu `progress` (ex.: 32) → etiqueta
+  "Andamento: 32/50" (ou "Meta: 50"); troféus com recompensa trazem `reward` → "Recompensa: …".
+  `TROPHY_LIST_VERSION` = 3 (caches antigos da lista são ignorados).
+
 ## Trocar o jogo do guia
 
 O id do guia é o id do jogo (`rawg-123`, `igdb-456`). No editor, o botão ⇄ do card do jogo num guia com conteúdo abre

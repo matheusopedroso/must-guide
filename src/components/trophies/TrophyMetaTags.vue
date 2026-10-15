@@ -19,6 +19,13 @@ const rarity = computed(() => {
   return [RARITY_LABELS[s.rarity], formatRate(s.rate)].filter(Boolean).join(' · ');
 });
 const moment = computed(() => TROPHY_MOMENT_MAP[props.note.when]?.label ?? '');
+// Contador dos troféus de PS5 ("colete 50"): seu andamento enquanto não conquistou; senão só a meta
+const counter = computed(() => {
+  const target = props.trophy.target;
+  if (!target || props.stats?.earned) return '';
+  const done = props.stats?.progress;
+  return done != null ? `${Math.min(done, target)}/${target}` : `${target}`;
+});
 </script>
 
 <template>
@@ -27,6 +34,12 @@ const moment = computed(() => TROPHY_MOMENT_MAP[props.note.when]?.label ?? '');
     <span class="tag">
       <span class="tag__label">Tipo:</span>
       <Trophy :size="14" :stroke-width="2" :style="{ color: type.color }" /> {{ type.label }}
+    </span>
+    <span v-if="counter" class="tag tag--counter" :title="stats?.progress != null ? 'Seu andamento na PSN' : 'Quantidade pedida pelo troféu'">
+      <span class="tag__label">{{ stats?.progress != null ? 'Andamento:' : 'Meta:' }}</span> {{ counter }}
+    </span>
+    <span v-if="trophy.reward" class="tag" title="Recompensa do troféu no jogo">
+      <span class="tag__label">Recompensa:</span> {{ trophy.reward.name }}
     </span>
     <span v-if="rarity" class="tag" title="Porcentagem de jogadores com o troféu">
       <span class="tag__label">Raridade:</span> {{ rarity }}
@@ -43,6 +56,10 @@ const moment = computed(() => TROPHY_MOMENT_MAP[props.note.when]?.label ?? '');
 </template>
 
 <style lang="scss" scoped>
+.tag--counter {
+  font-variant-numeric: tabular-nums;
+}
+
 .tag--chapter {
   max-width: 260px;
 }

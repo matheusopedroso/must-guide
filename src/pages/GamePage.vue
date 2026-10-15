@@ -1,13 +1,16 @@
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { BookOpen, ExternalLink, FileQuestion, MessageSquareText, Pencil, Plus } from 'lucide-vue-next';
+import { BookOpen, CirclePlay, ExternalLink, FileQuestion, MessageSquareText, Pencil, Plus } from 'lucide-vue-next';
 import PageBar from '@/components/ui/PageBar.vue';
 import DetailHero from '@/components/ui/DetailHero.vue';
 import ActionIcon from '@/components/ui/ActionIcon.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import ProviderCredit from '@/components/ui/ProviderCredit.vue';
+import VideoModal from '@/components/ui/VideoModal.vue';
+import GameGrid from '@/components/games/GameGrid.vue';
+import GameCard from '@/components/games/GameCard.vue';
 import GameAbout from '@/components/games/GameAbout.vue';
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
 import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
@@ -21,12 +24,14 @@ import { APP_NAME } from '@/config/app';
 
 // Página do jogo (/jogo/:id), aberta pelos cards do início — com ou sem guia. Mesmo formato da leitura do guia:
 // PageBar → hero (capa, título, ano, plataformas, ações) → sobre o jogo + ficha à esquerda e, à direita,
-// o cartão do guia (ler / criar). Embaixo, os guias das DLCs. Sem guia: quem edita cria daqui.
+// o cartão do guia (ler / criar). Embaixo, os guias das DLCs e as outras versões do jogo (edições, remasters,
+// DLCs — IGDB). Fundo com a arte horizontal do jogo e botão de trailer, quando a API traz.
+// Sem guia: quem edita cria daqui.
 const route = useRoute();
 const router = useRouter();
 const gameId = computed(() => String(route.params.id ?? ''));
 
-const { game, loading, error } = useGameDetails(gameId);
+const { game, loading, error } = useGameDetails(gameId, { full: true }); // full: com os relacionados
 const { guide: rawGuide, loading: guideLoading } = useGuide(gameId); // guia do jogo: id do guia = id do jogo
 const { items: dlcGuides } = useDlcGuides(gameId);
 const { enabled, isAdmin } = useAuth();
@@ -37,9 +42,25 @@ const viewRoute = computed(() => ({ name: 'guide-view', params: { id: gameId.val
 const editRoute = computed(() => ({ name: 'guide-edit', params: { id: gameId.value } }));
 const source = computed(() => providerInfo(game.value?.provider));
 const meta = computed(() => [game.value?.kind, game.value?.year, game.value?.platforms?.join(' · ')]);
+const trailerOpen = ref(false);
+const related = computed(() => game.value?.related ?? []);
+
+// Tempo para zerar: "História ~20 h · Extras ~35 h · 100% ~60 h" (IGDB) ou "Média ~30 h" (RAWG)
+const TTB = [
+  ['story', 'História'],
+  ['extra', 'Extras'],
+  ['complete', '100%'],
+  ['average', 'Média'],
+];
+const timeToBeat = computed(() => {
+  const t = game.value?.timeToBeat;
+  return t ? TTB.filter(([k]) => t[k]).map(([k, label]) => `${label} ~${t[k]} h`).join(' · ') : '';
+});
+
 const facts = computed(() =>
   [
     { label: 'Lançamento', value: game.value?.year },
+    { label: 'Tempo para zerar', value: timeToBeat.value },
     { label: 'Plataformas', value: game.value?.platforms?.join(' · ') },
     { label: 'Tipo', value: game.value?.kind },
     { label: 'Nota', value: game.value?.rating && `${game.value.rating}/100` },
@@ -65,13 +86,14 @@ const back = () => (window.history.state?.back ? router.back() : router.push({ n
     </div>
 
     <template v-else>
-      <DetailHero :title="game.title" kicker="Jogo" :cover="game.cover" :meta="meta">
+      <DetailHero :title="game.title" kicker="Jogo" :cover="game.cover" :backdrop="game.backdrop" :meta="meta">
         <template v-if="guide?.status === 'published'" #labels>
           <span class="badge badge--success"><BookOpen :size="12" /> Tem guia</span>
         </template>
         <template #actions>
           <ActionIcon v-if="guide" :icon="BookOpen" label="Ler guia" :to="viewRoute" />
           <ActionIcon v-if="canEdit" :icon="guide ? Pencil : Plus" :label="guide ? 'Editar guia' : 'Criar guia'" :to="editRoute" />
+          <ActionIcon v-if="game.trailer" :icon="CirclePlay" label="Trailer" @click="trailerOpen = true" />
           <ActionIcon v-if="game.sourceUrl && source" :icon="ExternalLink" :label="source.name" :href="game.sourceUrl" />
         </template>
       </DetailHero>
@@ -108,8 +130,17 @@ const back = () => (window.history.state?.back ? router.back() : router.push({ n
         </div>
 
         <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="Guias de DLC" />
+
+        <section v-if="related.length" class="d-flex flex-column gap-2">
+          <h2 class="section-heading">Outras versões e relacionados <span class="text-subtle fw-500">{{ related.length }}</span></h2>
+          <GameGrid>
+            <GameCard v-for="r in related" :key="r.id" :game="r" />
+          </GameGrid>
+        </section>
         <ProviderCredit v-if="game.provider" :providers="[game.provider]" />
       </div>
+
+      <VideoModal v-if="game.trailer" v-model="trailerOpen" :url="game.trailer" :title="`Trailer: ${game.title}`" />
     </template>
   </div>
 </template>

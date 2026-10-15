@@ -13,6 +13,11 @@ export const makeGame = (provider, data) => ({
   genres: data.genres ?? [],
   rating: data.rating ?? null,
   kind: data.kind ?? null, // não é o jogo principal: "Edição: Director's Cut", "Remaster", "DLC"… (null = principal)
+  // Só nos detalhes (getById):
+  backdrop: data.backdrop ?? null, // imagem horizontal (artwork) para o fundo do topo das páginas
+  trailer: data.trailer ?? null, // link do YouTube
+  timeToBeat: data.timeToBeat ?? null, // horas: { story, extra, complete } (IGDB) ou { average } (RAWG)
+  related: data.related, // outras versões e relacionados (lista de jogos); ausente = não buscado
   sourceUrl: data.sourceUrl ?? null,
   partial: !!data.partial, // true = veio de lista/busca sem resumo
 });

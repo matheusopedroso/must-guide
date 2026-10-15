@@ -4,6 +4,11 @@ const API_URL = 'https://api.rawg.io/api';
 
 const mapGame = (g, partial) =>
   makeGame('rawg', {
+    ...(!partial && {
+      backdrop: g.background_image_additional ?? null,
+      timeToBeat: g.playtime ? { average: g.playtime } : null, // média de horas jogadas (RAWG)
+      related: [], // o RAWG precisaria de outras chamadas: fica só no IGDB
+    }),
     providerId: g.id,
     title: g.name,
     slug: g.slug,

@@ -45,8 +45,29 @@ function kindOf(g) {
 }
 
 const escape = (s) => s.replace(/["\\]/g, '\\$&');
+const image = (id, size) => `https://images.igdb.com/igdb/image/upload/t_${size}/${id}.jpg`;
 
-const mapGame = (g) =>
+// Detalhes: + artes (fundo), vídeos (trailer) e ids dos jogos ligados (versões, remasters, DLCs…)
+const RELATED_KEYS = ['parent_game', 'remasters', 'remakes', 'expanded_games', 'ports', 'standalone_expansions', 'expansions', 'dlcs'];
+const DETAIL_FIELDS = [FIELDS, 'artworks.image_id', 'screenshots.image_id', 'videos.video_id', 'videos.name', ...RELATED_KEYS].join(',');
+
+const backdropOf = (g) => {
+  const id = g.artworks?.[0]?.image_id ?? g.screenshots?.[0]?.image_id;
+  return id ? image(id, '1080p') : null;
+};
+const trailerOf = (videos = []) => {
+  const id = (videos.find((v) => /trailer/i.test(v.name ?? '')) ?? videos[0])?.video_id;
+  return id ? `https://www.youtube.com/watch?v=${id}` : null;
+};
+const hours = (seconds) => (seconds ? Math.max(1, Math.round(seconds / 3600)) : null);
+const timeToBeatOf = (t) => {
+  const ttb = t && { story: hours(t.hastily), extra: hours(t.normally), complete: hours(t.completely) };
+  return ttb && Object.values(ttb).some(Boolean) ? ttb : null;
+};
+// Ordem dos relacionados: o jogo base e as edições primeiro, depois o resto por ano
+const relatedOrder = (g) => (g.kind && !g.kind.startsWith('Edição') ? 1 : 0);
+
+const mapGame = (g, extra = {}) =>
   makeGame('igdb', {
     providerId: g.id,
     title: g.name,
@@ -61,6 +82,7 @@ const mapGame = (g) =>
     rating: g.total_rating ? Math.round(g.total_rating) : null,
     sourceUrl: g.url ?? null,
     kind: kindOf(g),
+    ...extra,
   });
 
 // getSecret(nome) → valor. Sem dependência do Firebase: roda no Vite (dev) e na function
@@ -84,9 +106,9 @@ export function createIgdbProvider(getSecret) {
     return access_token;
   }
 
-  // Consulta Apicalypse; se o token expirou antes da hora, renova e tenta de novo
-  async function query(body, retry = true) {
-    const res = await fetch(`${API_URL}/games`, {
+  // Consulta Apicalypse num endpoint; se o token expirou antes da hora, renova e tenta de novo
+  async function request(endpoint, body, retry = true) {
+    const res = await fetch(`${API_URL}/${endpoint}`, {
       method: 'POST',
       headers: {
         'Client-ID': getSecret('TWITCH_CLIENT_ID'),
@@ -96,9 +118,36 @@ export function createIgdbProvider(getSecret) {
       body,
     });
 
-    if (res.status === 401 && retry) return query(body, false);
-    if (!res.ok) throw new Error(`IGDB games ${res.status}: ${await res.text()}`);
-    return (await res.json()).filter((g) => !HIDDEN_TYPES.has(g.game_type?.type)).map(mapGame);
+    if (res.status === 401 && retry) return request(endpoint, body, false);
+    if (!res.ok) throw new Error(`IGDB ${endpoint} ${res.status}: ${await res.text()}`);
+    return res.json();
+  }
+
+  // Listas (busca, populares, relacionados): sem mods/updates; partial = sem os detalhes
+  const query = async (body) =>
+    (await request('games', body)).filter((g) => !HIDDEN_TYPES.has(g.game_type?.type)).map((g) => mapGame(g, { partial: true }));
+
+  // Detalhes: o jogo + (em paralelo) tempo para zerar e os jogos ligados — 3 consultas, guardadas 24 h no servidor
+  async function getById(providerId) {
+    const id = Number(providerId);
+    const [g] = await request('games', `fields ${DETAIL_FIELDS}; where id = ${id}; limit 1;`);
+    if (!g) return null;
+
+    const base = g.version_parent ?? id; // edição → as outras edições do mesmo jogo
+    const linked = [...new Set([g.version_parent, ...RELATED_KEYS.flatMap((k) => [].concat(g[k] ?? []))].filter(Boolean))];
+    const where = [`version_parent = ${base}`, ...(linked.length ? [`id = (${linked.join(',')})`] : [])].join(' | ');
+    const [times, related] = await Promise.all([
+      request('game_time_to_beats', `fields game_id,hastily,normally,completely; where game_id = (${[id, base].join(',')}); limit 2;`).catch(() => []),
+      query(`fields ${FIELDS}; where (${where}) & id != ${id}; limit 30;`).catch(() => []),
+    ]);
+
+    return mapGame(g, {
+      partial: false,
+      backdrop: backdropOf(g),
+      trailer: trailerOf(g.videos),
+      timeToBeat: timeToBeatOf(times.find((t) => t.game_id === id) ?? times[0]),
+      related: related.sort((a, b) => relatedOrder(a) - relatedOrder(b) || (a.year ?? 9999) - (b.year ?? 9999)),
+    });
   }
 
   return {
@@ -116,7 +165,6 @@ export function createIgdbProvider(getSecret) {
       );
     },
 
-    getById: async (providerId) =>
-      (await query(`fields ${FIELDS}; where id = ${Number(providerId)}; limit 1;`))[0] ?? null,
+    getById,
   };
 }

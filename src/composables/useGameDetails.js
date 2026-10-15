@@ -12,7 +12,9 @@ export const rememberGame = (game) => game?.id && !known.has(game.id) && known.s
 // Se o objeto já veio do seletor (set), usa direto — sem nova requisição, mesmo depois de trocar de página.
 // saved(id): cópia do jogo guardada no guia (gameSnapshot) → usada sem ir à API; só uma cópia incompleta
 // é completada em segundo plano, e se a API falhar (sem chave, outro provedor) fica a cópia.
-export function useGameDetails(gameId, { saved } = {}) {
+// full: precisa também dos relacionados (página do jogo) → completa quem não tem.
+export function useGameDetails(gameId, { saved, full = false } = {}) {
+  const incomplete = (g) => g.partial || (full && g.related === undefined);
   const game = ref(null);
   const loading = ref(false);
   const error = ref('');
@@ -43,7 +45,7 @@ export function useGameDetails(gameId, { saved } = {}) {
       if (game.value?.id === id) return;
       if (known.has(id)) {
         game.value = known.get(id);
-        if (game.value.partial) enrich(id, game.value); // veio de lista/busca: completa o resumo
+        if (incomplete(game.value)) enrich(id, game.value); // veio de lista/busca: completa os detalhes
         return;
       }
 

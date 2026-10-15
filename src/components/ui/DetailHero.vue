@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import GameCover from '@/components/ui/GameCover.vue';
-import { coverSrc } from '@/utils/cover';
+import { backdropSrc, coverSrc } from '@/utils/cover';
 
 // Topo das páginas de detalhe (igual ao hero do título no Must Watch): fundo da capa desfocado,
 // capa à esquerda e, à direita, selos, título, meta e ações. Usado na página do jogo e na leitura do guia.
@@ -11,17 +11,17 @@ import { coverSrc } from '@/utils/cover';
 const props = defineProps({
   title: { type: String, required: true },
   kicker: { type: String, default: '' }, // "Guia de troféus", "Jogo"…
-  cover: { type: String, default: null }, // capa do jogo (também vira o fundo)
+  cover: { type: String, default: null }, // capa do jogo (também vira o fundo, se não houver backdrop)
+  backdrop: { type: String, default: null }, // imagem horizontal (artwork) para o fundo
   icon: { type: String, default: null }, // imagem quadrada no lugar da capa (ex.: ícone da DLC)
   meta: { type: Array, default: () => [] }, // textos da linha de meta (ano, plataformas…)
 });
 
 // Fundo: desfocado no desktop (640px basta) · nítido no celular (1280px, a tela tem 2–3× de densidade)
-const backdrop = computed(() =>
-  props.cover
-    ? { '--backdrop': `url("${coverSrc(props.cover, 'lg')}")`, '--backdrop-sharp': `url("${coverSrc(props.cover, 'xl')}")` }
-    : null,
-);
+const backdrop = computed(() => {
+  const [url, src] = props.backdrop ? [props.backdrop, backdropSrc] : [props.cover, coverSrc];
+  return url ? { '--backdrop': `url("${src(url, 'lg')}")`, '--backdrop-sharp': `url("${src(url, 'xl')}")` } : null;
+});
 const metaItems = computed(() => props.meta.filter(Boolean));
 </script>
 

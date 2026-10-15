@@ -100,6 +100,8 @@ export function createTrophyService(client) {
         detail: t.trophyDetail ?? '',
         icon: t.trophyIconUrl ?? null,
         hidden: !!t.trophyHidden,
+        target: t.trophyProgressTargetValue ? Number(t.trophyProgressTargetValue) : null, // "colete 50" (PS5)
+        reward: t.trophyRewardName ? { name: t.trophyRewardName, image: t.trophyRewardImageUrl ?? null } : null,
       })),
     };
   }
@@ -129,6 +131,7 @@ export function createTrophyService(client) {
         earnedAt: t.earnedDateTime ?? null,
         rate: t.trophyEarnedRate != null ? Number(t.trophyEarnedRate) : null, // % de jogadores
         rarity: t.trophyRare ?? null, // 0 ultra raro · 1 muito raro · 2 raro · 3 comum
+        progress: t.progress != null ? Number(t.progress) : null, // contador (ex.: 32 de 50), troféus de PS5
       };
     }
     return { earned, total: data.trophies.length, trophies };

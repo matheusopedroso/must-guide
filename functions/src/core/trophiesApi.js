@@ -9,7 +9,7 @@ export const TROPHY_SECRETS = ['PSN_NPSSO'];
 
 // Versão do formato da lista. Aumente quando mudar o que a lista traz (ex.: v2 = nameEn):
 // o cache em memória e os caches HTTP (navegador/CDN, via ?v= do app) deixam de usar respostas antigas.
-export const TROPHY_LIST_VERSION = 2;
+export const TROPHY_LIST_VERSION = 3; // v3 = target e reward
 
 const parseService = (value) => (['trophy', 'trophy2'].includes(value) ? value : null);
 

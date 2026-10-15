@@ -18,6 +18,7 @@ const gameTitle = computed(() => props.game?.title ?? props.guide.game?.title ??
 const dlc = computed(() => props.guide.dlc ?? null);
 const title = computed(() => (dlc.value ? dlc.value.name || 'DLC' : gameTitle.value));
 const cover = computed(() => props.game?.cover ?? props.guide.game?.cover ?? null);
+const backdrop = computed(() => props.game?.backdrop ?? props.guide.game?.backdrop ?? null);
 const platforms = computed(() => [...new Set(props.guide.versions.map((v) => v.platform).filter(Boolean))]);
 const meta = computed(() => [
   props.game?.year,
@@ -29,7 +30,7 @@ const hasStats = computed(() => Object.values(props.guide.stats ?? {}).some(Bool
 </script>
 
 <template>
-  <DetailHero :title="title" :kicker="dlc ? 'Guia de DLC' : 'Guia de troféus'" :cover="cover" :icon="dlc?.icon" :meta="meta">
+  <DetailHero :title="title" :kicker="dlc ? 'Guia de DLC' : 'Guia de troféus'" :cover="cover" :backdrop="backdrop" :icon="dlc?.icon" :meta="meta">
     <template #labels>
       <span v-if="published" class="badge badge--success"><Globe :size="12" /> Publicado</span>
       <span v-else class="badge">Rascunho</span>

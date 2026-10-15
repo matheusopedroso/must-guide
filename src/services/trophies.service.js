@@ -7,7 +7,7 @@ export const fetchPsnTitles = (opts) => request('/titles', { ...opts, auth: true
 
 // service = 'trophy' (PS3/PS4/Vita) | 'trophy2' (PS5); sem ele o servidor descobre sozinho
 // Versão do formato da lista (igual a TROPHY_LIST_VERSION do servidor): muda a URL → caches antigos são ignorados
-const LIST_VERSION = 2;
+const LIST_VERSION = 3;
 
 export function fetchTrophyList(npId, service, opts) {
   const qs = new URLSearchParams({ v: LIST_VERSION, ...(service && { service }) });

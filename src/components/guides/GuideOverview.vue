@@ -44,6 +44,12 @@ const collectibles = computed(() => {
   return items.length ? { total: items.length, done: items.filter((i) => col.collected?.value.has(i.id)).length } : null;
 });
 
+// Tempo: o informado no guia; sem ele, a estimativa da API (100% → extras → média), marcada como estimativa
+const estimate = computed(() => {
+  const t = props.game?.timeToBeat;
+  return t && (t.complete ?? t.extra ?? t.average ?? null);
+});
+
 const PLAY_ROWS = [
   { id: 'playthroughs', icon: Repeat, label: 'Jogadas', format: (n) => `${n} ${n > 1 ? 'jogadas' : 'jogada'}` },
   { id: 'hours', icon: Clock, label: 'Tempo', format: (n) => `~${n} h` },
@@ -104,7 +110,11 @@ const PLAY_ROWS = [
         </div>
         <div v-for="r in PLAY_ROWS" :key="r.id" class="card__row d-flex align-center justify-between gap-1">
           <span class="d-inline-flex align-center gap-1 text-sm text-muted"><component :is="r.icon" :size="16" /> {{ r.label }}</span>
-          <span class="text-sm fw-600">{{ stats[r.id] ? r.format(stats[r.id]) : '—' }}</span>
+          <span v-if="stats[r.id]" class="text-sm fw-600">{{ r.format(stats[r.id]) }}</span>
+          <span v-else-if="r.id === 'hours' && estimate" class="text-sm fw-600 tooltip-left" data-tooltip="Estimativa para fazer 100% (dados do jogo)">
+            ~{{ estimate }} h <span class="text-subtle fw-500">· estimativa</span>
+          </span>
+          <span v-else class="text-sm">—</span>
         </div>
         <div v-if="collectibles" class="card__row d-flex align-center justify-between gap-1">
           <span class="d-inline-flex align-center gap-1 text-sm text-muted"><Gem :size="16" /> Coletáveis</span>
