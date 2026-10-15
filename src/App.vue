@@ -2,6 +2,7 @@
 import AppNav from '@/components/layout/AppNav.vue';
 import MobileTabBar from '@/components/layout/MobileTabBar.vue';
 import ToastHost from '@/components/ui/ToastHost.vue';
+import OfflineBar from '@/components/layout/OfflineBar.vue';
 import { useNavVisibility } from '@/composables/useNavVisibility';
 
 const { topHidden, bottomHidden } = useNavVisibility();
@@ -18,6 +19,7 @@ const { topHidden, bottomHidden } = useNavVisibility();
   </main>
   <MobileTabBar :hidden="bottomHidden" />
   <ToastHost />
+  <OfflineBar />
 </template>
 
 <style lang="scss">

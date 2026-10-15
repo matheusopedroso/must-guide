@@ -1,4 +1,5 @@
 import { guideIdOf } from '@/utils/guideIds';
+import { forgetGuide } from './readCache.service';
 
 // Rascunho do guia guardado no navegador (localStorage), 1 chave por guia (jogo ou DLC).
 // É a cópia local (offline/sem login); a da nuvem fica em guides.service.js (sincronia em useGuideDraft).
@@ -28,6 +29,7 @@ export function deleteDraft(guideId) {
   try {
     localStorage.removeItem(key(guideId));
     localStorage.removeItem(`mg:collected:${guideId}`);
+    forgetGuide(guideId);
   } catch {
     /* armazenamento bloqueado */
   }

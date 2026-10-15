@@ -390,6 +390,21 @@ embaixo (só ícones; a aba ativa mostra o nome; a última é a Conta). As duas 
 Qualquer elemento: `data-tooltip="Texto"` (+ `aria-label`). Encostado na direita: classe `tooltip-left`.
 Estilo em `src/styles/components/_tooltip.scss` (só CSS; não aparece em telas de toque).
 
+## PWA (instalar e usar sem internet)
+
+No site gerado pelo build (`npm run build` → deploy, ou `npm run preview` para testar no PC), o app pode ser
+instalado no celular ("Adicionar à tela inicial") e abre **sem internet** o que já foi visto:
+- **Service worker** (`src/pwa/sw.js`, gerado no build por `vite/swPlugin.js` com a lista dos arquivos e a versão):
+  guarda o app inteiro na instalação; navegação pela rede e, sem internet, o app guardado; `/api` (jogos e troféus)
+  pela rede com a última resposta como reserva; imagens e fontes do cache (até 400). Cada deploy gera um `sw.js`
+  novo → os caches antigos saem. No `npm run dev` não há service worker.
+- **Guias lidos** (`readCache.service.js`): a cópia da nuvem de cada guia aberto fica no navegador (os últimos 30);
+  sem internet, `useGuide` usa ela. Os rascunhos de quem edita já ficam no navegador.
+- Sem internet aparece o aviso no rodapé (`OfflineBar`). Deploy novo com uma aba antiga aberta: se faltar um arquivo
+  ao trocar de página, a página recarrega sozinha uma vez (`src/pwa/register.js`).
+- `npm run preview` agora também responde `/api` (as mesmas chaves do `.env.local`), para testar o build completo.
+- `firebase.json`: `/sw.js` com `no-cache` (o navegador sempre confere a versão nova).
+
 ## Testes
 
 ```bash

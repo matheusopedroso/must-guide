@@ -1,5 +1,7 @@
 // Simula services/guides.service nos testes (nuvem = localStorage "mock-cloud:<guideId>"; só admin grava)
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const wait = (ms) => new Promise((r) => setTimeout(r, ms)).then(() => {
+  if (!navigator.onLine) throw new Error('Failed to fetch'); // sem internet: como o Firestore de verdade
+});
 const isAdmin = () => localStorage.getItem('mock-user') && localStorage.getItem('mock-admin') !== '0';
 const all = () => Object.keys(localStorage).filter((k) => k.startsWith('mock-cloud:')).map((k) => JSON.parse(localStorage.getItem(k)));
 const strip = ({ _uid, ...g }) => g;
