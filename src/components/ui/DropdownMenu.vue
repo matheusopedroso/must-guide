@@ -7,6 +7,8 @@ import { useClickOutside } from '@/composables/useClickOutside';
 defineProps({
   label: { type: String, required: true }, // aria-label do menu
   width: { type: Number, default: 240 },
+  up: Boolean, // abre para cima (ex.: no rodapé de um modal)
+  start: Boolean, // alinha pela esquerda do botão (padrão: pela direita)
 });
 
 const open = ref(false);
@@ -22,6 +24,7 @@ useClickOutside(root, open, close);
     <div
       v-if="open"
       class="dropdown__menu surface radius-2 py-1"
+      :class="{ 'is-up': up, 'is-start': start }"
       role="menu"
       :aria-label="label"
       :style="{ width: `min(${width}px, calc(100vw - 32px))` }"
@@ -40,5 +43,15 @@ useClickOutside(root, open, close);
   max-height: min(420px, 60dvh);
   overflow-y: auto;
   box-shadow: var(--shadow);
+
+  &.is-up {
+    top: auto;
+    bottom: calc(100% + #{space(1)});
+  }
+
+  &.is-start {
+    right: auto;
+    left: 0;
+  }
 }
 </style>

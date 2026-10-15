@@ -28,8 +28,10 @@ export function useCollectibleView(sections) {
     groupCollectibles(itemsOf(s)).filter(
       (g) => g.some((it) => matchesFilter(it, filter.value)) && !(hideDone.value && g.every((it) => isDone(it.id))),
     );
+  // Próximo que falta (na ordem do guia, respeitando o filtro) → id ou null
+  const nextMissing = () => all.value.find((it) => !isDone(it.id) && matchesFilter(it, filter.value))?.id ?? null;
   const regionCount = (s) => countOf(itemsOf(s));
   const regionTypes = (s) => summarizeByType(itemsOf(s), isDone);
 
-  return { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, regionCount, regionTypes };
+  return { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, nextMissing, regionCount, regionTypes };
 }

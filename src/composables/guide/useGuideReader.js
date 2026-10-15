@@ -28,7 +28,7 @@ export function useGuideReader(guideId) {
   const { list, progress, loading: listLoading, error: listError } = useTrophyData(active, { withProgress, scope: guide });
 
   // Progresso pessoal: coletáveis marcados e troféus marcados como feitos
-  const { collected, toggleCollected, checked, toggleChecked } = usePersonalProgress(guideId);
+  const { collected, toggleCollected, clearCollected, checked, toggleChecked } = usePersonalProgress(guideId);
   const collectibleItems = computed(() => collectiblesOf(guide.value));
   const openCollectible = ref(null); // coletável aberto no modal de detalhes
   provideCollectibleContext({
@@ -36,6 +36,7 @@ export function useGuideReader(guideId) {
     byId: computed(() => new Map(collectibleItems.value.map((c) => [c.id, c]))),
     collected,
     toggle: toggleCollected,
+    reset: clearCollected, // desmarca todos (Recomeçar)
     open: (id) => (openCollectible.value = id),
   });
 
@@ -51,7 +52,7 @@ export function useGuideReader(guideId) {
 
   return {
     gameId, guide, source, loading, error, game, enabled, isAdmin, canEdit, isDlc, title,
-    getNote, backlinks, versions, active, activeId, list, progress, listLoading, listError, openCollectible,
+    getNote, backlinks, versions, active, activeId, list, progress, listLoading, listError, openCollectible, collectibleItems,
     checked, toggleChecked, isDone, isEarned,
   };
 }

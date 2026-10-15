@@ -7,13 +7,15 @@ import CollectibleCard from '@/components/collectibles/CollectibleCard.vue';
 import CollectiblesOverview from '@/components/collectibles/CollectiblesOverview.vue';
 import VideoButton from '@/components/ui/VideoButton.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
-import { Pencil } from 'lucide-vue-next';
+import { Gem, Pencil } from 'lucide-vue-next';
 import ButtonStyleToggle from '@/components/trophies/ButtonStyleToggle.vue';
 import { useCollectibleView } from '@/composables/guide/useCollectibleView';
 import { useEditLinks } from '@/composables/guide/useEditLinks';
+import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { countDone, useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 import { sectionLabel, sectionWords } from '@/utils/sections';
+import { collectibleAnchorId } from '@/utils/collectibles';
 import { TROPHY_FLAGS } from '@/config/trophies';
 
 // Aba de seções na leitura (Guia, Roadmap): índice e, em cada seção, o texto corrido e a grade dos troféus.
@@ -22,6 +24,7 @@ const props = defineProps({
   sections: { type: Array, required: true },
   cfg: { type: Object, required: true }, // config da aba (config/guideTabs → sections)
   flagged: { type: Array, default: () => [] }, // troféus com a marcação da aba (cfg.flag), no topo
+  flaggedItems: { type: Array, default: () => [] }, // coletáveis com a marcação (Perdíveis), logo abaixo
   list: { type: Object, default: null },
   progress: { type: Object, default: null },
 });
@@ -40,10 +43,22 @@ const visible = computed(() =>
 
 // Coletáveis (cfg.items): progresso (geral, por tipo, por região), filtro, esconder coletados e modo compacto
 const cv = props.cfg.items ? useCollectibleView(computed(() => props.sections)) : null;
-const { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, regionCount, regionTypes } = cv ?? {};
+const { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, nextMissing, regionCount, regionTypes } = cv ?? {};
+// "Próximo que falta": rola até o cartão dele (o de um grupo também) e pisca a borda
+function goNext() {
+  const id = nextMissing();
+  const card = id && document.getElementById(collectibleAnchorId(id))?.closest('.ccard');
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.classList.add('is-flash');
+  setTimeout(() => card.classList.remove('is-flash'), 1600);
+}
 // Com filtro: só as regiões que têm algum coletável dele
 const listed = computed(() => (filter?.value ? visible.value.filter((s) => shown(s).length) : visible.value));
 const w = computed(() => sectionWords(props.cfg));
+// Coletáveis marcados (aba Perdíveis): linha compacta com a caixa de marcar (vale para o guia todo)
+const colCtx = useCollectibleContext();
+const itemDone = (id) => !!colCtx?.collected?.value.has(id);
 // Lápis (quem pode editar): abre o editor nesta seção
 const edit = useEditLinks();
 // Checklist de quem lê: troféus feitos em cada seção
@@ -72,9 +87,29 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
     <section v-if="flag && flagged.length" class="section surface radius-2 p-2 d-flex flex-column gap-2">
       <h2 class="section-heading d-flex align-center gap-1">
         <span class="badge" :class="`badge--${flag.tone}`"><component :is="flag.icon" :size="14" :stroke-width="2" /></span>
-        Marcados como {{ flag.label }} <span class="text-subtle fw-500">{{ flagged.length }}</span>
+        Troféus marcados como {{ flag.label }} <span class="text-subtle fw-500">{{ flagged.length }}</span>
       </h2>
       <SectionTrophyGrid :trophies="flagged" :progress="progress" @open="$emit('open-trophy', $event)" />
+    </section>
+
+    <!-- Coletáveis marcados como Perdível (aba Perdíveis) -->
+    <section v-if="flag && flaggedItems.length" class="section surface radius-2 p-2 d-flex flex-column gap-2">
+      <h2 class="section-heading d-flex align-center gap-1">
+        <span class="badge" :class="`badge--${flag.tone}`"><Gem :size="14" :stroke-width="2" /></span>
+        Coletáveis perdíveis <span class="text-subtle fw-500">{{ flaggedItems.length }}</span>
+      </h2>
+      <div class="d-flex flex-column gap-1">
+        <CollectibleCard
+          v-for="it in flaggedItems"
+          :key="it.id"
+          :items="[it]"
+          :is-done="itemDone"
+          :can-toggle="!!colCtx?.toggle"
+          compact
+          @toggle="colCtx.toggle"
+          @open-trophy="$emit('open-trophy', $event)"
+        />
+      </div>
     </section>
 
     <!-- Coletáveis: progresso geral, por tipo (filtra) e opções -->
@@ -86,6 +121,9 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
       :overall="overall"
       :by-type="byType"
       :missable="missable"
+      :can-reset="!!col?.reset"
+      @next="goNext"
+      @reset="col.reset()"
     />
 
     <ButtonStyleToggle v-if="hasKeys" />

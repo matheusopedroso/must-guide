@@ -24,10 +24,11 @@ const props = defineProps({
   types: { type: Array, default: () => [] }, // tipos de coletável já usados (sugestões)
   pages: { type: Array, default: () => [] }, // aba paginada: rótulos das páginas ("Página 2: …") para mover a seção
   pageIndex: { type: Number, default: 0 }, // página onde a seção está
+  regions: { type: Array, default: () => [] }, // coletáveis: [{ id, label }] das regiões (Mover para…)
 });
 const emit = defineEmits([
   'update', 'move', 'remove', 'add-trophies', 'remove-trophy', 'open-trophy',
-  'add-item', 'update-item', 'remove-item', 'move-item', // coletáveis (cfg.items)
+  'add-items', 'update-item', 'remove-item', 'move-item', 'move-item-to', // coletáveis (cfg.items)
   'move-page', // aba paginada: índice da página de destino
 ]);
 
@@ -106,7 +107,9 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
       :items="section.items ?? []"
       :types="types"
       :region-name="`${w.this} ${w.name}`"
-      @add="emit('add-item', $event)"
+      :regions="regions.filter((r) => r.id !== section.id)"
+      @add="emit('add-items', $event)"
+      @move-to="(itemId, toId) => emit('move-item-to', itemId, toId)"
       @update="(itemId, patch) => emit('update-item', itemId, patch)"
       @remove="emit('remove-item', $event)"
       @move="(itemId, dir) => emit('move-item', itemId, dir)"

@@ -46,7 +46,8 @@ const checklistCount = computed(() => (checklist && props.list ? countDone(props
 const col = useCollectibleContext();
 const collectibles = computed(() => {
   const items = col?.items.value ?? [];
-  return items.length ? { total: items.length, done: items.filter((i) => col.collected?.value.has(i.id)).length } : null;
+  if (!items.length) return null;
+  return { total: items.length, done: items.filter((i) => col.collected?.value.has(i.id)).length, missable: items.filter((i) => i.missable).length };
 });
 
 // Tempo: o informado no guia; sem ele, a estimativa da API (100% → extras → média), marcada como estimativa
@@ -123,7 +124,10 @@ const PLAY_ROWS = [
         </div>
         <div v-if="collectibles" class="card__row d-flex align-center justify-between gap-1">
           <span class="d-inline-flex align-center gap-1 text-sm text-muted"><Gem :size="16" /> Coletáveis</span>
-          <span class="text-sm fw-600">{{ collectibles.done }}/{{ collectibles.total }}</span>
+          <span class="text-sm fw-600">
+            {{ collectibles.done }}/{{ collectibles.total }}
+            <span v-if="collectibles.missable" class="text-warning fw-500">· {{ collectibles.missable }} perdível{{ collectibles.missable > 1 ? 'is' : '' }}</span>
+          </span>
         </div>
         <div v-if="checklistCount?.total" class="d-flex flex-column gap-1">
           <span class="d-flex justify-between text-xs text-muted">

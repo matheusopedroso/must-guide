@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { readDraft, seed, yoteiGuide } from './helpers.js';
+import { fakeIgdbImages, readDraft, seed, yoteiGuide } from './helpers.js';
 
 const item = (id, name, type, extra = {}) => ({ id, name, type, location: '', description: '', images: [], ...extra });
 
@@ -159,4 +159,77 @@ test('coletáveis: editar direto da leitura', async ({ page }) => {
   await page.goto('/guia/rawg-1002?aba=coletaveis');
   await expect(page.locator('.ccard').first()).toBeVisible();
   await expect(page.locator('[aria-label^="Editar"]')).toHaveCount(0);
+});
+
+// Editor: tipo lembrado no campo rápido, colar lista (uma linha por coletável) e mover para outra região
+test('coletáveis no editor: colar lista e mover de região', async ({ page }) => {
+  await seed(page, [guide()]);
+  await page.goto('/guia/rawg-1002/editar?aba=coletaveis');
+  const vila = page.locator('[data-section="r2"]');
+
+  await vila.getByLabel('Tipo do novo coletável').fill('Pingente');
+  await vila.getByLabel('Nome do novo coletável').fill('Pingente do Rio');
+  await vila.getByLabel('Nome do novo coletável').press('Enter');
+  await expect(vila.locator('.clist__row').last()).toContainText('Pingente do Rio');
+  await expect(vila.locator('.clist__row').last()).toContainText('Pingente');
+
+  // Colar: "Tipo #n: Nome + Tipo #n: Nome" = mesmo lugar; linha sem tipo usa o do campo
+  await vila.getByLabel('Nome do novo coletável').evaluate((el) => {
+    const dt = new DataTransfer();
+    dt.setData('text/plain', 'Artifact #7: Pamphlet + Artifact #8: Map\n- Bilhete solto');
+    el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+  });
+  await expect(page.locator('.toast')).toContainText('3 coletáveis adicionados');
+  await expect
+    .poll(async () => (await readDraft(page, 'rawg-1002'))?.collectibles?.[1]?.items?.slice(-3).map((i) => [i.name, i.type, i.samePlace]))
+    .toEqual([['Pamphlet', 'Artifact', false], ['Map', 'Artifact', true], ['Bilhete solto', 'Pingente', false]]);
+
+  // Mover "Carta" (Vila) para a Floresta
+  await vila.locator('.clist__row button:has-text("Carta")').click();
+  await page.locator('.modal button:has-text("Mover")').click();
+  await page.click('.menu__item:has-text("Floresta")');
+  await expect(page.locator('[data-section="r1"] .clist__row').last()).toContainText('Carta');
+  await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.collectibles?.[0]?.items?.map((i) => i.name).at(-1)).toBe('Carta');
+});
+
+// Leitura: imagens em tela cheia, próximo que falta, recomeçar e perdíveis na aba Perdíveis / Visão geral
+test('coletáveis: tela cheia, próximo que falta, recomeçar e perdíveis', async ({ page }) => {
+  await fakeIgdbImages(page);
+  const imgs = ['https://images.igdb.com/a.jpg', 'https://images.igdb.com/b.jpg'];
+  await seed(page, [guide({ tabs: ['coletaveis', 'perdiveis'] })]);
+  await page.evaluate((imgs) => {
+    const g = JSON.parse(localStorage.getItem('mock-cloud:rawg-1002'));
+    g.collectibles[0].items[0].images = imgs;
+    for (const k of ['mock-cloud:rawg-1002', 'mg:guide-draft:rawg-1002']) localStorage.setItem(k, JSON.stringify(g));
+  }, imgs);
+
+  await page.goto('/guia/rawg-1002');
+  await expect(page.locator('.overview')).toContainText('1 perdível');
+
+  await page.goto('/guia/rawg-1002?aba=coletaveis');
+  await page.click('.ccard#coletavel-a .ccard__images a >> nth=0');
+  const box = page.locator('.lightbox');
+  await expect(box).toContainText('1 / 2');
+  await page.keyboard.press('ArrowRight');
+  await expect(box).toContainText('2 / 2');
+  await page.keyboard.press('Escape');
+  await expect(box).toHaveCount(0);
+
+  // Próximo que falta: marca o 1º e o botão leva ao 2º (Pingente da Ana)
+  await page.click('.ccard#coletavel-a .ccard__check');
+  await page.click('button:has-text("Próximo que falta")');
+  await expect(page.locator('.ccard#coletavel-b')).toHaveClass(/is-flash/);
+
+  // Recomeçar: confirma e desmarca todos
+  await page.click('button:has-text("Recomeçar")');
+  await page.click('.modal button:has-text("Desmarcar todos")');
+  await expect(page.locator('[aria-label="Filtrar coletáveis"] .chip').filter({ hasText: 'Artefato' })).toContainText('0/3');
+
+  // Aba Perdíveis: o coletável perdível entra sozinho e dá para marcar ali
+  await page.goto('/guia/rawg-1002?aba=perdiveis');
+  const lost = page.locator('section:has-text("Coletáveis perdíveis")');
+  await expect(lost.locator('.ccard')).toHaveCount(1);
+  await lost.locator('.ccard__box').click();
+  await page.goto('/guia/rawg-1002?aba=coletaveis');
+  await expect(page.locator('[aria-label="Filtrar coletáveis"] .chip').filter({ hasText: 'Pingente' })).toContainText('1/1');
 });

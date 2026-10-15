@@ -4,6 +4,7 @@ import { Check, ChevronDown, Pencil, TriangleAlert } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import VideoButton from '@/components/ui/VideoButton.vue';
 import RefText from '@/components/trophies/RefText.vue';
+import ImageLightbox from '@/components/ui/ImageLightbox.vue';
 import { collectibleAnchorId, collectibleTag, cleanCredit } from '@/utils/collectibles';
 import { normalizeUrl } from '@/utils/url';
 import { useEditLinks } from '@/composables/guide/useEditLinks';
@@ -36,6 +37,9 @@ const missable = computed(() => props.items.some((it) => it.missable));
 const credit = computed(() => cleanCredit(lead.value.credit));
 const video = computed(() => normalizeUrl(lead.value.video ?? ''));
 const images = computed(() => (lead.value.images ?? []).map((u) => normalizeUrl(u)).filter(Boolean));
+// Imagem aberta em tela cheia (índice) — passa entre as imagens do cartão
+const viewing = ref(null);
+const gallery = computed(() => images.value.map((src, i) => ({ src, alt: `${name.value} — imagem ${i + 1} de ${images.value.length}` })));
 const hasBody = computed(() => !!(types.value || lead.value.location || lead.value.description || images.value.length || video.value || credit.value || group.value));
 
 const doneCount = computed(() => props.items.filter((it) => props.isDone(it.id)).length);
@@ -132,7 +136,7 @@ const open = computed(() => !props.compact || expanded.value);
       <RefText v-if="lead.description" :html="lead.description" class="ccard__desc px-2 py-2" @trophy="emit('open-trophy', $event)" />
 
       <div v-if="images.length" class="ccard__images p-2" :class="{ 'is-single': images.length === 1 }">
-        <a v-for="(src, i) in images" :key="i" :href="src" target="_blank" rel="noopener noreferrer" class="radius-1">
+        <a v-for="(src, i) in images" :key="i" :href="src" class="radius-1" :aria-label="`Ver imagem ${i + 1} em tela cheia`" @click.prevent="viewing = i">
           <img :src="src" :alt="`${name} — imagem ${i + 1}`" loading="lazy" decoding="async" />
         </a>
       </div>
@@ -170,6 +174,7 @@ const open = computed(() => !props.compact || expanded.value);
         </span>
       </label>
     </div>
+    <ImageLightbox v-model="viewing" :images="gallery" />
   </article>
 </template>
 
@@ -179,7 +184,7 @@ const open = computed(() => !props.compact || expanded.value);
   border: 1px solid var(--border);
   background: var(--surface);
   scroll-margin-top: calc(var(--nav-offset) + var(--pbar-gap) + var(--pbar-height) + 64px);
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.3s;
 
   &__name {
     min-height: 40px;
@@ -204,6 +209,11 @@ const open = computed(() => !props.compact || expanded.value);
   &__tag {
     color: var(--text-muted);
     font-size: 12px;
+  }
+
+  // "Próximo que falta": destaca por um instante
+  &.is-flash {
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   &.is-collected {

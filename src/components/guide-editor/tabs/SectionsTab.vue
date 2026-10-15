@@ -15,7 +15,7 @@ import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useToast } from '@/composables/useToast';
-import { sectionHasContent, sectionWords } from '@/utils/sections';
+import { sectionHasContent, sectionLabel, sectionWords } from '@/utils/sections';
 import { pageHasContent, pageLabel } from '@/utils/pages';
 import { TROPHY_FLAGS } from '@/config/trophies';
 
@@ -35,7 +35,7 @@ const paged = !!props.tab.sections.paged;
 const pg = paged ? usePages(draft, props.tab.sections.key) : null;
 // Dono da lista de seções: a página aberta (paginada) ou o próprio rascunho
 const owner = paged ? pg.current : draft;
-const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered: pageCovered, addItem, updateItem, removeItem, moveItem } =
+const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered: pageCovered, addItems, updateItem, removeItem, moveItem, moveItemTo } =
   useSections(owner, paged ? 'sections' : props.tab.sections.key);
 // Troféus já em alguma seção: na aba paginada, em qualquer página
 const covered = paged ? computed(() => new Set(pg.allSections.value.flatMap((s) => s.trophies))) : pageCovered;
@@ -43,6 +43,16 @@ const pageLabels = computed(() => (paged ? pg.pages.value.map(pageLabel) : []));
 
 // Coletáveis: tipos já usados viram sugestão no campo "Tipo"
 const types = computed(() => [...new Set(sections.value.flatMap((s) => (s.items ?? []).map((i) => i.type).filter(Boolean)))]);
+// Regiões para "Mover para…" (coletáveis)
+const regions = computed(() => (cfg.value.items ? sections.value.map((s, i) => ({ id: s.id, label: sectionLabel(s, i, cfg.value) })) : []));
+function addCollectibles(id, list) {
+  const n = addItems(id, list);
+  if (n > 1) toast.show(`${n} coletáveis adicionados.`, 'success');
+}
+function moveCollectible(fromId, itemId, toId) {
+  moveItemTo(fromId, itemId, toId);
+  toast.show(`Coletável movido para ${regions.value.find((r) => r.id === toId)?.label ?? 'outra região'}.`, 'success');
+}
 const { principal } = useTrophyVersions(draft);
 const { list } = useTrophyData(principal, { withProgress: false, scope: draft }); // só os troféus deste guia (jogo base ou DLC)
 const toast = useToast();
@@ -174,7 +184,9 @@ function moveToPage(sectionId, i) {
         @add-trophies="addMany(s.id, $event)"
         @remove-trophy="removeTrophy(s.id, $event)"
         :types="types"
-        @add-item="addItem(s.id, $event)"
+        :regions="regions"
+        @add-items="addCollectibles(s.id, $event)"
+        @move-item-to="(itemId, toId) => moveCollectible(s.id, itemId, toId)"
         @update-item="(itemId, patch) => updateItem(s.id, itemId, patch)"
         @remove-item="removeItem(s.id, $event)"
         @move-item="(itemId, dir) => moveItem(s.id, itemId, dir)"

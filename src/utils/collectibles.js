@@ -117,3 +117,25 @@ export function creditsOf(guide) {
   }
   return list;
 }
+
+// --- Adicionar em massa (editor): colar uma lista, uma linha por coletável ---
+// Aceita "Nome", "Tipo: Nome", "Tipo #3: Nome" (PowerPyx) e marcadores de lista ("- ", "• ", "1. ").
+// Vários na mesma linha com " + " ("Artifact #1: Pamphlet + Artifact #2: Map") = pegos no mesmo lugar:
+// o 2º em diante entra com samePlace. Linha sem tipo usa o padrão (o tipo escolhido no campo).
+// → [{ name, type, samePlace }]
+const BULLET = /^\s*(?:[-–•*]|\d+[.)])\s+/;
+const TYPED = /^([^:#]{1,40}?)\s*(?:#\s*\d+)?\s*:\s*(.+)$/;
+
+export function parseCollectibleLines(text = '', defaultType = '') {
+  const out = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(BULLET, '').trim();
+    if (!line) continue;
+    line.split(/\s\+\s/).forEach((part, i) => {
+      const m = part.trim().match(TYPED);
+      const name = (m ? m[2] : part).trim();
+      if (name) out.push({ name, type: (m ? m[1] : defaultType).trim(), samePlace: i > 0 });
+    });
+  }
+  return out;
+}

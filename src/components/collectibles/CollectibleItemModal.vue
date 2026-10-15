@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, watch } from 'vue';
-import { ImagePlus, Link2, Trash2, X } from 'lucide-vue-next';
+import { FolderInput, ImagePlus, Link2, Trash2, X } from 'lucide-vue-next';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import RefTextEditor from '@/components/trophies/RefTextEditor.vue';
@@ -18,8 +19,9 @@ const props = defineProps({
   item: { type: Object, default: null },
   types: { type: Array, default: () => [] }, // tipos já usados no guia (sugestões)
   first: Boolean, // 1º da região: não tem "anterior" para juntar
+  regions: { type: Array, default: () => [] }, // outras regiões [{ id, label }] (Mover para…)
 });
-const emit = defineEmits(['save', 'remove']);
+const emit = defineEmits(['save', 'remove', 'move-to']);
 
 const EMPTY = { name: '', type: '', location: '', description: '', images: [], video: '', missable: false, uncounted: false, samePlace: false, creditName: '', creditUrl: '' };
 const form = reactive({ ...EMPTY });
@@ -49,6 +51,12 @@ function onCreditName() {
 
 const joined = computed(() => form.samePlace && !props.first);
 const addImage = () => form.images.length < MAX_IMAGES && form.images.push('');
+
+function moveTo(regionId) {
+  const id = props.item.id; // o save fecha a janela (e quem abriu esquece qual era)
+  save();
+  emit('move-to', id, regionId);
+}
 
 function save() {
   emit('save', {
@@ -149,6 +157,17 @@ function save() {
 
     <template #footer>
       <BaseButton :icon="Trash2" size="sm" variant="danger" @click="$emit('remove'), (open = false)">Excluir</BaseButton>
+      <!-- Mover para outra região: grava o que foi editado aqui e leva para o fim da outra -->
+      <DropdownMenu v-if="regions.length" label="Mover para outra região" up start>
+        <template #trigger="{ open: menuOpen, toggle }">
+          <BaseButton :icon="FolderInput" size="sm" variant="ghost" aria-haspopup="menu" :aria-expanded="menuOpen" @click="toggle">Mover</BaseButton>
+        </template>
+        <template #default="{ close }">
+          <button v-for="r in regions" :key="r.id" type="button" role="menuitem" class="menu__item" @click="moveTo(r.id), close()">
+            {{ r.label }}
+          </button>
+        </template>
+      </DropdownMenu>
       <span class="flex-1" />
       <BaseButton @click="open = false">Cancelar</BaseButton>
       <BaseButton variant="primary" :disabled="!form.name.trim()" @click="save">Salvar</BaseButton>

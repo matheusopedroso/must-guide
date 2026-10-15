@@ -96,6 +96,14 @@ export function usePersonalProgress(guideId) {
     schedule();
   }
 
+  // Esvazia um dos conjuntos (ex.: recomeçar os coletáveis numa nova jogada)
+  function clearIn(set) {
+    set.value = new Set();
+    editedAt = new Date().toISOString();
+    writeLocal(guideId.value, snapshot());
+    schedule();
+  }
+
   watch(guideId, load, { immediate: true });
   watch(user, () => load(guideId.value)); // entrou/saiu: pega o progresso da conta
 
@@ -109,6 +117,7 @@ export function usePersonalProgress(guideId) {
   return {
     collected,
     toggleCollected: (id) => toggleIn(collected, id),
+    clearCollected: () => clearIn(collected),
     checked,
     toggleChecked: (id) => toggleIn(checked, id),
   };

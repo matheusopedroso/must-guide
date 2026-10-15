@@ -274,6 +274,18 @@ complete os detalhes no lápis. Toda seção (de qualquer aba) aceita um **víde
   vídeo/crédito do 1º e **uma caixa para cada** (cada um conta e numera separado). No compacto, a caixa da linha marca
   o grupo todo. No editor a linha fica recuada (↳). O chip no texto de qualquer um deles abre o cartão do grupo.
 
+- **Próximo que falta** rola até o próximo não marcado (respeita o filtro) e **Recomeçar** desmarca todos, com
+  confirmação (nova jogada; os troféus não mudam).
+- **Imagens em tela cheia** dentro do app (`ui/ImageLightbox.vue`): setas na tela e no teclado, Esc / voltar fecham,
+  "Abrir original" leva ao link.
+- **Perdíveis:** os coletáveis marcados como Perdível entram sozinhos na aba **Perdíveis** (linha compacta, dá para
+  marcar ali) e a Visão geral mostra "x/y · N perdíveis" no cartão Para platinar.
+
+**No editor:** o campo de adicionar tem o **tipo** (fica lembrado entre regiões) e aceita **colar uma lista** — uma
+linha por coletável: `Nome`, `Tipo: Nome`, `Tipo #3: Nome` (formato do PowerPyx) e marcadores de lista; vários na
+mesma linha com ` + ` entram como "mesmo lugar do anterior" (`parseCollectibleLines`). Na janela do coletável,
+**Mover** leva para o fim de outra região.
+
 **Créditos do guia:** no editor (aba Troféus, ao lado de "Dificuldade, jogadas e horas") — nome, link e o que fez.
 Na leitura aparecem no fim da página, em todas as abas, junto com os nomes citados nos coletáveis (sem repetir).
 Lógica em `src/utils/collectibles.js` (`collectiblesOf` com número, `summarizeByType`, `matchesFilter`, `creditsOf`).

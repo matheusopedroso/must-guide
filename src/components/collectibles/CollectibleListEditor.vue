@@ -1,24 +1,39 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useQueryParam } from '@/composables/useQueryParam';
+import { useStoredRef } from '@/composables/useStoredRef';
+import { parseCollectibleLines } from '@/utils/collectibles';
 import { ArrowDown, ArrowUp, CirclePlay, CornerDownRight, Image, Pencil, Plus, TriangleAlert } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import CollectibleItemModal from './CollectibleItemModal.vue';
 
-// Coletáveis de uma região no editor: lista compacta (nome · tipo · local), adicionar rápido pelo nome
-// (Enter) e editar os detalhes numa janela. "Mesmo lugar do anterior" aparece recuado, preso ao de cima.
+// Coletáveis de uma região no editor: lista compacta (nome · tipo · local), adicionar rápido (tipo + nome e
+// Enter; o tipo fica lembrado) ou colar uma lista (uma linha por coletável — ver parseCollectibleLines) e editar
+// os detalhes numa janela. "Mesmo lugar do anterior" aparece recuado, preso ao de cima.
 const props = defineProps({
   items: { type: Array, default: () => [] },
   types: { type: Array, default: () => [] },
   regionName: { type: String, default: 'esta área' },
+  regions: { type: Array, default: () => [] }, // outras regiões [{ id, label }] (Mover para…)
 });
-const emit = defineEmits(['add', 'update', 'remove', 'move']);
+// add: [{ name, type, samePlace }] · move-to: (itemId, regionId)
+const emit = defineEmits(['add', 'update', 'remove', 'move', 'move-to']);
 
 const newName = ref('');
+const newType = useStoredRef('mg:collectible-type', ''); // último tipo usado (vale para as outras regiões)
 function quickAdd() {
   if (!newName.value.trim()) return;
-  emit('add', newName.value);
+  emit('add', [{ name: newName.value, type: newType.value }]);
   newName.value = '';
+}
+
+// Colar várias linhas no nome: cada linha vira um coletável ("Tipo: Nome", "A #1: X + A #2: Y"…)
+function onPaste(e) {
+  const text = e.clipboardData?.getData('text') ?? '';
+  if (!text.includes('\n')) return; // uma linha só: cola normal
+  e.preventDefault();
+  const list = parseCollectibleLines(text, newType.value);
+  if (list.length) emit('add', list);
 }
 
 const editingId = ref(null);
@@ -74,8 +89,18 @@ defineExpose({ edit: (id) => (editingId.value = id) });
       </li>
     </ol>
 
-    <form class="d-flex gap-1" @submit.prevent="quickAdd">
-      <input v-model="newName" class="input flex-1" placeholder="Nome do coletável e Enter para adicionar" aria-label="Nome do novo coletável" />
+    <form class="quick d-flex gap-1" @submit.prevent="quickAdd">
+      <input v-model="newType" class="input quick__type" list="collectible-types-quick" placeholder="Tipo" aria-label="Tipo do novo coletável" />
+      <datalist id="collectible-types-quick">
+        <option v-for="t in types" :key="t" :value="t" />
+      </datalist>
+      <input
+        v-model="newName"
+        class="input flex-1"
+        placeholder="Nome e Enter — ou cole uma lista (uma linha por coletável)"
+        aria-label="Nome do novo coletável"
+        @paste="onPaste"
+      />
       <BaseButton :icon="Plus" type="submit" :disabled="!newName.trim()">Adicionar</BaseButton>
     </form>
 
@@ -84,6 +109,8 @@ defineExpose({ edit: (id) => (editingId.value = id) });
       :item="editing"
       :types="types"
       :first="editingFirst"
+      :regions="regions"
+      @move-to="(itemId, toId) => emit('move-to', itemId, toId)"
       @save="emit('update', editingId, $event)"
       @remove="emit('remove', editingId)"
     />
@@ -94,6 +121,14 @@ defineExpose({ edit: (id) => (editingId.value = id) });
 .clist__row {
   border: 1px solid var(--border);
   background: var(--surface);
+}
+
+.quick__type {
+  flex: 0 0 160px;
+
+  @include down(sm) {
+    flex-basis: 104px;
+  }
 }
 
 .clist__row.is-joined {

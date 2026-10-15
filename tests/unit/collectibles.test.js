@@ -48,3 +48,21 @@ describe('coletáveis', () => {
     expect(groupOf(collectiblesOf(g2), 'c').map((i) => i.id)).toEqual(['b', 'c']);
   });
 });
+
+describe('colar lista de coletáveis', () => {
+  it('tipo, número do PowerPyx, marcadores e mesmo lugar', async () => {
+    const { parseCollectibleLines } = await import('@/utils/collectibles');
+    const text = `Artifact #1: Military Pamphlet + Artifact #2: Boston Q.Z. Map
+- Firefly Pendant #4: Joseph Lenz
+
+2. Shiv Door
+Optional Conversation #6`;
+    expect(parseCollectibleLines(text, 'Artefato')).toEqual([
+      { name: 'Military Pamphlet', type: 'Artifact', samePlace: false },
+      { name: 'Boston Q.Z. Map', type: 'Artifact', samePlace: true },
+      { name: 'Joseph Lenz', type: 'Firefly Pendant', samePlace: false },
+      { name: 'Shiv Door', type: 'Artefato', samePlace: false },
+      { name: 'Optional Conversation #6', type: 'Artefato', samePlace: false },
+    ]);
+  });
+});

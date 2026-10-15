@@ -40,7 +40,7 @@ const guideId = computed(() => String(route.params.id ?? ''));
 // Guia, jogo, troféus (anotações, versões, lista e progresso) e coletáveis: o mesmo da página do troféu
 const {
   gameId, guide, source, loading, error, game, canEdit, isDlc, title: pageTitle,
-  getNote, backlinks, versions, active, activeId, list, progress, listLoading, listError, openCollectible,
+  getNote, backlinks, versions, active, activeId, list, progress, listLoading, listError, openCollectible, collectibleItems,
 } = useGuideReader(guideId);
 // Guia do jogo: os guias das DLCs (cada DLC é um guia separado)
 const { items: dlcGuides } = useDlcGuides(computed(() => (guide.value && !guide.value.dlc ? gameId.value : '')));
@@ -48,15 +48,17 @@ const { items: dlcGuides } = useDlcGuides(computed(() => (guide.value && !guide.
 // Abas de seções (Guia, Roadmap…): aparecem se estiverem no guia e tiverem alguma seção preenchida
 // (Perdíveis/Online também aparecem só com troféus marcados na aba Troféus)
 const flaggedBy = (flag) => (flag && list.value ? list.value.trophies.filter((t) => getNote(t.id)[flag]) : []);
+// Coletáveis com a mesma marcação (só Perdível existe nos coletáveis): entram na aba Perdíveis
+const flaggedItemsBy = (flag) => (flag === 'missable' ? collectibleItems.value.filter((i) => i.missable) : []);
 const sectionTabs = computed(() =>
   sectionTabsOf(guide.value)
     .map((t) => {
       // Paginada (Guia): páginas com conteúdo; as seções delas contam para a aba aparecer
       const pages = t.sections.paged ? filledPages(guide.value, t.sections.key) : null;
       const filled = pages ? pages.flatMap((p) => p.sections) : filledSections(guide.value, t.sections.key);
-      return { ...t, pages, filled, flagged: flaggedBy(t.sections.flag) };
+      return { ...t, pages, filled, flagged: flaggedBy(t.sections.flag), flaggedItems: flaggedItemsBy(t.sections.flag) };
     })
-    .filter((t) => t.filled.length || t.flagged.length),
+    .filter((t) => t.filled.length || t.flagged.length || t.flaggedItems.length),
 );
 const activeSectionTab = computed(() => sectionTabs.value.find((t) => t.id === tab.value) ?? null);
 
@@ -195,6 +197,7 @@ async function share() {
           :sections="activeSectionTab.filled"
           :cfg="activeSectionTab.sections"
           :flagged="activeSectionTab.flagged"
+          :flagged-items="activeSectionTab.flaggedItems"
           :list="list"
           :progress="progress"
           @open-trophy="openTrophy"

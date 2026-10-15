@@ -59,13 +59,26 @@ export function useSections(owner, key) {
   }
 
   // --- Coletáveis da seção (aba Coletáveis: cada seção é uma região) ---
-  function addItem(id, name) {
+  // list: [{ name, type?, samePlace? }] (um ou vários — colar lista) → quantos entraram
+  function addItems(id, list) {
     const section = find(id);
-    if (!section) return null;
+    if (!section) return 0;
     section.items ??= [];
-    const item = createCollectible(name.trim());
-    section.items.push(item);
-    return item.id;
+    for (const { name, type = '', samePlace = false } of list) {
+      if (name?.trim()) section.items.push({ ...createCollectible(name.trim()), type: type.trim(), samePlace: samePlace && section.items.length > 0 });
+    }
+    return list.length;
+  }
+
+  // Leva o coletável para o fim de outra região (deixa de ser "mesmo lugar do anterior")
+  function moveItemTo(id, itemId, toId) {
+    const from = find(id);
+    const to = find(toId);
+    const item = from?.items?.find((i) => i.id === itemId);
+    if (!item || !to || from === to) return;
+    from.items = from.items.filter((i) => i !== item);
+    to.items ??= [];
+    to.items.push({ ...item, samePlace: false });
   }
 
   function updateItem(id, itemId, patch) {
@@ -92,5 +105,5 @@ export function useSections(owner, key) {
   // Troféus que já estão em alguma seção (para mostrar o que falta)
   const covered = computed(() => new Set(sections.value.flatMap((s) => s.trophies)));
 
-  return { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered, addItem, updateItem, removeItem, moveItem };
+  return { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered, addItems, updateItem, removeItem, moveItem, moveItemTo };
 }
