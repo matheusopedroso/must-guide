@@ -3,9 +3,11 @@ import { createSection } from '@/utils/sections';
 import { createCollectible } from '@/utils/collectibles';
 import { extractTrophyRefs } from '@/utils/trophyRef';
 
-// Seções de uma aba de texto no rascunho (key: 'guide' | 'roadmap'): criar, editar, reordenar,
-// remover e escolher os troféus de cada uma.
-export function useSections(draft, key) {
+// Seções de uma aba de texto: criar, editar, reordenar, remover e escolher os troféus de cada uma.
+// owner = ref do objeto que guarda a lista: o rascunho (key: 'roadmap'…) ou, numa aba paginada, a página
+// aberta (key: 'sections').
+export function useSections(owner, key) {
+  const draft = owner;
   const sections = computed(() => draft.value?.[key] ?? []);
   const find = (id) => sections.value.find((s) => s.id === id);
 

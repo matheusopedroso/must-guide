@@ -3,8 +3,10 @@ import { hasRichContent } from './html';
 // Seções das abas de texto (Guia, Roadmap…): título, texto corrido (HTML do editor, cita troféus)
 // e os troféus da seção (ids, na ordem escolhida). Coletáveis: cada seção é uma região e tem também `items`. Cada aba guarda a sua lista no rascunho
 // (config/guideTabs → sections.key: 'guide', 'roadmap').
+export const uid = () => Math.random().toString(36).slice(2, 10);
+
 export const createSection = () => ({
-  id: Math.random().toString(36).slice(2, 10),
+  id: uid(),
   title: '',
   body: '',
   trophies: [],

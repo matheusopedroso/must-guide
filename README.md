@@ -146,7 +146,7 @@ seção, numerada ou não, textos de ajuda) e as mesmas peças (`SectionsTab` no
 
 | Aba | Fica em | Cada parte | Rótulo |
 |---|---|---|---|
-| **Guia** (fixa) | `guide` | Seção (Introdução, Dicas gerais…) | só o título |
+| **Guia** (fixa, **paginada**) | `guide` | Página → seções (Introdução, Capítulo 1…) | só o título |
 | **Roadmap** (opcional) | `roadmap` | Etapa | "Etapa 1: título" |
 | **Coletáveis** | `collectibles` | Região (Capítulo 3, Floresta…) + **coletáveis** com caixa de marcar | só o título |
 | **Detonado** | `walkthrough` | Capítulo (masculino) | "Capítulo 1: título" |
@@ -164,6 +164,18 @@ citados. No editor: subir/descer/remover etapa e quantos troféus já estão em 
 Na leitura (`/guia/:id?aba=roadmap`): índice das etapas, texto e grade (conquistados em verde); tocar num troféu
 abre a aba Troféus nele. Formato (as duas abas): `[{ id, title, body, trophies: [trophyId] }]` (`src/utils/sections.js`).
 A leitura mostra a aba só se ela tiver alguma seção preenchida.
+
+### Abas paginadas (Guia)
+
+`sections.paged: true` (como os guias do IGN e do TrueAchievements): a aba guarda **páginas**, cada uma com as suas
+seções — `[{ id, title, sections: [{ id, title, body, trophies }] }]` (`src/utils/pages.js`). Guias antigos (seções
+soltas) viram a Página 1 ao abrir (`toPages` em `normalizeDraft`).
+- **Editor:** `PageNavEditor` (lista das páginas, nova página, título, mover e remover) + as seções da página aberta
+  (`useSections` com a página como dona da lista; `usePages`). Cada seção tem "Outra página" para mudar de página.
+  A página aberta fica em `?pagina=` (a 1ª fica sem).
+- **Leitura:** `PagedSectionsView` — sumário ao lado (no celular, seletor), "Página N de M", as seções e
+  Anterior/Próxima. Cada troca entra no histórico (`?pagina=2`): o voltar do navegador volta a página.
+  Páginas sem conteúdo não aparecem. Para paginar outra aba (ex.: Detonado), basta `paged: true` na config.
 
 ## Coletáveis (modelo do IGN)
 

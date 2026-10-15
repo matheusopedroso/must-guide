@@ -1,6 +1,7 @@
 import { EMPTY_NOTE } from '@/config/trophies';
 import { GUIDE_TABS } from '@/config/guideTabs';
 import { dlcGuideId } from './guideIds';
+import { toPages } from './pages';
 import { hasRichContent } from './html';
 
 // Formato do guia. É o mesmo documento do Firestore (guides/{gameId}) e do rascunho no navegador.
@@ -40,7 +41,7 @@ export const createDraft = (game, { dlc = null } = {}) => ({
   versions: [], // listas de troféus da PSN: [{ id, name, platform, service }] — a 1ª é a principal
   trophies: {}, // anotações por trophyId no formato de EMPTY_NOTE (config/trophies), só as preenchidas
   stats: { difficulty: 0, playthroughs: 0, hours: 0 }, // visão geral do guia (0 = não informado) — config/guide
-  guide: [], // aba Guia: seções [{ id, title, body (HTML), trophies: [trophyId] }] — utils/sections
+  guide: [], // aba Guia (paginada): páginas [{ id, title, sections: [{ id, title, body (HTML), trophies }] }] — utils/pages
   roadmap: [], // aba Roadmap: etapas no mesmo formato
   tips: [], // aba Dicas: dicas no mesmo formato
   collectibles: [], // Coletáveis · walkthrough: Detonado · missables: Perdíveis · online: Online (mesmo formato)
@@ -50,10 +51,15 @@ export const createDraft = (game, { dlc = null } = {}) => ({
   updatedAt: null, // ISO da última edição (decide entre a cópia do navegador e a da nuvem)
 });
 
+// Abas paginadas (config/guideTabs → sections.paged): guias antigos (seções soltas) viram uma página
+const PAGED_KEYS = GUIDE_TABS.filter((t) => t.sections?.paged).map((t) => t.sections.key);
+
 // Garante todos os campos ao ler um rascunho antigo ou incompleto
 export function normalizeDraft(raw, game) {
   const base = createDraft(game, { dlc: raw?.dlc });
-  return { ...base, ...raw, guideId: raw?.guideId ?? base.guideId, game: gameSnapshot(game, raw?.game), stats: { ...base.stats, ...raw?.stats } };
+  const draft = { ...base, ...raw, guideId: raw?.guideId ?? base.guideId, game: gameSnapshot(game, raw?.game), stats: { ...base.stats, ...raw?.stats } };
+  for (const key of PAGED_KEYS) draft[key] = toPages(draft[key]);
+  return draft;
 }
 
 // Vazia = nenhum campo preenchido (texto sem conteúdo real também conta como vazio)

@@ -7,7 +7,8 @@ import { BookOpen, Gem, Lightbulb, Milestone, PackagePlus, Route, TriangleAlert,
 //
 // Abas de texto em seções (Guia, Roadmap): `sections` configura o mesmo editor/leitura (SectionsTab/SectionsView).
 //   key: onde ficam no rascunho · unit: nome de cada seção · masc: palavra masculina ("deste capítulo")
-//   numbered: "Etapa 1: …" ou só o título · flag: marcação dos troféus (config/trophies → TROPHY_FLAGS) cujos
+//   numbered: "Etapa 1: …" ou só o título · paged: a aba é dividida em páginas (cada uma com as suas seções,
+//   leitura com sumário e anterior/próxima — utils/pages) · flag: marcação dos troféus (config/trophies → TROPHY_FLAGS) cujos
 //   troféus aparecem sozinhos no topo da aba (Perdíveis, Online) · items: cada seção tem coletáveis (Coletáveis)
 const SectionsTab = defineAsyncComponent(() => import('@/components/guide-editor/tabs/SectionsTab.vue'));
 export const GUIDE_TABS = [
@@ -30,9 +31,12 @@ export const GUIDE_TABS = [
       key: 'guide',
       unit: 'Seção',
       numbered: false,
-      titlePlaceholder: 'Título (ex.: Introdução, Antes de começar)',
+      paged: true, // como os guias do IGN e do TrueAchievements: páginas com sumário e anterior/próxima
+      pageTitlePlaceholder: 'Título da página (ex.: Introdução, Capítulo 1, Pós-jogo)',
+      titlePlaceholder: 'Título da seção (ex.: Dicas gerais, Missão 3)',
       bodyPlaceholder: 'Escreva o guia. Digite @ para citar um troféu ou use a varinha para linkar os nomes…',
-      emptyText: 'Divida o guia em seções (ex.: introdução, antes de começar, dicas gerais). Cada seção tem um texto e, se quiser, os troféus ligados a ela.',
+      emptyText:
+        'Divida o guia em páginas (ex.: Introdução, Capítulo 1, Capítulo 2, Pós-jogo). Cada página tem as suas seções, com texto e os troféus ligados a elas; na leitura, sumário e botões de anterior/próxima.',
     },
   },
   {

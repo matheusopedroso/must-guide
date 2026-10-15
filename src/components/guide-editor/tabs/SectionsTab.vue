@@ -6,18 +6,22 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import SectionEditor from '@/components/sections/SectionEditor.vue';
+import PageNavEditor from '@/components/sections/PageNavEditor.vue';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useSections } from '@/composables/guide/useSections';
+import { usePages } from '@/composables/guide/usePages';
 import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
 import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useToast } from '@/composables/useToast';
 import { sectionHasContent, sectionWords } from '@/utils/sections';
+import { pageHasContent, pageLabel } from '@/utils/pages';
 import { TROPHY_FLAGS } from '@/config/trophies';
 
 // Aba de texto em seções no editor (Guia, Roadmap — como o roadmap do PSNProfiles): cada seção tem
 // título, texto corrido e os troféus ligados a ela. A aba diz onde guardar e os textos (config/guideTabs → sections).
 // Usa a lista da versão principal (já em cache da aba Troféus).
+// Aba paginada (cfg.paged — Guia): em cima as páginas (PageNavEditor); embaixo, as seções da página aberta.
 const props = defineProps({
   tab: { type: Object, required: true },
   game: { type: Object, default: null }, // a página passa para todas as abas
@@ -26,8 +30,15 @@ const props = defineProps({
 const cfg = computed(() => props.tab.sections);
 const w = computed(() => sectionWords(cfg.value));
 const { draft } = useGuideDraft();
-const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered, addItem, updateItem, removeItem, moveItem } =
-  useSections(draft, props.tab.sections.key);
+const paged = !!props.tab.sections.paged;
+const pg = paged ? usePages(draft, props.tab.sections.key) : null;
+// Dono da lista de seções: a página aberta (paginada) ou o próprio rascunho
+const owner = paged ? pg.current : draft;
+const { sections, add, update, remove, move, addTrophies, removeTrophy, citedMissing, covered: pageCovered, addItem, updateItem, removeItem, moveItem } =
+  useSections(owner, paged ? 'sections' : props.tab.sections.key);
+// Troféus já em alguma seção: na aba paginada, em qualquer página
+const covered = paged ? computed(() => new Set(pg.allSections.value.flatMap((s) => s.trophies))) : pageCovered;
+const pageLabels = computed(() => (paged ? pg.pages.value.map(pageLabel) : []));
 
 // Coletáveis: tipos já usados viram sugestão no campo "Tipo"
 const types = computed(() => [...new Set(sections.value.flatMap((s) => (s.items ?? []).map((i) => i.type).filter(Boolean)))]);
@@ -58,15 +69,25 @@ function addMany(id, ids) {
   if (ids.length > 1) toast.show(n ? `${n} troféu(s) adicionados.` : `Eles já estavam ${w.value.in} ${w.value.name}.`, 'success');
 }
 
-// Remover: pede confirmação só se a seção tiver conteúdo
-const removing = ref(null);
+// Remover seção ou página: pede confirmação só se tiver conteúdo
+const removing = ref(null); // { kind: 'section', id } | { kind: 'page' }
 function askRemove(section) {
-  if (sectionHasContent(section)) removing.value = section.id;
+  if (sectionHasContent(section)) removing.value = { kind: 'section', id: section.id };
   else remove(section.id);
 }
+function askRemovePage() {
+  if (pageHasContent(pg.current.value)) removing.value = { kind: 'page' };
+  else pg.remove();
+}
 function confirmRemove() {
-  remove(removing.value);
+  if (removing.value.kind === 'page') pg.remove();
+  else remove(removing.value.id);
   removing.value = null;
+}
+
+function moveToPage(sectionId, i) {
+  pg.moveSection(sectionId, i);
+  toast.show(`Seção movida para a ${pageLabels.value[i]}.`, 'success');
 }
 </script>
 
@@ -84,7 +105,12 @@ function confirmRemove() {
       <span v-else>Marque os troféus como {{ flag.label }} na aba Troféus (Detalhes) e eles aparecem sozinhos no topo desta aba.</span>
     </p>
 
-    <EmptyState v-if="!sections.length" :icon="tab.icon" :title="tab.label" :text="cfg.emptyText">
+    <!-- Aba paginada sem páginas -->
+    <EmptyState v-if="paged && !pg.pages.value.length" :icon="tab.icon" :title="tab.label" :text="cfg.emptyText">
+      <BaseButton :icon="Plus" variant="primary" @click="pg.add()">Adicionar página</BaseButton>
+    </EmptyState>
+
+    <EmptyState v-else-if="!paged && !sections.length" :icon="tab.icon" :title="tab.label" :text="cfg.emptyText">
       <BaseButton :icon="Plus" variant="primary" @click="addSection">Adicionar {{ w.name }}</BaseButton>
     </EmptyState>
 
@@ -93,6 +119,19 @@ function confirmRemove() {
         <p class="text-xs text-muted">{{ coveredCount }} de {{ trophies.length }} troféus em {{ w.some }} {{ w.name }}</p>
         <ProgressBar :value="coveredCount" :max="trophies.length" />
       </div>
+
+      <PageNavEditor
+        v-if="paged"
+        :pages="pg.pages.value"
+        :index="pg.index.value"
+        :placeholder="cfg.pageTitlePlaceholder"
+        @select="pg.index.value = $event"
+        @add="pg.add()"
+        @rename="pg.rename($event)"
+        @move="pg.move($event)"
+        @remove="askRemovePage"
+      />
+      <p v-if="paged && !sections.length" class="text-sm text-muted">Página vazia: adicione uma {{ w.name }} para escrever.</p>
 
       <SectionEditor
         v-for="(s, i) in sections"
@@ -104,7 +143,10 @@ function confirmRemove() {
         :total="sections.length"
         :trophies="trophies"
         :by-id="byId"
-        :cited="citedMissing(s)"
+:cited="citedMissing(s)"
+        :pages="pageLabels"
+        :page-index="paged ? pg.index.value : 0"
+        @move-page="moveToPage(s.id, $event)"
         @update="update(s.id, $event)"
         @move="move(s.id, $event)"
         @remove="askRemove(s)"
@@ -120,8 +162,13 @@ function confirmRemove() {
       <BaseButton :icon="Plus" class="align-self-start" @click="addSection">Adicionar {{ w.name }}</BaseButton>
     </template>
 
-    <BaseModal :model-value="!!removing" :title="`Remover ${w.name}`" @update:model-value="(v) => !v && (removing = null)">
-      <p class="text-muted">O texto e a lista de troféus {{ w.this }} {{ w.name }} serão apagados.</p>
+    <BaseModal
+      :model-value="!!removing"
+      :title="removing?.kind === 'page' ? 'Remover página' : `Remover ${w.name}`"
+      @update:model-value="(v) => !v && (removing = null)"
+    >
+      <p v-if="removing?.kind === 'page'" class="text-muted">A página e todas as seções dela (textos e troféus) serão apagadas.</p>
+      <p v-else class="text-muted">O texto e a lista de troféus {{ w.this }} {{ w.name }} serão apagados.</p>
       <template #footer>
         <span class="flex-1" />
         <BaseButton @click="removing = null">Cancelar</BaseButton>

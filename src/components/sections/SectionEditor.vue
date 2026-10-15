@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref, useTemplateRef } from 'vue';
-import { ArrowDown, ArrowUp, Plus, Quote, Trash2 } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, FileOutput, Plus, Quote, Trash2 } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import RefTextEditor from '@/components/trophies/RefTextEditor.vue';
 import TrophyRefPicker from '@/components/trophies/TrophyRefPicker.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
@@ -20,10 +21,13 @@ const props = defineProps({
   byId: { type: Map, required: true },
   cited: { type: Array, default: () => [] }, // ids citados no texto e fora da lista
   types: { type: Array, default: () => [] }, // tipos de coletável já usados (sugestões)
+  pages: { type: Array, default: () => [] }, // aba paginada: rótulos das páginas ("Página 2: …") para mover a seção
+  pageIndex: { type: Number, default: 0 }, // página onde a seção está
 });
 const emit = defineEmits([
   'update', 'move', 'remove', 'add-trophies', 'remove-trophy', 'open-trophy',
   'add-item', 'update-item', 'remove-item', 'move-item', // coletáveis (cfg.items)
+  'move-page', // aba paginada: índice da página de destino
 ]);
 
 const sectionTrophies = computed(() => props.section.trophies.map((id) => props.byId.get(id)).filter(Boolean));
@@ -50,6 +54,28 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
       <div class="d-flex gap-1 ml-auto">
         <BaseButton :icon="ArrowUp" icon-only size="sm" variant="ghost" :disabled="index === 0" :aria-label="`Subir ${w.name}`" data-tooltip="Subir" @click="emit('move', -1)" />
         <BaseButton :icon="ArrowDown" icon-only size="sm" variant="ghost" :disabled="index === total - 1" :aria-label="`Descer ${w.name}`" data-tooltip="Descer" @click="emit('move', 1)" />
+        <DropdownMenu v-if="pages.length > 1" label="Mover para outra página">
+          <template #trigger="{ open, toggle }">
+            <BaseButton
+              :icon="FileOutput"
+              icon-only
+              size="sm"
+              variant="ghost"
+              :aria-label="`Mover ${w.name} para outra página`"
+              aria-haspopup="menu"
+              :aria-expanded="open"
+              data-tooltip="Outra página"
+              @click="toggle"
+            />
+          </template>
+          <template #default="{ close }">
+            <template v-for="(label, i) in pages" :key="i">
+              <button v-if="i !== pageIndex" type="button" role="menuitem" class="menu__item" @click="emit('move-page', i), close()">
+                {{ label }}
+              </button>
+            </template>
+          </template>
+        </DropdownMenu>
         <BaseButton :icon="Trash2" icon-only size="sm" variant="danger" class="tooltip-left" :aria-label="`Remover ${w.name}`" :data-tooltip="`Remover ${w.name}`" @click="emit('remove')" />
       </div>
     </header>

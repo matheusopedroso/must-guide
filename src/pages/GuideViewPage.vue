@@ -12,6 +12,7 @@ import GuideHero from '@/components/guides/GuideHero.vue';
 import GuideOverview from '@/components/guides/GuideOverview.vue';
 import GuideTrophiesView from '@/components/guides/GuideTrophiesView.vue';
 import SectionsView from '@/components/sections/SectionsView.vue';
+import PagedSectionsView from '@/components/sections/PagedSectionsView.vue';
 import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailModal.vue';
 import { provideCollectibleContext, useCollected } from '@/composables/guide/useCollectibles';
 import { collectiblesOf } from '@/utils/collectibles';
@@ -29,6 +30,7 @@ import { useToast } from '@/composables/useToast';
 import { APP_NAME } from '@/config/app';
 import { absoluteUrl, copyText } from '@/utils/share';
 import { filledSections } from '@/utils/sections';
+import { filledPages } from '@/utils/pages';
 import { sectionTabsOf } from '@/config/guideTabs';
 
 // Leitura do guia (/guia/:id), no formato da página de título do Must Watch:
@@ -74,7 +76,12 @@ const canEdit = computed(() => !enabled || isAdmin.value || source.value === 'lo
 const flaggedBy = (flag) => (flag && list.value ? list.value.trophies.filter((t) => getNote(t.id)[flag]) : []);
 const sectionTabs = computed(() =>
   sectionTabsOf(guide.value)
-    .map((t) => ({ ...t, filled: filledSections(guide.value, t.sections.key), flagged: flaggedBy(t.sections.flag) }))
+    .map((t) => {
+      // Paginada (Guia): páginas com conteúdo; as seções delas contam para a aba aparecer
+      const pages = t.sections.paged ? filledPages(guide.value, t.sections.key) : null;
+      const filled = pages ? pages.flatMap((p) => p.sections) : filledSections(guide.value, t.sections.key);
+      return { ...t, pages, filled, flagged: flaggedBy(t.sections.flag) };
+    })
     .filter((t) => t.filled.length || t.flagged.length),
 );
 const activeSectionTab = computed(() => sectionTabs.value.find((t) => t.id === tab.value) ?? null);
@@ -170,6 +177,16 @@ async function share() {
           />
           <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="DLCs" />
         </div>
+        <PagedSectionsView
+          v-else-if="activeSectionTab?.pages?.length"
+          :key="`p-${activeSectionTab.id}`"
+          :pages="activeSectionTab.pages"
+          :cfg="activeSectionTab.sections"
+          :flagged="activeSectionTab.flagged"
+          :list="list"
+          :progress="progress"
+          @open-trophy="openTrophy"
+        />
         <SectionsView
           v-else-if="activeSectionTab"
           :key="activeSectionTab.id"
