@@ -51,8 +51,11 @@ function restoreSelection() {
 }
 
 // Insere HTML onde o cursor estava. deleteBefore: apaga N caracteres antes (ex.: o "@" que abriu a lista).
+// block: é um bloco (ex.: cartão do troféu) → entra depois do parágrafo do cursor, com um parágrafo novo
+// embaixo para continuar escrevendo.
 // Feito com Range (e não execCommand('insertHTML')): o navegador jogava blocos não editáveis para fora do parágrafo.
-function insertHtml(html, { deleteBefore = 0 } = {}) {
+function insertHtml(html, { deleteBefore = 0, block = false } = {}) {
+  if (block) return insertBlock(html);
   restoreSelection();
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
@@ -77,6 +80,28 @@ function insertHtml(html, { deleteBefore = 0 } = {}) {
   sel.addRange(after);
 
   content.dispatchEvent(new Event('input', { bubbles: true })); // avisa o Pell → v-model atualiza
+  savedRange = null;
+}
+
+function insertBlock(html) {
+  restoreSelection();
+  const sel = window.getSelection();
+  let node = sel.rangeCount ? sel.getRangeAt(0).startContainer : null;
+  while (node && node.parentNode !== content) node = node.parentNode; // bloco de 1º nível do cursor
+
+  const tpl = document.createElement('template');
+  tpl.innerHTML = `${html}<p><br></p>`;
+  const next = tpl.content.lastChild;
+  if (node && node !== content) node.after(tpl.content);
+  else content.append(tpl.content);
+
+  const after = document.createRange();
+  after.setStart(next, 0);
+  after.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(after);
+
+  content.dispatchEvent(new Event('input', { bubbles: true }));
   savedRange = null;
 }
 

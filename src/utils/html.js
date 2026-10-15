@@ -4,8 +4,13 @@
 const TROPHY_REF = /^#trofeu-\d+$/;
 const COLLECTIBLE_REF = /^#coletavel-[a-z0-9]{4,16}$/;
 const INTERNAL_REF = (v) => TROPHY_REF.test(v) || COLLECTIBLE_REF.test(v);
+const TROPHY_TYPE = (v) => ['platinum', 'gold', 'silver', 'bronze'].includes(v);
 const ALLOWED = {
-  P: {}, BR: {}, DIV: {}, SPAN: {},
+  P: {}, BR: {},
+  // Cartão do troféu no texto (<div class="trophy-card" data-trophy-card="12" data-type="gold">)
+  DIV: { class: (v) => v === 'trophy-card', 'data-trophy-card': (v) => /^\d+$/.test(v), 'data-type': TROPHY_TYPE, contenteditable: (v) => v === 'false' },
+  // Contador sem troféu (<span class="count-tag">5/6 Associados</span>)
+  SPAN: { class: (v) => v === 'count-tag', contenteditable: (v) => v === 'false' },
   B: {}, STRONG: {}, I: {}, EM: {}, U: {}, S: {}, STRIKE: {}, CODE: {},
   H3: {}, H4: {}, UL: {}, OL: {}, LI: {}, BLOCKQUOTE: {}, HR: {},
   // Link externo, referência a troféu (<a href="#trofeu-12" data-trophy="12" data-type="gold" class="trophy-ref">)
@@ -13,9 +18,9 @@ const ALLOWED = {
   A: {
     href: (v) => /^(https?:|mailto:)/i.test(v) || INTERNAL_REF(v),
     'data-trophy': (v) => /^\d+$/.test(v),
-    'data-type': (v) => ['platinum', 'gold', 'silver', 'bronze'].includes(v),
+    'data-type': TROPHY_TYPE,
     'data-collectible': (v) => /^[a-z0-9]{4,16}$/.test(v),
-    class: (v) => v === 'trophy-ref' || v === 'collectible-ref',
+    class: (v) => ['trophy-ref', 'trophy-ref trophy-count', 'collectible-ref'].includes(v), // trophy-count = contador
     contenteditable: (v) => v === 'false',
   },
 };

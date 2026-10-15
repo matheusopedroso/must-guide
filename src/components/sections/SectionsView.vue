@@ -5,6 +5,7 @@ import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleCard from '@/components/collectibles/CollectibleCard.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
+import { provideTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useStoredRef } from '@/composables/useStoredRef';
 import { sectionLabel, sectionWords } from '@/utils/sections';
 import { TROPHY_FLAGS } from '@/config/trophies';
@@ -21,6 +22,8 @@ const props = defineProps({
 defineEmits(['open-trophy']);
 
 const byId = computed(() => new Map((props.list?.trophies ?? []).map((t) => [t.id, t])));
+// Cartões de troféu no texto (RefText) usam a lista e o seu progresso
+provideTrophyContext({ trophies: computed(() => props.list?.trophies ?? []), progress: computed(() => props.progress) });
 const visible = computed(() =>
   props.sections.map((s, i) => ({
     ...s,

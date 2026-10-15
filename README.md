@@ -177,6 +177,18 @@ soltas) viram a Página 1 ao abrir (`toPages` em `normalizeDraft`).
   Anterior/Próxima. Cada troca entra no histórico (`?pagina=2`): o voltar do navegador volta a página.
   Páginas sem conteúdo não aparecem. Para paginar outra aba (ex.: Detonado), basta `paged: true` na config.
 
+### Cartão do troféu e contador no texto (como o TrueAchievements)
+
+No editor de qualquer aba de texto:
+- **Cartão do troféu** (ícone de cartão): escolhe o troféu e ele entra como bloco entre os parágrafos
+  (`<div class="trophy-card" data-trophy-card="12">Nome</div>`). Na leitura, `RefText` monta o cartão completo
+  com a lista e o seu progresso (`fillTrophyCard`): ícone, descrição, tipo, % dos jogadores com barra e "você tem";
+  tocar abre o troféu.
+- **Contador** (#): "6/18 chefes derrotados" — feito, total, texto e troféu ligado (opcional; o total vem da PSN
+  quando o troféu tem contador). Com troféu vira um chip que leva a ele (`a.trophy-ref.trophy-count`); sem, `span.count-tag`.
+- **Troféu citado entra na lista da seção:** chip, contador ou cartão novo no texto → o troféu vai sozinho para
+  "Troféus desta seção" (`useSections.update`). Tirar da lista continua valendo enquanto não for citado de novo.
+
 ## Coletáveis (modelo do IGN)
 
 Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar e

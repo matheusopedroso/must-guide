@@ -43,7 +43,7 @@ async function goTo(id) {
   el.classList.add('is-flash');
 }
 
-provideTrophyContext({ trophies: computed(() => props.list.trophies), goTo });
+provideTrophyContext({ trophies: computed(() => props.list.trophies), progress: computed(() => props.progress), goTo });
 defineExpose({ goTo }); // ex.: a Visão geral do guia leva até um troféu
 
 const showGroups = computed(() => props.list.groups.length > 1);

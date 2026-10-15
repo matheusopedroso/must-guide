@@ -1,14 +1,15 @@
 <script setup>
 import { ref, useTemplateRef } from 'vue';
-import { Gem, Trophy, WandSparkles } from 'lucide-vue-next';
+import { Gem, Hash, IdCard, Trophy, WandSparkles } from 'lucide-vue-next';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import TrophyRefPicker from './TrophyRefPicker.vue';
 import CollectiblePicker from '@/components/collectibles/CollectiblePicker.vue';
+import CounterInsertForm from './CounterInsertForm.vue';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { collectibleRefHtml } from '@/utils/collectibles';
 import { EDITOR_ACTIONS } from '@/config/editor';
-import { autoLinkTrophies, trophyRefHtml } from '@/utils/trophyRef';
+import { autoLinkTrophies, counterHtml, trophyCardHtml, trophyRefHtml } from '@/utils/trophyRef';
 import { useToast } from '@/composables/useToast';
 
 // Editor de texto (Pell) que cita troféus: botão na barra ou "@" → lista → chip do troféu no texto.
@@ -17,6 +18,8 @@ import { useToast } from '@/composables/useToast';
 // Varinha: transforma de uma vez todos os nomes de troféus já escritos (PT ou EN) em links — com Desfazer.
 // Coletável (joia na barra): mesmo jeito do troféu — com o nome selecionado, o trecho vira o chip do coletável,
 // que na leitura vira uma caixinha para marcar (marca também na aba Coletáveis).
+// Cartão (bloco no texto, como o TrueAchievements): escolhe o troféu e ele entra entre os parágrafos; na leitura
+// mostra ícone, descrição, raridade e se você já tem. Contador (#): "6/18 Chefes derrotados", ligado ou não a um troféu.
 // As listas vêm do contexto (provideTrophyContext / provideCollectibleContext). Usado em todas as abas de texto.
 const model = defineModel({ type: String, default: '' });
 const props = defineProps({
@@ -30,7 +33,7 @@ const ctx = useTrophyContext();
 const collectibles = useCollectibleContext();
 const toast = useToast();
 const editor = useTemplateRef('editor');
-const picking = ref(null); // null | 'trophy' | 'collectible'
+const picking = ref(null); // null | 'trophy' | 'collectible' | 'card' | 'counter'
 const selection = ref(''); // texto selecionado que vai virar o link
 let fromTrigger = false;
 
@@ -66,6 +69,8 @@ const actions = [
           result: () => openFromSelection('trophy'),
         },
         { name: 'autoLink', title: 'Linkar troféus automaticamente (acha os nomes já escritos no texto)', icon: WandSparkles, result: autoLink },
+        { name: 'trophyCard', title: 'Cartão do troféu no texto (ícone, descrição e raridade, entre os parágrafos)', icon: IdCard, result: () => openFromSelection('card') },
+        { name: 'counter', title: 'Contador no texto (ex.: 6/18 chefes derrotados)', icon: Hash, result: () => openFromSelection('counter') },
       ]
     : []),
   ...(collectibles
@@ -89,6 +94,20 @@ function autoLink() {
   toast.show(`${count} ${count > 1 ? 'nomes de troféus viraram links' : 'nome de troféu virou link'}.`, 'success', {
     action: { label: 'Desfazer', run: () => (model.value = before) },
   });
+}
+
+// Cartão: bloco depois do parágrafo do cursor
+function insertCard(trophy) {
+  picking.value = null;
+  editor.value.insertHtml(trophyCardHtml(trophy), { block: true });
+  selection.value = '';
+}
+
+// Contador: no lugar do trecho selecionado (ou no cursor)
+function insertCounter(counter) {
+  picking.value = null;
+  editor.value.insertHtml(`${counterHtml(counter)}&nbsp;`);
+  selection.value = '';
 }
 
 // Com seleção: o trecho vira o chip (mesmo texto). Sem: entra o nome do troféu + espaço.
@@ -119,6 +138,22 @@ defineExpose({ focus: () => editor.value?.focus() });
       :autofocus="autofocus"
       @keydown="onKeydown"
       @trigger="ctx && openPicker(true)"
+    />
+    <TrophyRefPicker
+      v-if="picking === 'card' && ctx"
+      :trophies="ctx.trophies.value"
+      :initial-term="selection"
+      class="ref-pop"
+      @select="insertCard"
+      @cancel="cancelPick"
+    />
+    <CounterInsertForm
+      v-if="picking === 'counter'"
+      :trophies="ctx?.trophies.value ?? []"
+      :initial-label="selection"
+      class="ref-pop"
+      @insert="insertCounter"
+      @cancel="cancelPick"
     />
     <TrophyRefPicker
       v-if="picking === 'trophy' && ctx"

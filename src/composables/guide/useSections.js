@@ -19,7 +19,18 @@ export function useSections(owner, key) {
     return section.id;
   }
 
-  const update = (id, patch) => Object.assign(find(id) ?? {}, patch);
+  // Texto novo citou troféus (chip, contador ou cartão) → entram na lista da seção, sem repetir.
+  // Só os citados agora: tirar um troféu da lista continua valendo enquanto ele não for citado de novo.
+  function update(id, patch) {
+    const section = find(id);
+    if (!section) return;
+    if ('body' in patch) {
+      const before = extractTrophyRefs(section.body);
+      const added = [...extractTrophyRefs(patch.body)].filter((t) => !before.has(t) && !section.trophies.includes(t));
+      if (added.length) section.trophies.push(...added);
+    }
+    Object.assign(section, patch);
+  }
 
   function remove(id) {
     if (draft.value) draft.value[key] = sections.value.filter((s) => s.id !== id);
