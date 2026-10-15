@@ -12,6 +12,7 @@ export default (env) => {
     { find: '@/services/firebase/auth', replacement: here('./firebase/auth.js') },
     { find: '@/services/guides.service', replacement: here('./firebase/guides.js') },
     { find: '@/services/progress.service', replacement: here('./firebase/progress.js') },
+    { find: '@/services/library.service', replacement: here('./firebase/library.js') },
     { find: '@', replacement: here('../../src') },
   ];
   return cfg;

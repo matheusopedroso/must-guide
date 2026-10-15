@@ -11,6 +11,7 @@ import GameCardSkeleton from '@/components/games/GameCardSkeleton.vue';
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
 import GuideCoverCard from '@/components/guides/GuideCoverCard.vue';
 import { useHomeGuides } from '@/composables/guide/useHomeGuides';
+import { useLibrary } from '@/composables/useLibrary';
 import { useGameSearch } from '@/composables/useGameSearch';
 import { useQueryParam } from '@/composables/useQueryParam';
 
@@ -24,6 +25,9 @@ const { games, provider, loading, error, isSearching, query, load: retry } = use
 // Sem busca: "Continuar editando" (quem edita) e "Guias publicados" antes dos populares
 const { recent, published } = useHomeGuides();
 const PUBLISHED_MAX = 12;
+// Jogando agora (biblioteca pessoal)
+const { entries } = useLibrary();
+const playing = computed(() => entries.value.filter((e) => e.status === 'playing').slice(0, 6));
 
 const sectionTitle = computed(() => (isSearching.value ? `Resultados para “${query.value}”` : 'Populares agora'));
 </script>
@@ -37,6 +41,16 @@ const sectionTitle = computed(() => (isSearching.value ? `Resultados para “${q
     </section>
 
     <template v-if="!isSearching">
+      <section v-if="playing.length" class="container mb-6">
+        <div class="d-flex align-center justify-between gap-2 mb-2">
+          <h2 class="section-title">Jogando agora</h2>
+          <BaseButton :to="{ name: 'library' }" :icon="ArrowRight" size="sm" variant="ghost">Biblioteca</BaseButton>
+        </div>
+        <GameGrid>
+          <GameCard v-for="e in playing" :key="e.game.id" :game="e.game" />
+        </GameGrid>
+      </section>
+
       <section v-if="recent.length" class="container mb-6">
         <div class="d-flex align-center justify-between gap-2 mb-2">
           <h2 class="section-title">Continuar editando</h2>

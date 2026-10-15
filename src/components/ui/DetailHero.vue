@@ -27,8 +27,11 @@ const metaItems = computed(() => props.meta.filter(Boolean));
 
 <template>
   <section class="hero" :style="backdrop">
-    <div class="hero__backdrop" aria-hidden="true" />
-    <div class="hero__overlay" aria-hidden="true" />
+    <!-- Fundo recortado à parte: o hero não corta o que sai dele (ex.: menu da ação Biblioteca) -->
+    <div class="hero__bg" aria-hidden="true">
+      <div class="hero__backdrop" />
+      <div class="hero__overlay" />
+    </div>
 
     <div class="hero__inner">
       <img v-if="icon" :src="icon" :alt="title" class="hero__poster hero__poster--icon" />
@@ -63,15 +66,20 @@ const metaItems = computed(() => props.meta.filter(Boolean));
 .hero {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
   // Fica atrás da navegação e da PageBar (a página sobe por baixo delas)
   padding: calc(var(--nav-space) + var(--pbar-gap) + var(--pbar-height) + #{space(4)}) space(2) space(5);
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
 
   &__backdrop,
   &__overlay {
     position: absolute;
     inset: 0;
-    z-index: -2;
   }
 
   &__backdrop {
@@ -82,7 +90,6 @@ const metaItems = computed(() => props.meta.filter(Boolean));
   }
 
   &__overlay {
-    z-index: -1;
     background:
       linear-gradient(180deg, color-mix(in srgb, var(--bg) 60%, transparent) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 35%, var(--bg) 100%),
       radial-gradient(circle at 50% 15%, var(--accent-soft), transparent 45%);

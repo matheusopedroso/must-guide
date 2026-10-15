@@ -17,6 +17,8 @@ import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailM
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
 import GuideSearchModal from '@/components/guides/GuideSearchModal.vue';
 import GuideCredits from '@/components/guides/GuideCredits.vue';
+import LibraryButton from '@/components/library/LibraryButton.vue';
+import { useLibrary } from '@/composables/useLibrary';
 import { useDlcGuides } from '@/composables/guide/useDlcGuides';
 import { useGuideReader } from '@/composables/guide/useGuideReader';
 import { useQueryParam } from '@/composables/useQueryParam';
@@ -102,6 +104,13 @@ watch(
   { immediate: true },
 );
 
+// Platinou na PSN (100% no guia do jogo base) e ainda não está como Platinado na biblioteca: sugere marcar
+const library = useLibrary();
+const suggestPlatinum = computed(
+  () => myProgress.value?.pct === 100 && !guide.value?.dlc && game.value && library.statusOf(gameId.value) !== 'platinum',
+);
+const markPlatinum = () => library.setStatus({ ...game.value, id: gameId.value }, 'platinum');
+
 const myProgress = computed(() => {
   const p = progress.value;
   if (!p?.total) return null;
@@ -150,6 +159,7 @@ async function share() {
     <template v-else>
       <GuideHero :guide="guide" :game="game" :source="source">
         <template #actions>
+          <LibraryButton v-if="game" :game="{ ...game, id: gameId }" />
           <ActionIcon v-if="canEdit" :icon="Pencil" label="Editar" :to="{ name: 'guide-edit', params: { id: guideId } }" />
           <ActionIcon :icon="Share2" label="Compartilhar" @click="share" />
         </template>
@@ -160,6 +170,9 @@ async function share() {
               <strong class="progress__pct">{{ myProgress.pct === 100 ? 'Platinado ✓' : `${myProgress.pct}%` }}</strong>
             </div>
             <ProgressBar :value="myProgress.earned" :max="myProgress.total" tone="earned" />
+            <button v-if="suggestPlatinum" type="button" class="text-xs text-accent fw-600 mt-1" @click="markPlatinum">
+              Marcar como Platinado na biblioteca
+            </button>
           </div>
           <p v-if="guide.status !== 'published'" class="text-xs text-muted mt-2">
             Rascunho: só você está vendo. Publique pelo editor para liberar o link.

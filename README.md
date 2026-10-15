@@ -127,6 +127,20 @@ O admin já lê todos os guias para a primeira lista, então os publicados saem 
 quem não é admin lê só os publicados, guardados 5 min na memória. Peças: `useHomeGuides.js`, `GuideCoverCard.vue`,
 `GuideLinkList` (modo `edit`) e `timeAgo` em `utils/date.js`.
 
+## Biblioteca pessoal (`/biblioteca`)
+
+Botão **Biblioteca** na página do jogo e na leitura do guia: **Jogando**, **Quero platinar**, **Platinado** ou tirar
+da biblioteca. A página `/biblioteca` (aba "Biblioteca" na navegação; "Jogos" no celular) mostra os jogos com filtro
+por status (`?status=`), mais recentes primeiro; o início ganha **Jogando agora**; os cards de jogo/guia mostram o selo
+do status (no celular, só o ícone). Platinou na PSN (100% no guia do jogo base) → a leitura sugere "Marcar como
+Platinado na biblioteca".
+
+Dados: sempre no navegador (`mg:library`) e, logado, num documento só na conta (`users/{uid}/data/library` — 1 leitura
+ao abrir o app; regra em `firestore.rules`), agrupado em 1,5 s; vale a cópia editada por último. Guarda uma cópia do
+jogo (nome, capa, ano, plataformas), então a página abre sem ir à API de jogos. Peças: `useLibrary.js` (estado único),
+`config/library.js` (status), `services/library.service.js`, `components/library/` (`LibraryButton`, `LibraryBadge`).
+**Publique as regras novas:** `firebase deploy --only firestore:rules`.
+
 ## Publicar e ler o guia
 
 | Rota | O quê |

@@ -6,6 +6,7 @@ const GuideEditPage = () => import('@/pages/GuideEditPage.vue');
 
 const routes = [
   { path: '/', name: 'home', component: () => import('@/pages/HomePage.vue') },
+  { path: '/biblioteca', name: 'library', component: () => import('@/pages/LibraryPage.vue'), meta: { title: 'Biblioteca' } },
   { path: '/guias', name: 'my-guides', component: () => import('@/pages/MyGuidesPage.vue'), meta: { title: 'Meus guias' } },
   {
     path: '/guia/novo',

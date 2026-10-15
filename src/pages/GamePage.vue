@@ -13,6 +13,7 @@ import GameGrid from '@/components/games/GameGrid.vue';
 import GameCard from '@/components/games/GameCard.vue';
 import GameAbout from '@/components/games/GameAbout.vue';
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
+import LibraryButton from '@/components/library/LibraryButton.vue';
 import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
 import { useGameDetails } from '@/composables/useGameDetails';
 import { useGuide } from '@/composables/guide/useGuide';
@@ -91,6 +92,7 @@ const back = () => (window.history.state?.back ? router.back() : router.push({ n
           <span class="badge badge--success"><BookOpen :size="12" /> Tem guia</span>
         </template>
         <template #actions>
+          <LibraryButton :game="game" />
           <ActionIcon v-if="guide" :icon="BookOpen" label="Ler guia" :to="viewRoute" />
           <ActionIcon v-if="canEdit" :icon="guide ? Pencil : Plus" :label="guide ? 'Editar guia' : 'Criar guia'" :to="editRoute" />
           <ActionIcon v-if="game.trailer" :icon="CirclePlay" label="Trailer" @click="trailerOpen = true" />

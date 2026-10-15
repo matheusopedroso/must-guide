@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import GameCover from '@/components/ui/GameCover.vue';
+import LibraryBadge from '@/components/library/LibraryBadge.vue';
 import { rememberGame } from '@/composables/useGameDetails';
 
 // Card de jogo da grade do início: abre a página do jogo (com ou sem guia). Guarda o jogo antes de ir
@@ -8,12 +9,15 @@ import { rememberGame } from '@/composables/useGameDetails';
 
 const props = defineProps({ game: { type: Object, required: true } });
 
-const meta = computed(() => [props.game.kind, props.game.year, props.game.platforms.slice(0, 2).join(' · ')].filter(Boolean).join(' · '));
+const meta = computed(() => [props.game.kind, props.game.year, (props.game.platforms ?? []).slice(0, 2).join(' · ')].filter(Boolean).join(' · '));
 </script>
 
 <template>
   <RouterLink :to="{ name: 'game', params: { id: game.id } }" class="card d-flex flex-column gap-1" @click="rememberGame(game)">
-    <GameCover :src="game.cover" :title="game.title" class="card__cover" />
+    <div class="card__media relative">
+      <GameCover :src="game.cover" :title="game.title" class="card__cover" />
+      <LibraryBadge :game-id="game.id" />
+    </div>
     <div class="d-flex flex-column min-w-0">
       <h3 class="card__title line-clamp-2">{{ game.title }}</h3>
       <p v-if="meta" class="text-xs text-subtle truncate">{{ meta }}</p>
@@ -25,10 +29,14 @@ const meta = computed(() => [props.game.kind, props.game.year, props.game.platfo
 .card {
   &__cover {
     box-shadow: var(--shadow);
+  }
+
+  // Capa + selo da biblioteca sobem juntos no hover
+  &__media {
     transition: transform 0.2s $ease;
   }
 
-  &:hover &__cover {
+  &:hover &__media {
     transform: translateY(-4px);
   }
 

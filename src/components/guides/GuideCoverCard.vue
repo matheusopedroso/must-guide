@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { MessageSquareText } from 'lucide-vue-next';
 import GameCover from '@/components/ui/GameCover.vue';
 import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
+import LibraryBadge from '@/components/library/LibraryBadge.vue';
 
 // Card de guia publicado na grade do início (mesmo formato do card de jogo): capa, nome e, embaixo,
 // dificuldade e quantas dicas. DLC mostra "DLC · jogo". Abre a leitura do guia.
@@ -12,7 +13,10 @@ const sub = computed(() => (props.guide.dlc ? `DLC · ${props.guide.gameTitle}` 
 
 <template>
   <RouterLink :to="{ name: 'guide-view', params: { id: guide.guideId } }" class="card d-flex flex-column gap-1">
-    <GameCover :src="guide.cover" :title="guide.gameTitle || guide.title" class="card__cover" />
+    <div class="card__media relative">
+      <GameCover :src="guide.cover" :title="guide.gameTitle || guide.title" class="card__cover" />
+      <LibraryBadge v-if="!guide.dlc" :game-id="guide.gameId" />
+    </div>
     <div class="d-flex flex-column gap-1 min-w-0">
       <h3 class="card__title line-clamp-2">{{ guide.title }}</h3>
       <p v-if="sub" class="text-xs text-subtle truncate">{{ sub }}</p>
@@ -28,10 +32,14 @@ const sub = computed(() => (props.guide.dlc ? `DLC · ${props.guide.gameTitle}` 
 .card {
   &__cover {
     box-shadow: var(--shadow);
+  }
+
+  // Capa + selo da biblioteca sobem juntos no hover
+  &__media {
     transition: transform 0.2s $ease;
   }
 
-  &:hover &__cover {
+  &:hover &__media {
     transform: translateY(-4px);
   }
 
