@@ -55,6 +55,10 @@ const backdropOf = (g) => {
   const id = g.artworks?.[0]?.image_id ?? g.screenshots?.[0]?.image_id;
   return id ? image(id, '1080p') : null;
 };
+// Artes + screenshots para o texto do guia (tamanho bom para ler; a leitura abre a grande ao tocar)
+const MAX_IMAGES = 20;
+const imagesOf = (g) => [...(g.artworks ?? []), ...(g.screenshots ?? [])].slice(0, MAX_IMAGES).map((x) => image(x.image_id, 'screenshot_big'));
+
 const trailerOf = (videos = []) => {
   const id = (videos.find((v) => /trailer/i.test(v.name ?? '')) ?? videos[0])?.video_id;
   return id ? `https://www.youtube.com/watch?v=${id}` : null;
@@ -145,6 +149,7 @@ export function createIgdbProvider(getSecret) {
       partial: false,
       backdrop: backdropOf(g),
       trailer: trailerOf(g.videos),
+      images: imagesOf(g),
       timeToBeat: timeToBeatOf(times.find((t) => t.game_id === id) ?? times[0]),
       related: related.sort((a, b) => relatedOrder(a) - relatedOrder(b) || (a.year ?? 9999) - (b.year ?? 9999)),
     });

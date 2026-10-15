@@ -61,3 +61,69 @@
     font-size: 0.9em;
   }
 }
+
+// Spoiler: no editor, trecho marcado (tracejado); na leitura, borrado até tocar (RefText põe .is-revealed)
+.rich-text .spoiler {
+  border-radius: $space-half;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.rte__content .spoiler {
+  background: var(--accent-soft);
+  outline: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.rich-text:not(.rte__content) .spoiler:not(.is-revealed) {
+  background: var(--surface-2);
+  filter: blur(5px);
+  cursor: pointer;
+  user-select: none;
+  transition: filter 0.2s;
+
+  &:hover {
+    filter: blur(4px);
+  }
+
+  // Dentro do spoiler fechado nada é clicável (o toque só revela)
+  * {
+    pointer-events: none;
+  }
+}
+
+.rich-text:not(.rte__content) .spoiler.is-revealed {
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+
+// Imagem no texto (figure.guide-img): bloco na largura do texto, com legenda. Na leitura, tocar abre a grande.
+.rich-text .guide-img {
+  margin: space(2) 0;
+
+  img {
+    display: block;
+    width: 100%;
+    max-height: 560px;
+    object-fit: contain;
+    border-radius: $r2;
+    background: var(--surface-2);
+  }
+
+  figcaption {
+    margin-top: space(1);
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+  }
+}
+
+.rich-text:not(.rte__content) .guide-img img {
+  cursor: zoom-in;
+}
+
+.rte__content .guide-img {
+  user-select: none;
+
+  img {
+    max-height: 240px; // no editor, menor para não atrapalhar a escrita
+  }
+}

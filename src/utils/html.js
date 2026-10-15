@@ -10,16 +10,21 @@ const ALLOWED = {
   P: {}, BR: {},
   // Cartão do troféu no texto (<div class="trophy-card" data-trophy-card="12" data-type="gold">)
   DIV: { class: (v) => v === 'trophy-card', 'data-trophy-card': (v) => /^\d+$/.test(v), 'data-type': TROPHY_TYPE, contenteditable: (v) => v === 'false' },
-  // Contador sem troféu (<span class="count-tag">5/6 Associados</span>) e botão de controle
+  // Contador sem troféu (<span class="count-tag">5/6 Associados</span>), botão de controle
   // (<span class="btn-key" data-key="face-down" title="Cruz / A">Cruz</span> — config/controllerKeys)
+  // e spoiler (<span class="spoiler">trecho escondido até tocar</span>)
   SPAN: {
-    class: (v) => v === 'count-tag' || v === 'btn-key',
+    class: (v) => ['count-tag', 'btn-key', 'spoiler'].includes(v),
     'data-key': (v) => CONTROLLER_KEY_IDS.has(v),
     title: (v) => v.length <= 60,
     contenteditable: (v) => v === 'false',
   },
   B: {}, STRONG: {}, I: {}, EM: {}, U: {}, S: {}, STRIKE: {}, CODE: {},
   H3: {}, H4: {}, UL: {}, OL: {}, LI: {}, BLOCKQUOTE: {}, HR: {},
+  // Imagem no texto: só dentro de <figure class="guide-img">, com endereço https (legenda opcional)
+  FIGURE: { class: (v) => v === 'guide-img', contenteditable: (v) => v === 'false' },
+  IMG: { src: (v) => /^https:\/\//i.test(v), alt: (v) => v.length <= 200, loading: (v) => v === 'lazy' },
+  FIGCAPTION: {},
   // Link externo, referência a troféu (<a href="#trofeu-12" data-trophy="12" data-type="gold" class="trophy-ref">)
   // ou a coletável (<a href="#coletavel-ab12cd" data-collectible="ab12cd" class="collectible-ref">)
   A: {
@@ -33,7 +38,7 @@ const ALLOWED = {
 };
 // Títulos grandes colados de sites viram os do guia
 const RENAME = { H1: 'H3', H2: 'H3', H5: 'H4', H6: 'H4' };
-const DROP_WITH_CONTENT = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'TEMPLATE', 'svg', 'SVG', 'IMG', 'VIDEO', 'AUDIO']);
+const DROP_WITH_CONTENT = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'TEMPLATE', 'svg', 'SVG', 'VIDEO', 'AUDIO']);
 
 function clean(node, doc) {
   for (const child of [...node.childNodes]) {
@@ -51,7 +56,8 @@ function clean(node, doc) {
       el = renamed;
     }
 
-    if (DROP_WITH_CONTENT.has(el.tagName)) {
+    // Imagem solta (ex.: colada de um site) sai; só fica a do bloco de imagem do guia
+    if (DROP_WITH_CONTENT.has(el.tagName) || (el.tagName === 'IMG' && !el.parentElement?.matches('figure.guide-img'))) {
       el.remove();
       continue;
     }
@@ -91,6 +97,7 @@ export function sanitizeHtml(html = '') {
 }
 
 export const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const escapeAttr = (s) => escapeHtml(s).replace(/"/g, '&quot;');
 // O editor sempre grava começando por um bloco (<p>, <h3>, <ul>…); texto antigo não
 const looksLikeHtml = (s) => /^\s*<(p|h[1-6]|ul|ol|div|blockquote|hr|br)[\s/>]/i.test(s);
 

@@ -18,6 +18,7 @@ export const makeGame = (provider, data) => ({
   trailer: data.trailer ?? null, // link do YouTube
   timeToBeat: data.timeToBeat ?? null, // horas: { story, extra, complete } (IGDB) ou { average } (RAWG)
   related: data.related, // outras versões e relacionados (lista de jogos); ausente = não buscado
+  images: data.images, // artes e screenshots (para usar no texto do guia); ausente = não buscado
   sourceUrl: data.sourceUrl ?? null,
   partial: !!data.partial, // true = veio de lista/busca sem resumo
 });

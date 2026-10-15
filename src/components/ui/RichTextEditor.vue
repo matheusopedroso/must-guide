@@ -83,6 +83,39 @@ function insertHtml(html, { deleteBefore = 0, block = false } = {}) {
   savedRange = null;
 }
 
+// Liga/desliga um trecho marcado (ex.: spoiler): com o cursor dentro de um, tira a marcação; com texto
+// selecionado (dentro de um parágrafo), envolve em <span class="cls">. → 'on' | 'off' | 'empty' | 'multi'
+function toggleWrap(cls) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !content.contains(sel.anchorNode)) return 'empty';
+  const range = sel.getRangeAt(0);
+  const start = range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer;
+  const current = start.closest?.(`span.${cls}`);
+  if (current && content.contains(current)) {
+    current.replaceWith(...current.childNodes);
+    content.dispatchEvent(new Event('input', { bubbles: true }));
+    return 'off';
+  }
+  if (range.collapsed) return 'empty';
+  const blockOf = (node) => {
+    while (node && node.parentNode !== content) node = node.parentNode;
+    return node;
+  };
+  if (blockOf(range.startContainer) !== blockOf(range.endContainer)) return 'multi';
+
+  const span = document.createElement('span');
+  span.className = cls;
+  span.append(range.extractContents());
+  range.insertNode(span);
+  sel.removeAllRanges();
+  const after = document.createRange();
+  after.setStartAfter(span);
+  after.collapse(true);
+  sel.addRange(after);
+  content.dispatchEvent(new Event('input', { bubbles: true }));
+  return 'on';
+}
+
 function insertBlock(html) {
   restoreSelection();
   const sel = window.getSelection();
@@ -159,7 +192,7 @@ watch(model, (value) => {
   empty.value = !hasRichContent(value);
 });
 
-defineExpose({ focus: () => content && focusEnd(), saveSelection, restoreSelection, selectedText, insertHtml });
+defineExpose({ focus: () => content && focusEnd(), saveSelection, restoreSelection, selectedText, insertHtml, toggleWrap });
 </script>
 
 <template>

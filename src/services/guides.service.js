@@ -65,3 +65,15 @@ export async function moveGuides(guides, oldIds, uid) {
   for (const id of oldIds) batch.delete(fs.doc(db, COLLECTIONS.guides, id));
   await batch.commit();
 }
+
+// Vários guias numa escrita só (importar backup). Lotes de até 400 (limite do Firestore: 500 por lote)
+export async function saveGuides(guides, uid) {
+  const { db, fs } = await getFirestore();
+  for (let i = 0; i < guides.length; i += 400) {
+    const batch = fs.writeBatch(db);
+    for (const g of guides.slice(i, i + 400)) {
+      batch.set(fs.doc(db, COLLECTIONS.guides, guideIdOf(g)), { ...g, updatedBy: uid, savedAt: fs.serverTimestamp() });
+    }
+    await batch.commit();
+  }
+}

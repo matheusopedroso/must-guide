@@ -121,7 +121,7 @@ select.input {
   font-weight: 500;
 }
 
-// Badge de status (ex.: Perdível, Oculto). Tons: neutral, info, danger, accent, success
+// Badge de status (ex.: Perdível, Oculto). Tons: neutral, info, danger, accent, success, warning
 .badge {
   display: inline-flex;
   align-items: center;
@@ -135,7 +135,7 @@ select.input {
   font-weight: 600;
   white-space: nowrap;
 
-  @each $tone in 'info', 'danger', 'accent', 'success' {
+  @each $tone in 'info', 'danger', 'accent', 'success', 'warning' {
     &--#{$tone} {
       background: color-mix(in srgb, var(--#{$tone}) 14%, transparent);
       color: var(--#{$tone});

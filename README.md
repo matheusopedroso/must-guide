@@ -214,6 +214,15 @@ direto à seção: `?aba=…&pagina=…#secao-…`), **Citado nas dicas de** (ou
 - A leitura do guia e a do troféu montam os dados do mesmo jeito: `useGuideReader` (guia, jogo, anotações,
   versões, lista e progresso, coletáveis).
 
+### Spoiler e imagens no texto
+
+- **Spoiler** (olho riscado na barra): o trecho selecionado vira `<span class="spoiler">` (dentro de um parágrafo;
+  com o cursor num spoiler, o botão tira). Na leitura fica borrado e o 1º toque só revela (`RefText`).
+- **Imagem** (imagem com +): escolhe entre as artes e screenshots do jogo (IGDB → `images` nos detalhes; RAWG → as
+  2 imagens de fundo) ou cola um link https, com legenda. Entra como bloco
+  `<figure class="guide-img"><img src loading="lazy"><figcaption>` (`utils/textBlocks.js`); o filtro só aceita
+  imagem dentro desse bloco (imagem colada de site sai). Na leitura, tocar abre a versão grande (IGDB: `t_1080p`).
+
 ## Coletáveis (modelo do IGN)
 
 Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar e
@@ -283,6 +292,14 @@ Em **Meus guias** (lixeira no card) ou no **editor** (menu ⋯ → Apagar guia).
 navegador (rascunho + coletáveis marcados — `deleteDraft`). O guia de um jogo leva junto os guias das DLCs dele.
 Com o Firebase configurado, sem admin não apaga (o guia voltaria da nuvem no próximo login). No editor, `discard()`
 cancela as gravações pendentes antes de sair, para nada recriar o guia.
+
+## Backup dos guias
+
+Meus guias → **Backup**: **Exportar todos (.json)** baixa `must-guide-backup-AAAA-MM-DD.json` com os guias completos
+(nuvem + navegador, a cópia mais recente de cada — `utils/backup.js`). **Importar backup…** lê o arquivo, ignora
+o que não for guia válido e mostra o que muda em cada um (Novo / Mais novo / Igual / Mais antigo que o atual); entram
+os novos e os mais novos, e os mais antigos só se marcar. Grava na nuvem numa escrita só (`saveGuides`, admin) e
+no navegador (`useBackup`). Com o Firebase configurado, sem admin não importa.
 
 ## Rascunho do guia
 

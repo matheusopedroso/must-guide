@@ -6,9 +6,11 @@ import { guideIdOf } from '@/utils/guideIds';
 
 // Guias para a lista "Meus guias": nuvem (admin) + rascunhos deste navegador.
 // O mesmo jogo nas duas → fica a cópia mais recente. Ordem: editado por último primeiro.
+// docs: os guias completos (mesma escolha), para o backup sem ler a nuvem de novo.
 export function useMyGuides() {
   const { enabled, isAdmin, whenReady } = useAuth();
   const items = shallowRef([]);
+  const docs = shallowRef(new Map());
   const loading = ref(true);
   const error = ref('');
 
@@ -33,6 +35,7 @@ export function useMyGuides() {
       }
     }
 
+    docs.value = new Map([...byId].map(([id, { guide }]) => [id, guide]));
     items.value = [...byId.values()]
       .map(({ guide, source }) => summarizeGuide(guide, source))
       .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
@@ -49,7 +52,10 @@ export function useMyGuides() {
   }));
 
   // Guias apagados saem da lista sem ir de novo à nuvem
-  const drop = (ids) => (items.value = items.value.filter((g) => !ids.includes(g.guideId)));
+  const drop = (ids) => {
+    items.value = items.value.filter((g) => !ids.includes(g.guideId));
+    docs.value = new Map([...docs.value].filter(([id]) => !ids.includes(id)));
+  };
 
-  return { items, counts, loading, error, reload: load, drop };
+  return { items, docs, counts, loading, error, reload: load, drop };
 }

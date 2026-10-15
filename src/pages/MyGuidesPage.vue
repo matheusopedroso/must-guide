@@ -6,12 +6,13 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import GuideCard from '@/components/guides/GuideCard.vue';
 import DeleteGuideModal from '@/components/guides/DeleteGuideModal.vue';
+import BackupMenu from '@/components/guides/BackupMenu.vue';
 import { useMyGuides } from '@/composables/guide/useMyGuides';
 import { useAuth } from '@/composables/useAuth';
 import { GUIDE_STATUS } from '@/utils/guideDraft';
 
 // Meus guias: rascunhos e publicados (nuvem + este navegador), com filtro por status
-const { items, counts, loading, error, drop } = useMyGuides();
+const { items, docs, counts, loading, error, drop, reload } = useMyGuides();
 const { enabled, user, isAdmin, login, busy } = useAuth();
 
 const filter = ref('all');
@@ -31,6 +32,7 @@ const visible = computed(() => (filter.value === 'all' ? items.value : items.val
   <div class="container page">
     <PageHeader title="Meus guias" subtitle="Rascunhos e guias publicados.">
       <template #actions>
+        <BackupMenu :docs="docs" @imported="reload" />
         <BaseButton :to="{ name: 'guide-new' }" :icon="Plus" variant="primary">Criar guia</BaseButton>
       </template>
     </PageHeader>

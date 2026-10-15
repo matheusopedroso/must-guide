@@ -4,10 +4,12 @@ import { hasRichContent, sanitizeHtml, textToHtml } from '@/utils/html';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 import { fillTrophyCard, promoteLoneTrophyRefs } from '@/utils/trophyRef';
+import { fullImageSrc } from '@/utils/textBlocks';
 
 // Leitura de um texto do guia (HTML do editor, sempre filtrado). Chip de troféu → emite `trophy` (id);
 // outros links abrem normal; tocar no resto do texto → `text` (ex.: abrir a edição).
 // Chip de coletável: a caixinha marca/desmarca (vale para o guia todo); o nome abre os detalhes.
+// Spoiler: trecho borrado até tocar.
 // Cartão do troféu (bloco no texto): vira o cartão completo com os dados da lista (contexto de troféus:
 // trophies e, se tiver, progress) e tocar nele também emite `trophy`.
 const props = defineProps({ html: { type: String, default: '' } });
@@ -51,6 +53,19 @@ watch([safeHtml, () => trophyCtx?.trophies.value, () => trophyCtx?.progress?.val
 const BOX_AREA = 28; // px da esquerda do chip que valem como "caixinha"
 
 function onClick(e) {
+  // Spoiler fechado: o 1º toque só revela (não abre troféu/link que estiver dentro)
+  const spoiler = e.target.closest('.spoiler:not(.is-revealed)');
+  if (spoiler) {
+    e.preventDefault();
+    spoiler.classList.add('is-revealed');
+    return;
+  }
+  // Imagem: abre a versão grande em outra aba
+  const img = e.target.closest('figure.guide-img img');
+  if (img) {
+    window.open(fullImageSrc(img.src), '_blank', 'noopener');
+    return;
+  }
   const trophyEl = e.target.closest('a.trophy-ref, [data-trophy-card]');
   if (trophyEl) {
     e.preventDefault();

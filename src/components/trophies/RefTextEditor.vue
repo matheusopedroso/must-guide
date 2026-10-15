@@ -1,11 +1,14 @@
 <script setup>
-import { ref, useTemplateRef } from 'vue';
-import { Gamepad2, Gem, Hash, IdCard, Trophy, WandSparkles } from 'lucide-vue-next';
+import { computed, ref, useTemplateRef } from 'vue';
+import { EyeOff, Gamepad2, Gem, Hash, IdCard, ImagePlus, Trophy, WandSparkles } from 'lucide-vue-next';
 import RichTextEditor from '@/components/ui/RichTextEditor.vue';
 import TrophyRefPicker from './TrophyRefPicker.vue';
 import CollectiblePicker from '@/components/collectibles/CollectiblePicker.vue';
 import CounterInsertForm from './CounterInsertForm.vue';
 import ControllerKeyPicker from './ControllerKeyPicker.vue';
+import ImageInsertForm from '@/components/guide-editor/ImageInsertForm.vue';
+import { useGuideDraft } from '@/composables/guide/useGuideDraft';
+import { imageBlockHtml } from '@/utils/textBlocks';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { collectibleRefHtml } from '@/utils/collectibles';
@@ -31,10 +34,13 @@ const props = defineProps({
 const emit = defineEmits(['keydown']);
 
 const ctx = useTrophyContext();
+const guideDraft = useGuideDraft();
 const collectibles = useCollectibleContext();
 const toast = useToast();
 const editor = useTemplateRef('editor');
-const picking = ref(null); // null | 'trophy' | 'collectible' | 'card' | 'counter' | 'key'
+const picking = ref(null); // null | 'trophy' | 'collectible' | 'card' | 'counter' | 'key' | 'image'
+// Jogo do guia em edição (imagens do jogo para o texto); fora do editor do guia, só por link
+const gameId = computed(() => guideDraft?.draft.value?.gameId ?? '');
 const selection = ref(''); // texto selecionado que vai virar o link
 let fromTrigger = false;
 
@@ -61,6 +67,13 @@ function onKeydown(e) {
 
 const actions = [
   ...EDITOR_ACTIONS,
+  { name: 'image', title: 'Imagem no texto (do jogo ou por link), com legenda', icon: ImagePlus, result: () => openFromSelection('image') },
+  {
+    name: 'spoiler',
+    title: 'Spoiler: esconde o trecho selecionado até a pessoa tocar (com o cursor num spoiler, tira)',
+    icon: EyeOff,
+    result: toggleSpoiler,
+  },
   { name: 'controllerKey', title: 'Botão do controle (✕, ○, L1… — cada pessoa vê no estilo PlayStation ou Xbox)', icon: Gamepad2, result: () => openFromSelection('key') },
   ...(ctx
     ? [
@@ -87,6 +100,13 @@ const actions = [
     : []),
 ];
 
+// Spoiler: o trecho selecionado fica escondido na leitura até tocar
+function toggleSpoiler() {
+  const result = editor.value.toggleWrap('spoiler');
+  if (result === 'empty') toast.show('Selecione o trecho que vai virar spoiler.', 'info');
+  else if (result === 'multi') toast.show('Selecione dentro de um parágrafo (um spoiler por parágrafo).', 'info');
+}
+
 // Varinha: linka todos os nomes encontrados (fora dos links que já existem)
 function autoLink() {
   const before = model.value;
@@ -102,6 +122,13 @@ function autoLink() {
 function insertCard(trophy) {
   picking.value = null;
   editor.value.insertHtml(trophyCardHtml(trophy), { block: true });
+  selection.value = '';
+}
+
+// Imagem: bloco depois do parágrafo do cursor
+function insertImage(img) {
+  picking.value = null;
+  editor.value.insertHtml(imageBlockHtml(img), { block: true });
   selection.value = '';
 }
 
@@ -156,6 +183,7 @@ defineExpose({ focus: () => editor.value?.focus() });
       @select="insertCard"
       @cancel="cancelPick"
     />
+    <ImageInsertForm v-if="picking === 'image'" :game-id="gameId" class="ref-pop" @insert="insertImage" @cancel="cancelPick" />
     <ControllerKeyPicker v-if="picking === 'key'" class="ref-pop" @select="insertKey" @cancel="cancelPick" />
     <CounterInsertForm
       v-if="picking === 'counter'"
