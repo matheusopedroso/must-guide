@@ -54,3 +54,35 @@ test('busca automática: parecido não vira a lista do jogo', async ({ page }) =
   await page.goto('/jogo/rawg-1000?aba=trofeus'); // Elden Ring Nightreign
   await expect(page.locator('#game-trophies')).toContainText('Lista de troféus não encontrada');
 });
+
+// Sincronizar um jogo com a PSN sem criar guia: a aba Troféus mostra o seu progresso; a lista "Meus jogos da PSN"
+// abre o jogo; escolher à mão quando a busca não acha
+test('sincronizar jogo com a PSN sem guia', async ({ page }) => {
+  await seed(page, []);
+  await page.goto('/jogo/rawg-1002?aba=trofeus'); // Ghost of Yōtei (na sua conta)
+  const section = page.locator('#game-trophies');
+  await expect(section).toContainText('Achado em: Sua conta');
+  await section.locator('button:has-text("Sincronizar com a PSN")').click();
+
+  await expect(section).toContainText('Sincronizado com a PSN');
+  await expect(section).toContainText(/Você: \d+ de \d+ troféus/);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('mg:library'))?.links?.['rawg-1002']?.id)).toBe('NPWR38432_00');
+
+  // Biblioteca → Meus jogos da PSN: a lista sincronizada abre o jogo
+  await page.goto('/biblioteca?aba=psn');
+  await expect(page.locator('.row:has-text("Ghost of Yōtei") [aria-label="Abrir Ghost of Yōtei"]')).toHaveAttribute('href', '/jogo/rawg-1002?aba=trofeus');
+
+  // Desvincular volta para a sugestão
+  await page.goto('/jogo/rawg-1002?aba=trofeus');
+  await section.locator('button:has-text("Desvincular")').click();
+  await expect(section.locator('button:has-text("Sincronizar com a PSN")')).toBeVisible();
+
+  // Sem sugestão: escolher a lista à mão (sua conta)
+  await page.goto('/jogo/rawg-1000?aba=trofeus'); // Elden Ring Nightreign: nenhum acervo tem
+  await section.locator('button:has-text("Escolher a lista")').click();
+  await page.locator('.modal .chip:has-text("Minha conta")').click();
+  await page.locator('.modal').getByPlaceholder('Filtrar seus jogos').fill('god of war');
+  await page.locator('.modal .title:has-text("God of War")').click();
+  await expect(section).toContainText('Sincronizado com a PSN');
+  await expect(section).toContainText('God of War');
+});

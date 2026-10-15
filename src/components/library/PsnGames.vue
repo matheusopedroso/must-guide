@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { BookOpen, RefreshCw, Search, Trophy, TriangleAlert } from 'lucide-vue-next';
+import { BookOpen, Gamepad2, RefreshCw, Search, Trophy, TriangleAlert } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import SearchInput from '@/components/ui/SearchInput.vue';
@@ -9,6 +9,7 @@ import TrophyCounts from '@/components/trophies/TrophyCounts.vue';
 import { useAsyncState } from '@/composables/useAsyncState';
 import { useStoredRef } from '@/composables/useStoredRef';
 import { useMyGuides } from '@/composables/guide/useMyGuides';
+import { useLibrary } from '@/composables/useLibrary';
 import { fetchPsnTitles } from '@/services/trophies.service';
 import { PSN_SORTS, PSN_STATUS, allPlatforms, filterPsnGames, isPlatinum, platformsOf, psnStats } from '@/utils/psnGames';
 import { TROPHY_TYPE_MAP } from '@/config/trophies';
@@ -16,7 +17,8 @@ import { formatDate } from '@/utils/date';
 
 // Biblioteca → aba PSN: todos os jogos da sua conta da PSN (conta do NPSSO, todas as páginas) com as platinas,
 // o progresso e os troféus conquistados. Filtros: nome, status (platinado, platina pendente, 100%, em andamento,
-// não começado), plataforma; ordem guardada no navegador. Jogo com guia → "Ver guia"; sem → procura o jogo no início.
+// não começado), plataforma; ordem guardada no navegador. Jogo com guia → "Ver guia"; sincronizado com um jogo →
+// abre a página dele; senão → procura o jogo no início (lá, aba Troféus → "Sincronizar com a PSN").
 const { data: titles, loading, error, reload } = useAsyncState(ref('me'), (_, opts) => fetchPsnTitles(opts));
 const games = computed(() => titles.value ?? []);
 
@@ -43,6 +45,9 @@ const guideByList = computed(() => {
   for (const [id, g] of docs.value) if (!g.dlc) for (const v of g.versions ?? []) map.set(v.id, id);
   return map;
 });
+
+// Lista sincronizada com um jogo (aba Troféus da página do jogo) → abre a página do jogo
+const { gamesByList } = useLibrary();
 
 const PLAT = TROPHY_TYPE_MAP.platinum;
 </script>
@@ -154,6 +159,17 @@ const PLAT = TROPHY_TYPE_MAP.platinum;
                 data-tooltip="Ver guia"
               />
               <BaseButton
+                v-if="gamesByList.get(g.id)"
+                :to="{ name: 'game', params: { id: gamesByList.get(g.id).id }, query: { aba: 'trofeus' } }"
+                :icon="Gamepad2"
+                icon-only
+                size="sm"
+                class="row__action is-filled tooltip-left"
+                :aria-label="`Abrir ${gamesByList.get(g.id).title}`"
+                data-tooltip="Abrir o jogo"
+              />
+              <BaseButton
+                v-else
                 :to="{ name: 'home', query: { q: g.name.replace(/[™®]/g, '') } }"
                 :icon="Search"
                 icon-only

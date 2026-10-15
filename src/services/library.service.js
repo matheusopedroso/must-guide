@@ -1,7 +1,7 @@
 import { getFirestore } from './firebase/app';
 
 // Biblioteca pessoal: um documento só por pessoa — users/{uid}/data/library =
-// { games: { [gameId]: { status, game, addedAt, updatedAt } }, editedAt, savedAt }
+// { games: { [gameId]: { status, game, addedAt, updatedAt } }, links: { [gameId]: lista da PSN }, editedAt, savedAt }
 // (1 leitura ao abrir o app; ~1 KB por centena de jogos). Só a própria pessoa lê e grava (firestore.rules).
 const ref = (fs, db, uid) => fs.doc(db, 'users', uid, 'data', 'library');
 
@@ -11,7 +11,7 @@ export async function fetchLibrary(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
-export async function saveLibrary(uid, { games, editedAt }) {
+export async function saveLibrary(uid, { games, links = {}, editedAt }) {
   const { db, fs } = await getFirestore();
-  await fs.setDoc(ref(fs, db, uid), { games, editedAt, savedAt: fs.serverTimestamp() });
+  await fs.setDoc(ref(fs, db, uid), { games, links, editedAt, savedAt: fs.serverTimestamp() });
 }

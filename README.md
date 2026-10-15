@@ -92,6 +92,11 @@ vazio = `Hakoom,dav1d123,ikemenzi`). Lê todas as páginas de cada perfil (800 j
 guarda 24 h na memória do servidor — a 1ª busca depois de subir o `npm run dev` leva alguns segundos. Perfil que não
 existir ou ficar privado é ignorado (aviso no terminal). Nome comparado sem acento/™ (`functions/src/core/text.js`,
 o mesmo do app). Jogo lançado agora pode ainda não estar em nenhum acervo: aí vale o perfil de quem já jogou.
+- **Sincronizar com a PSN sem guia:** na aba Troféus do jogo, **Sincronizar com a PSN** guarda o vínculo jogo ↔ lista
+  na biblioteca (`links` em `mg:library` / `users/{uid}/data/library`, sem criar guia). Sincronizado, a aba mostra o
+  **seu progresso** (conquistados em verde, "Você: x de y", Atualizar), **Trocar lista** e **Desvincular**; a lista
+  "Meus jogos da PSN" abre o jogo pelo ícone do controle. Sem sugestão (ou outra lista): **Escolher a lista** abre a
+  busca completa (busca automática, sua conta, outro perfil, código). Nas sugestões, a da sua conta vem primeiro.
 - **Página do jogo:** abas **Detalhes** · **Troféus** (`?aba=trofeus`, só quem edita; a busca roda ao abrir a aba)
   com a lista achada — versões PS4/PS5 em chips (região repetida mostra o código), os troféus do jogo base e
   **Criar guia com esta lista** (abre o editor já vinculado: `?lista=NPWR…`).
