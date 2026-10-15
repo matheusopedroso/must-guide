@@ -32,7 +32,7 @@ const visible = computed(() => (filter.value === 'all' ? items.value : items.val
   <div class="container page">
     <PageHeader title="Meus guias" subtitle="Rascunhos e guias publicados.">
       <template #actions>
-        <BackupMenu :docs="docs" @imported="reload" />
+        <BackupMenu :docs="docs" :loading="loading" @imported="reload" />
         <BaseButton :to="{ name: 'guide-new' }" :icon="Plus" variant="primary">Criar guia</BaseButton>
       </template>
     </PageHeader>

@@ -10,7 +10,10 @@ import { parseBackup, planImport } from '@/utils/backup';
 
 // Backup em Meus guias: exportar todos os guias (.json) e importar um backup (com confirmação do que muda).
 // docs = Map id → guia completo (useMyGuides). Importou → emite 'imported' (a lista recarrega).
-const props = defineProps({ docs: { type: Map, required: true } });
+const props = defineProps({
+  docs: { type: Map, required: true },
+  loading: Boolean, // lista ainda carregando: exportar/importar esperam (senão sairia um backup vazio)
+});
 const emit = defineEmits(['imported']);
 
 const { blocked, exportAll, importGuides } = useBackup(() => props.docs);
@@ -57,7 +60,7 @@ async function confirm(guides) {
 <template>
   <DropdownMenu label="Backup dos guias">
     <template #trigger="{ open: menuOpen, toggle }">
-      <BaseButton :icon="DatabaseBackup" aria-haspopup="menu" :aria-expanded="menuOpen" @click="toggle">Backup</BaseButton>
+      <BaseButton :icon="DatabaseBackup" :disabled="loading" aria-haspopup="menu" :aria-expanded="menuOpen" @click="toggle">Backup</BaseButton>
     </template>
     <template #default="{ close }">
       <button type="button" role="menuitem" class="menu__item" @click="onExport(), close()">

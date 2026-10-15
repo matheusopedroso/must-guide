@@ -390,6 +390,27 @@ embaixo (só ícones; a aba ativa mostra o nome; a última é a Conta). As duas 
 Qualquer elemento: `data-tooltip="Texto"` (+ `aria-label`). Encostado na direita: classe `tooltip-left`.
 Estilo em `src/styles/components/_tooltip.scss` (só CSS; não aparece em telas de toque).
 
+## Testes
+
+```bash
+npm install                      # 1ª vez: vitest, jsdom e @playwright/test
+npx playwright install chromium  # 1ª vez: o navegador dos testes de ponta a ponta
+npm test                         # unidade (≈3 s): filtro do HTML, citações, páginas, backup, recorte da lista…
+npm run test:e2e                 # ponta a ponta (≈1 min): o app de verdade num Chromium
+npm run test:all                 # os dois — rode antes de cada commit
+```
+
+- **Unidade** (`tests/unit`, Vitest + jsdom): funções de `src/utils` — o que passa e o que sai no filtro do texto,
+  varinha, troféu sozinho vira cartão, cópia do jogo, guia antigo → páginas, recorte jogo base/DLC, "onde aparece",
+  plano do backup.
+- **Ponta a ponta** (`tests/e2e`, Playwright): DLC, Guia em páginas, ferramentas do texto (contador, cartão, botões
+  PS/Xbox, caixa de aviso, spoiler, imagem), página do troféu, checklist, apagar, trocar o jogo, backup e página do jogo.
+- **Sem internet e sem as suas chaves:** `playwright.config.js` sobe o Vite com `tests/mocks/vite.config.js`
+  (Firebase de mentira no localStorage — `tests/mocks/firebase`) e simula RAWG, IGDB e PSN no servidor
+  (`tests/mocks/network`, via `NODE_OPTIONS`). As variáveis do teste vencem o `.env.local`.
+- Novo teste: copie um `*.spec.js` e use `seed(page, [guias])` / `yoteiGuide({...})` de `tests/e2e/helpers.js`.
+  Falhou? O Playwright guarda print e contexto em `test-results/` (fora do git).
+
 ## Trocar de provedor de jogos
 
 | Provedor | Chaves | Observações |
