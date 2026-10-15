@@ -152,6 +152,12 @@ por status (`?status=`), mais recentes primeiro; o início ganha **Jogando agora
 do status (no celular, só o ícone). Platinou na PSN (100% no guia do jogo base) → a leitura sugere "Marcar como
 Platinado na biblioteca".
 
+**Aba "Meus jogos da PSN"** (`/biblioteca?aba=psn`, quem edita): todos os jogos da conta do `PSN_NPSSO` (todas as
+páginas) com totais (jogos, platinas, 100%, conclusão média, troféus por tipo) e filtros por nome, status (Platinados,
+Platina pendente, 100%, Em andamento, Não começados) e plataforma (cross-buy conta nas duas); ordem (recentes,
+progresso, nome) guardada no navegador. Lista já vinculada a um guia → "Guia"; sem guia → procura o jogo no início.
+Lógica em `src/utils/psnGames.js`; componente `components/library/PsnGames.vue`.
+
 Dados: sempre no navegador (`mg:library`) e, logado, num documento só na conta (`users/{uid}/data/library` — 1 leitura
 ao abrir o app; regra em `firestore.rules`), agrupado em 1,5 s; vale a cópia editada por último. Guarda uma cópia do
 jogo (nome, capa, ano, plataformas), então a página abre sem ir à API de jogos. Peças: `useLibrary.js` (estado único),

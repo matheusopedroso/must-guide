@@ -48,7 +48,8 @@ export function createTrophiesApi(getSecret, options = {}) {
     titles: {
       private: true,
       cache: 'private, max-age=300',
-      run: async () => ({ titles: await remember(memory, 'titles', 10 * 60, trophies.userTitles) }),
+      // Todas as páginas (conta com 800+ jogos); o mesmo acervo da busca automática
+      run: async () => ({ titles: await remember(memory, 'all:me', 10 * 60, () => trophies.allTitlesOf('me')) }),
     },
 
     // Jogos de outro perfil (ID da PSN): para vincular jogos que a conta ainda não tem. Usa a conta do

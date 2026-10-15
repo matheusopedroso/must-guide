@@ -17,6 +17,13 @@ const other = [
 ];
 const svg = (c) => 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="${c}"/><circle cx="32" cy="32" r="14" fill="#fff6"/></svg>`);
 titles.forEach((t, i) => (t.trophyTitleIconUrl = svg(['#6b4e71', '#7b3f3f', '#8a4b4b', '#3d5a80', '#556b2f'][i])));
+// Conquistados e última atividade (lista "Meus jogos da PSN"): 100% = platinado
+titles.forEach((t, i) => {
+  const d = t.definedTrophies;
+  const k = t.progress / 100;
+  t.earnedTrophies = { platinum: t.progress === 100 ? d.platinum : 0, gold: Math.round(d.gold * k), silver: Math.round(d.silver * k), bronze: Math.round(d.bronze * k) };
+  t.lastUpdatedDateTime = `2026-10-${String(10 - i).padStart(2, '0')}T20:00:00Z`;
+});
 other[0].trophyTitleIconUrl = svg('#1f3a2e');
 other[2].trophyTitleIconUrl = svg('#2e4a7a');
 const allTitles = [...titles, other[0], other[2]];

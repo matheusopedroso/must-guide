@@ -18,16 +18,17 @@ const props = defineProps({
 const tag = computed(() => (props.to ? RouterLink : props.href ? 'a' : 'button'));
 const isButton = computed(() => !props.to && !props.href);
 const iconSize = computed(() => (props.size === 'sm' ? 16 : 18));
+// Só os atributos do tipo certo: um href "undefined" sobrescrevia o href que o RouterLink monta
+// (o link funcionava no clique, mas sem endereço — sem abrir em nova aba nem copiar o link)
+const linkAttrs = computed(() =>
+  props.to ? { to: props.to } : props.href ? { href: props.href, target: '_blank', rel: 'noopener' } : { type: props.type },
+);
 </script>
 
 <template>
   <component
     :is="tag"
-    :to="to || undefined"
-    :href="href || undefined"
-    :target="href ? '_blank' : undefined"
-    :rel="href ? 'noopener' : undefined"
-    :type="isButton ? type : undefined"
+    v-bind="linkAttrs"
     :disabled="(isButton && (disabled || loading)) || undefined"
     class="btn d-inline-flex align-center justify-center gap-1"
     :class="[`btn--${variant}`, `btn--${size}`, { 'btn--icon': iconOnly }]"

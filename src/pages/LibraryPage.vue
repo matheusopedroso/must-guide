@@ -6,6 +6,8 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import GameGrid from '@/components/games/GameGrid.vue';
 import GameCard from '@/components/games/GameCard.vue';
+import PillTabs from '@/components/ui/PillTabs.vue';
+import PsnGames from '@/components/library/PsnGames.vue';
 import { useLibrary } from '@/composables/useLibrary';
 import { useAuth } from '@/composables/useAuth';
 import { useQueryParam } from '@/composables/useQueryParam';
@@ -13,8 +15,17 @@ import { LIBRARY_STATUSES } from '@/config/library';
 
 // Biblioteca pessoal (/biblioteca): os jogos que você marcou (Jogando, Quero platinar, Platinado), mais
 // recentes primeiro. Filtro na URL (?status=). Marcar: botão "Biblioteca" na página do jogo ou do guia.
+// Aba PSN (?aba=psn, quem edita): todos os jogos da sua conta da PSN com as platinas, para filtrar.
 const { entries, counts } = useLibrary();
-const { enabled, user, login, busy } = useAuth();
+const { enabled, user, isAdmin, login, busy } = useAuth();
+
+const canEdit = computed(() => !enabled || isAdmin.value);
+const tabParam = useQueryParam('aba');
+const TABS = computed(() => [{ id: 'lista', label: 'Minha lista' }, ...(canEdit.value ? [{ id: 'psn', label: 'Meus jogos da PSN' }] : [])]);
+const tab = computed({
+  get: () => (TABS.value.some((t) => t.id === tabParam.value) ? tabParam.value : 'lista'),
+  set: (id) => (tabParam.value = id === 'lista' ? '' : id),
+});
 
 const status = useQueryParam('status');
 const FILTERS = computed(() => [
@@ -28,42 +39,48 @@ const visible = computed(() => (status.value ? entries.value.filter((e) => e.sta
   <div class="container page">
     <PageHeader title="Biblioteca" subtitle="Os jogos que você está jogando, quer platinar ou já platinou." />
 
-    <p v-if="enabled && !user && entries.length" class="notice d-flex align-center flex-wrap gap-1 text-sm radius-1 p-2 mb-2">
-      Sua biblioteca está só neste navegador.
-      <button type="button" class="text-accent fw-600" :disabled="busy" @click="login">
-        <LogIn :size="14" class="inline-icon" /> Entrar para ver no celular e no PC
-      </button>
-    </p>
+    <PillTabs v-if="TABS.length > 1" v-model="tab" :tabs="TABS" label="Biblioteca" class="mb-3" />
 
-    <EmptyState
-      v-if="!entries.length"
-      :icon="Library"
-      title="Sua biblioteca está vazia"
-      text="Na página de um jogo (ou de um guia), toque em Biblioteca e escolha Jogando, Quero platinar ou Platinado."
-    >
-      <BaseButton :to="{ name: 'home' }" :icon="Search" variant="primary">Procurar jogo</BaseButton>
-    </EmptyState>
+    <PsnGames v-if="tab === 'psn'" />
 
     <template v-else>
-      <div class="d-flex flex-wrap gap-1 mb-3" role="group" aria-label="Filtrar por status">
-        <button
-          v-for="f in FILTERS"
-          :key="f.id"
-          type="button"
-          class="chip"
-          :class="{ 'is-active': status === f.id }"
-          :aria-pressed="status === f.id"
-          @click="status = f.id"
-        >
-          <component :is="f.icon" v-if="f.icon" :size="14" />
-          {{ f.label }} <span class="chip__count">{{ f.count }}</span>
+      <p v-if="enabled && !user && entries.length" class="notice d-flex align-center flex-wrap gap-1 text-sm radius-1 p-2 mb-2">
+        Sua biblioteca está só neste navegador.
+        <button type="button" class="text-accent fw-600" :disabled="busy" @click="login">
+          <LogIn :size="14" class="inline-icon" /> Entrar para ver no celular e no PC
         </button>
-      </div>
+      </p>
 
-      <GameGrid v-if="visible.length">
-        <GameCard v-for="e in visible" :key="e.game.id" :game="e.game" />
-      </GameGrid>
-      <p v-else class="text-sm text-muted py-2">Nenhum jogo com este status.</p>
+      <EmptyState
+        v-if="!entries.length"
+        :icon="Library"
+        title="Sua biblioteca está vazia"
+        text="Na página de um jogo (ou de um guia), toque em Biblioteca e escolha Jogando, Quero platinar ou Platinado."
+      >
+        <BaseButton :to="{ name: 'home' }" :icon="Search" variant="primary">Procurar jogo</BaseButton>
+      </EmptyState>
+
+      <template v-else>
+        <div class="d-flex flex-wrap gap-1 mb-3" role="group" aria-label="Filtrar por status">
+          <button
+            v-for="f in FILTERS"
+            :key="f.id"
+            type="button"
+            class="chip"
+            :class="{ 'is-active': status === f.id }"
+            :aria-pressed="status === f.id"
+            @click="status = f.id"
+          >
+            <component :is="f.icon" v-if="f.icon" :size="14" />
+            {{ f.label }} <span class="chip__count">{{ f.count }}</span>
+          </button>
+        </div>
+
+        <GameGrid v-if="visible.length">
+          <GameCard v-for="e in visible" :key="e.game.id" :game="e.game" />
+        </GameGrid>
+        <p v-else class="text-sm text-muted py-2">Nenhum jogo com este status.</p>
+      </template>
     </template>
   </div>
 </template>

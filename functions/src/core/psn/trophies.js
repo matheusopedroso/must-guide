@@ -15,7 +15,9 @@ const mapTitle = (t) => ({
   platform: t.trophyTitlePlatform ?? '',
   service: t.npServiceName,
   counts: mapCounts(t.definedTrophies),
+  earned: mapCounts(t.earnedTrophies), // conquistados por tipo (platinum ≥ 1 = platinado)
   progress: t.progress ?? 0,
+  lastPlayed: t.lastUpdatedDateTime ?? null, // último troféu / atualização da lista na conta
 });
 
 const PAGE = 800; // máximo da PSN por chamada de trophyTitles
@@ -33,7 +35,7 @@ export function searchTitles(sources, term, { platform = '', limit = 12, min = 6
         continue;
       }
       const score = matchScore(t.name, term);
-      if (score >= min) byId.set(t.id, { ...t, progress: undefined, score, sources: [name] });
+      if (score >= min) byId.set(t.id, { ...t, progress: undefined, earned: undefined, lastPlayed: undefined, score, sources: [name] }); // progresso é de quem é o acervo
     }
   }
   const wanted = platform.toUpperCase();
@@ -50,7 +52,6 @@ const avatarOf = (urls = []) => (urls.find((a) => a.size === 'm') ?? urls[0])?.a
 export function createTrophyService(client) {
   // Jogos com troféus de uma conta (mais recentes primeiro; máx. 800 por chamada)
   const titlesOf = async (accountId) => (await client.get(`/users/${accountId}/trophyTitles`, { limit: 800 })).trophyTitles.map(mapTitle);
-  const userTitles = () => titlesOf('me');
 
   // Todos os jogos de uma conta (perfis com milhares de jogos): 1ª página diz o total, o resto vem em paralelo (4 por vez)
   async function allTitlesOf(accountId) {
@@ -182,5 +183,5 @@ export function createTrophyService(client) {
     return { earned, total: data.trophies.length, trophies };
   }
 
-  return { userTitles, allTitlesOf, playerTitles, playerAllTitles, trophyList, userProgress };
+  return { allTitlesOf, playerTitles, playerAllTitles, trophyList, userProgress };
 }

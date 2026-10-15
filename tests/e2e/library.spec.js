@@ -52,3 +52,32 @@ test('biblioteca: a cópia da conta mais nova vence', async ({ page }) => {
   await expect(page.locator('.card')).toContainText('Hades II');
   await expect(page.locator('.card .lbadge')).toHaveText('Platinado');
 });
+
+// Biblioteca → Meus jogos da PSN: todos os jogos da conta com platinas, totais e filtros
+test('biblioteca: meus jogos da PSN com filtros', async ({ page }) => {
+  await seed(page, [yoteiGuide()]);
+  await page.goto('/biblioteca');
+  await page.click('[role="tablist"] :text("Meus jogos da PSN")');
+  await expect(page).toHaveURL(/aba=psn/);
+
+  const rows = page.locator('.row');
+  await expect(rows).toHaveCount(5);
+  await expect(page.locator('.stat:has-text("Platinas")')).toContainText('2'); // Tsushima e Astro (100%)
+  await expect(rows.first()).toContainText('Ghost of Yōtei'); // mais recente primeiro
+  await expect(rows.first().locator('a:has-text("Guia")')).toHaveAttribute('href', '/guia/rawg-1002'); // já tem guia
+
+  await page.click('.chip:has-text("Platinados")');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.filter({ hasText: 'Platinado' })).toHaveCount(2);
+
+  await page.click('.chip:has-text("Todos")');
+  await page.click('[aria-label="Plataforma"] .chip:has-text("PS4")');
+  await expect(rows).toHaveCount(2); // Ghost of Tsushima e God of War
+
+  await page.getByLabel('Ordenar').selectOption('name');
+  await expect(rows.first()).toContainText('Ghost of Tsushima');
+  await page.getByPlaceholder('Filtrar pelo nome').fill('god');
+  await expect(rows).toHaveCount(1);
+  await rows.first().locator('[aria-label^="Procurar"]').click();
+  await expect(page).toHaveURL(/\/\?q=God/);
+});
