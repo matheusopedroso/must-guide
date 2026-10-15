@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue';
 import { useCollectibleContext } from './useCollectibles';
 import { useStoredRef } from '@/composables/useStoredRef';
-import { matchesFilter, summarizeByType } from '@/utils/collectibles';
+import { groupCollectibles, matchesFilter, summarizeByType } from '@/utils/collectibles';
 
 // Leitura da aba Coletáveis: progresso (geral, por tipo e por região), filtro (tipo ou perdíveis),
 // "Esconder coletados" e modo compacto (os dois guardados no navegador). sections: ref das regiões preenchidas.
@@ -22,8 +22,12 @@ export function useCollectibleView(sections) {
   const byType = computed(() => summarizeByType(all.value, isDone));
   const missable = computed(() => all.value.filter((i) => i.missable).length);
 
-  // Itens visíveis de uma região (filtro + esconder coletados)
-  const shown = (s) => itemsOf(s).filter((it) => matchesFilter(it, filter.value) && !(hideDone.value && isDone(it.id)));
+  // Cartões visíveis de uma região: grupos (vários no mesmo lugar = um cartão). Entra se algum do grupo bate
+  // com o filtro e, com "Esconder coletados", se ainda falta algum
+  const shown = (s) =>
+    groupCollectibles(itemsOf(s)).filter(
+      (g) => g.some((it) => matchesFilter(it, filter.value)) && !(hideDone.value && g.every((it) => isDone(it.id))),
+    );
   const regionCount = (s) => countOf(itemsOf(s));
   const regionTypes = (s) => summarizeByType(itemsOf(s), isDone);
 

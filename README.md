@@ -261,6 +261,10 @@ complete os detalhes no lápis. Toda seção (de qualquer aba) aceita um **víde
 - **Numeração por tipo no guia todo**, na ordem ("Artefato #4", como o contador do jogo); os que não contam ficam sem número.
 - Em cada região: a contagem por tipo (`Artefato 0/7 · Pingente 0/3`) e no índice o progresso da região.
 - Cartão: "Artefato #4" | nome | marcas, Tipo | Local, descrição, imagens, vídeo, crédito e a caixa **para marcar**.
+- **Vários no mesmo lugar** (PowerPyx: "Artifact #1: … + Artifact #2: …"): marque **Mesmo lugar do anterior** no
+  coletável de baixo. Vira um cartão só — título "Artefato #1: Panfleto + Artefato #2: Mapa", local/descrição/imagens/
+  vídeo/crédito do 1º e **uma caixa para cada** (cada um conta e numera separado). No compacto, a caixa da linha marca
+  o grupo todo. No editor a linha fica recuada (↳). O chip no texto de qualquer um deles abre o cartão do grupo.
 
 **Créditos do guia:** no editor (aba Troféus, ao lado de "Dificuldade, jogadas e horas") — nome, link e o que fez.
 Na leitura aparecem no fim da página, em todas as abas, junto com os nomes citados nos coletáveis (sem repetir).

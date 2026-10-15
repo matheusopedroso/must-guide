@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectibleTag, collectiblesOf, creditsOf, matchesFilter, summarizeByType } from '@/utils/collectibles';
+import { collectibleTag, collectiblesOf, creditsOf, groupCollectibles, groupOf, matchesFilter, summarizeByType } from '@/utils/collectibles';
 
 const item = (id, type, extra = {}) => ({ id, name: id, type, ...extra });
 const guide = {
@@ -37,5 +37,14 @@ describe('coletáveis', () => {
       { id: 'c', name: 'PowerPyx', url: 'https://powerpyx.com/', role: 'Rota' },
       { id: 'item-d', name: 'Ana', url: 'https://ana.dev/', role: 'Imagens/vídeos dos coletáveis' },
     ]);
+  });
+
+  it('mesmo lugar do anterior: junta no cartão de cima, sem passar de região', () => {
+    const list = [item('p', 'A'), item('q', 'A', { samePlace: true }), item('r', 'B', { samePlace: true }), item('s', 'A')];
+    expect(groupCollectibles(list).map((g) => g.map((i) => i.id))).toEqual([['p', 'q', 'r'], ['s']]);
+    expect(groupCollectibles([item('z', 'A', { samePlace: true })]).map((g) => g.length)).toEqual([1]); // 1º nunca segue
+
+    const g2 = { collectibles: [{ id: 'r1', title: 'X', items: [item('a', 'T')] }, { id: 'r2', title: 'Y', items: [item('b', 'T', { samePlace: true }), item('c', 'T', { samePlace: true })] }] };
+    expect(groupOf(collectiblesOf(g2), 'c').map((i) => i.id)).toEqual(['b', 'c']);
   });
 });

@@ -107,10 +107,10 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
       <RefText :html="s.body" class="section__body" @trophy="$emit('open-trophy', $event)" />
       <div v-if="cv && s.items?.length" class="d-flex flex-column" :class="compact ? 'gap-1' : 'gap-2'">
         <CollectibleCard
-          v-for="it in shown(s)"
-          :key="it.id"
-          :item="it"
-          :collected="isDone(it.id)"
+          v-for="g in shown(s)"
+          :key="g[0].id"
+          :items="g"
+          :is-done="isDone"
           :can-toggle="!!col?.toggle"
           :compact="compact"
           @toggle="col.toggle"

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, watch } from 'vue';
-import { ImagePlus, Trash2, X } from 'lucide-vue-next';
+import { ImagePlus, Link2, Trash2, X } from 'lucide-vue-next';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import { MAX_IMAGES, cleanCredit, creditsOf } from '@/utils/collectibles';
@@ -8,15 +8,18 @@ import { normalizeUrl } from '@/utils/url';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 
 // Edição de um coletável (editor): nome, tipo, local/checkpoint, descrição, imagens (links), vídeo,
-// marcas (perdível / não conta) e crédito de quem fez as imagens/vídeo. Edita uma cópia e grava só no "Salvar".
+// marcas (perdível / não conta), "mesmo lugar do anterior" (um cartão só, como "Artefato #1 + Artefato #2" do PowerPyx)
+// e crédito de quem fez as imagens/vídeo. Edita uma cópia e grava só no "Salvar".
+// Junto com o anterior: local, descrição, imagens, vídeo e crédito vêm dele (os campos daqui ficam guardados, escondidos).
 const open = defineModel({ type: Boolean, default: false });
 const props = defineProps({
   item: { type: Object, default: null },
   types: { type: Array, default: () => [] }, // tipos já usados no guia (sugestões)
+  first: Boolean, // 1º da região: não tem "anterior" para juntar
 });
 const emit = defineEmits(['save', 'remove']);
 
-const EMPTY = { name: '', type: '', location: '', description: '', images: [], video: '', missable: false, uncounted: false, creditName: '', creditUrl: '' };
+const EMPTY = { name: '', type: '', location: '', description: '', images: [], video: '', missable: false, uncounted: false, samePlace: false, creditName: '', creditUrl: '' };
 const form = reactive({ ...EMPTY });
 watch(open, (v) => {
   if (!v || !props.item) return;
@@ -32,6 +35,7 @@ function onCreditName() {
   if (known?.url && !form.creditUrl.trim()) form.creditUrl = known.url;
 }
 
+const joined = computed(() => form.samePlace && !props.first);
 const addImage = () => form.images.length < MAX_IMAGES && form.images.push('');
 
 function save() {
@@ -44,6 +48,7 @@ function save() {
     video: normalizeUrl(form.video),
     missable: form.missable,
     uncounted: form.uncounted,
+    samePlace: form.samePlace,
     credit: cleanCredit({ name: form.creditName, url: form.creditUrl }),
   });
   open.value = false;
@@ -66,7 +71,7 @@ function save() {
             <option v-for="t in types" :key="t" :value="t" />
           </datalist>
         </label>
-        <label class="field">
+        <label v-if="!joined" class="field">
           <span class="field__label">Local / checkpoint</span>
           <input v-model="form.location" class="input" placeholder="Ex.: 06 Central Camp" />
         </label>
@@ -75,51 +80,58 @@ function save() {
       <div class="d-flex flex-wrap gap-3">
         <label class="checkbox text-sm"><input v-model="form.missable" type="checkbox" /> Perdível</label>
         <label class="checkbox text-sm"><input v-model="form.uncounted" type="checkbox" /> Não conta para o troféu</label>
+        <label v-if="!first" class="checkbox text-sm"><input v-model="form.samePlace" type="checkbox" /> Mesmo lugar do anterior</label>
       </div>
+      <p v-if="joined" class="notice d-flex align-center gap-1 text-sm radius-1 p-2">
+        <Link2 :size="16" class="shrink-0" />
+        Fica no mesmo cartão do coletável de cima (cada um com a sua caixa). Local, como achar, imagens, vídeo e crédito vêm dele.
+      </p>
       <p class="text-xs text-subtle">
         A numeração ("{{ form.type || 'Tipo' }} #4") é automática, por tipo e na ordem do guia. Os que não contam ficam sem número.
       </p>
 
-      <label class="field">
-        <span class="field__label">Como achar</span>
-        <textarea v-model="form.description" class="input" rows="4" placeholder="Onde fica e como chegar até ele." />
-      </label>
+      <template v-if="!joined">
+        <label class="field">
+          <span class="field__label">Como achar</span>
+          <textarea v-model="form.description" class="input" rows="4" placeholder="Onde fica e como chegar até ele." />
+        </label>
 
-      <div class="field">
-        <span class="field__label">Imagens (links, até {{ MAX_IMAGES }})</span>
-        <div v-for="(url, i) in form.images" :key="i" class="d-flex align-center gap-1">
-          <img v-if="url" :src="url" alt="" class="thumb radius-1 shrink-0" />
-          <input v-model="form.images[i]" class="input" type="url" placeholder="https://…/imagem.jpg" />
-          <BaseButton :icon="X" icon-only size="sm" variant="ghost" aria-label="Tirar imagem" @click="form.images.splice(i, 1)" />
+        <div class="field">
+          <span class="field__label">Imagens (links, até {{ MAX_IMAGES }})</span>
+          <div v-for="(url, i) in form.images" :key="i" class="d-flex align-center gap-1">
+            <img v-if="url" :src="url" alt="" class="thumb radius-1 shrink-0" />
+            <input v-model="form.images[i]" class="input" type="url" placeholder="https://…/imagem.jpg" />
+            <BaseButton :icon="X" icon-only size="sm" variant="ghost" aria-label="Tirar imagem" @click="form.images.splice(i, 1)" />
+          </div>
+          <BaseButton v-if="form.images.length < MAX_IMAGES" :icon="ImagePlus" size="sm" variant="ghost" class="align-self-start" @click="addImage">
+            Adicionar imagem
+          </BaseButton>
         </div>
-        <BaseButton v-if="form.images.length < MAX_IMAGES" :icon="ImagePlus" size="sm" variant="ghost" class="align-self-start" @click="addImage">
-          Adicionar imagem
-        </BaseButton>
-      </div>
 
-      <label class="field">
-        <span class="field__label">Vídeo (YouTube com o tempo toca no app)</span>
-        <input v-model="form.video" class="input" type="url" placeholder="https://youtu.be/…?t=95" />
-      </label>
+        <label class="field">
+          <span class="field__label">Vídeo (YouTube com o tempo toca no app)</span>
+          <input v-model="form.video" class="input" type="url" placeholder="https://youtu.be/…?t=95" />
+        </label>
 
-      <fieldset class="field">
-        <legend class="field__label mb-1">Crédito das imagens/vídeo</legend>
-        <div class="grid-2">
-          <input
-            v-model="form.creditName"
-            class="input"
-            list="credit-names"
-            placeholder="Nome (ex.: PowerPyx)"
-            aria-label="Nome do crédito"
-            @change="onCreditName"
-          />
-          <datalist id="credit-names">
-            <option v-for="c in knownCredits" :key="c.id" :value="c.name" />
-          </datalist>
-          <input v-model="form.creditUrl" class="input" type="url" placeholder="Link (opcional)" aria-label="Link do crédito" />
-        </div>
-        <span class="text-xs text-subtle">Aparece no cartão e entra sozinho nos créditos do guia.</span>
-      </fieldset>
+        <fieldset class="field">
+          <legend class="field__label mb-1">Crédito das imagens/vídeo</legend>
+          <div class="grid-2">
+            <input
+              v-model="form.creditName"
+              class="input"
+              list="credit-names"
+              placeholder="Nome (ex.: PowerPyx)"
+              aria-label="Nome do crédito"
+              @change="onCreditName"
+            />
+            <datalist id="credit-names">
+              <option v-for="c in knownCredits" :key="c.id" :value="c.name" />
+            </datalist>
+            <input v-model="form.creditUrl" class="input" type="url" placeholder="Link (opcional)" aria-label="Link do crédito" />
+          </div>
+          <span class="text-xs text-subtle">Aparece no cartão e entra sozinho nos créditos do guia.</span>
+        </fieldset>
+      </template>
     </form>
 
     <template #footer>
@@ -151,6 +163,11 @@ fieldset {
   height: 40px;
   object-fit: cover;
   background: var(--surface-2);
+}
+
+.notice {
+  background: var(--surface-2);
+  color: var(--text-muted);
 }
 
 .align-self-start {

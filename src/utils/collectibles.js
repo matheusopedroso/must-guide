@@ -17,6 +17,7 @@ export const createCollectible = (name = '') => ({
   missable: false, // some se passar do ponto (sem seleção de capítulo)
   uncounted: false, // aparece no jogo, mas não conta para o troféu/contador
   credit: null, // { name, url } — imagens/vídeo de outra pessoa
+  samePlace: false, // pego no mesmo lugar do anterior ("Artefato #1 + Artefato #2"): um cartão só, local/imagens do anterior
 });
 
 export const collectibleAnchorId = (id) => `coletavel-${id}`;
@@ -43,11 +44,31 @@ export function numberCollectibles(items) {
   return numbers;
 }
 
-// Todos os coletáveis do guia, na ordem, com a região e o número: [{ ...item, region, n, of }]
+// Todos os coletáveis do guia, na ordem, com a região e o número: [{ ...item, region, regionId, n, of }]
 export function collectiblesOf(guide) {
-  const items = (guide?.collectibles ?? []).flatMap((s) => (s.items ?? []).map((item) => ({ ...item, region: s.title.trim() })));
+  const items = (guide?.collectibles ?? []).flatMap((s) =>
+    (s.items ?? []).map((item) => ({ ...item, region: s.title.trim(), regionId: s.id })),
+  );
   const numbers = numberCollectibles(items);
   return items.map((it) => ({ ...it, ...numbers.get(it.id) }));
+}
+
+// Coletáveis da mesma região juntos no mesmo cartão: o "mesmo lugar do anterior" entra no grupo de cima
+// (o 1º da lista nunca é seguidor). items: de UMA região, na ordem → [[líder, ...seguidores]]
+export function groupCollectibles(items) {
+  const groups = [];
+  for (const it of items) {
+    if (it.samePlace && groups.length) groups[groups.length - 1].push(it);
+    else groups.push([it]);
+  }
+  return groups;
+}
+
+// Grupo (cartão) de um coletável, entre todos os do guia (collectiblesOf) → [líder, ...] ou null
+export function groupOf(all, id) {
+  const item = all.find((i) => i.id === id);
+  if (!item) return null;
+  return groupCollectibles(all.filter((i) => i.regionId === item.regionId)).find((g) => g.some((i) => i.id === id));
 }
 
 // Resumo por tipo (na ordem em que aparecem): [{ type, total, done }]. Só os que contam.

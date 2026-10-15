@@ -20,7 +20,16 @@ const guide = () =>
           item('x', 'Quadrinho', 'Artefato', { uncounted: true }),
         ],
       },
-      { id: 'r2', title: 'Vila', body: '', trophies: [], items: [item('c', 'Carta', 'Artefato', { video: 'https://youtu.be/abcdefghijk' })] },
+      {
+        id: 'r2',
+        title: 'Vila',
+        body: '',
+        trophies: [],
+        items: [
+          item('c', 'Carta', 'Artefato', { location: 'Casa do ferreiro', video: 'https://youtu.be/abcdefghijk' }),
+          item('d', 'Mapa da Vila', 'Artefato', { samePlace: true, location: 'ignorado' }), // pego junto com a Carta
+        ],
+      },
     ],
   });
 
@@ -30,8 +39,16 @@ test('coletáveis: resumo, numeração, filtro, compacto e créditos', async ({ 
   await page.goto('/guia/rawg-1002?aba=coletaveis');
 
   const chips = page.locator('[aria-label="Filtrar coletáveis"] .chip');
-  await expect(chips).toHaveText([/Todos/, /Artefato\s*0\/2/, /Pingente\s*0\/1/, /Perdíveis\s*1/]);
-  await expect(page.locator('.ccard#coletavel-c .ccard__name')).toContainText('Artefato #2');
+  await expect(chips).toHaveText([/Todos/, /Artefato\s*0\/3/, /Pingente\s*0\/1/, /Perdíveis\s*1/]);
+  // Mesmo lugar: um cartão só ("Artefato #2: Carta + Artefato #3: Mapa da Vila"), local do 1º e uma caixa para cada
+  const pair = page.locator('.ccard#coletavel-c');
+  await expect(pair.locator('.ccard__name')).toHaveText(/Artefato #2:\s*Carta \+ Artefato #3:\s*Mapa da Vila/);
+  await expect(pair).toContainText('Casa do ferreiro');
+  await expect(pair).not.toContainText('ignorado');
+  await expect(pair.locator('.ccard__check')).toHaveCount(2);
+  await pair.locator('.ccard__check:has-text("Mapa da Vila")').click();
+  await expect(chips.filter({ hasText: 'Artefato' })).toContainText('1/3');
+  await pair.locator('.ccard__check:has-text("Mapa da Vila")').click();
   await expect(page.locator('.ccard#coletavel-x')).toContainText('Não conta');
   await expect(page.locator('.ccard#coletavel-b')).toContainText('Perdível');
   await expect(page.locator('.ccard#coletavel-b a:has-text("Ana")')).toHaveAttribute('href', 'https://ana.dev/');
@@ -47,7 +64,9 @@ test('coletáveis: resumo, numeração, filtro, compacto e créditos', async ({ 
   await page.getByLabel('Compacto').check();
   await expect(page.locator('.ccard.is-compact')).toHaveCount(4);
   await page.click('.ccard#coletavel-a .ccard__box');
-  await expect(chips.filter({ hasText: 'Artefato' })).toContainText('1/2');
+  await expect(chips.filter({ hasText: 'Artefato' })).toContainText('1/3');
+  await page.click('.ccard#coletavel-c .ccard__row .ccard__box'); // caixa do grupo marca os dois
+  await expect(chips.filter({ hasText: 'Artefato' })).toContainText('3/3');
   await page.click('.ccard#coletavel-c .ccard__summary');
   await expect(page.locator('.ccard#coletavel-c .btn:has-text("Ver vídeo")')).toBeVisible();
 
@@ -71,6 +90,15 @@ test('coletáveis no editor: marcas, vídeo e crédito; créditos do guia', asyn
   await expect
     .poll(async () => (await readDraft(page, 'rawg-1002'))?.collectibles?.[0]?.items?.[0])
     .toMatchObject({ missable: true, video: 'https://youtu.be/abcdefghijk?t=95', credit: { name: 'PowerPyx', url: 'https://www.powerpyx.com/' } });
+
+  // "Mesmo lugar do anterior": esconde local/imagens/crédito e a linha fica recuada
+  await page.click('.clist__row:has-text("Pingente da Ana") button:has-text("Pingente da Ana")');
+  const second = page.locator('.modal:has-text("Mesmo lugar do anterior")');
+  await second.getByLabel('Mesmo lugar do anterior').check();
+  await expect(second.getByLabel('Nome do crédito')).toHaveCount(0);
+  await second.locator('button:has-text("Salvar")').click();
+  await expect(page.locator('.clist__row.is-joined:has-text("Pingente da Ana")')).toBeVisible();
+  await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.collectibles?.[0]?.items?.[1]?.samePlace).toBe(true);
 
   // Créditos do guia (aba Troféus, ao lado da visão geral)
   await page.goto('/guia/rawg-1002/editar');

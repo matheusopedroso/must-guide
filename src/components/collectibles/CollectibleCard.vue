@@ -7,21 +7,38 @@ import { normalizeUrl } from '@/utils/url';
 
 // Cartão do coletável na leitura (modelo do IGN + numeração do PowerPyx): "Artefato #4", nome, marcas
 // (Perdível, Não conta), Tipo | Local, descrição, imagens, vídeo, crédito e a caixa para marcar.
-// Marcado = verde (mesma cor de troféu conquistado). compact: uma linha (caixa, número, nome) que abre ao tocar.
+// Vários pegos no mesmo lugar ("Artefato #1 + Artefato #2"): um cartão só, com o local/imagens do 1º e
+// uma caixa para cada. Marcado = verde (mesma cor de troféu conquistado).
+// compact: uma linha (caixa, número, nome) que abre ao tocar; a caixa da linha marca/desmarca o grupo todo.
 const props = defineProps({
-  item: { type: Object, required: true }, // com n/of quando vier de collectiblesOf
-  collected: Boolean,
+  items: { type: Array, required: true }, // [líder, ...mesmo lugar] — com n/of quando vierem de collectiblesOf
+  isDone: { type: Function, default: () => false },
   canToggle: { type: Boolean, default: true },
   compact: Boolean,
 });
 const emit = defineEmits(['toggle']);
 
-const name = computed(() => props.item.name || 'Coletável');
-const tag = computed(() => collectibleTag(props.item));
-const credit = computed(() => cleanCredit(props.item.credit));
-const video = computed(() => normalizeUrl(props.item.video ?? ''));
-const images = computed(() => (props.item.images ?? []).map((u) => normalizeUrl(u)).filter(Boolean));
-const hasBody = computed(() => !!(props.item.type || props.item.location || props.item.description || images.value.length || video.value || credit.value));
+const lead = computed(() => props.items[0]); // dono do local, descrição, imagens, vídeo e crédito
+const group = computed(() => props.items.length > 1);
+const nameOf = (it) => it.name || 'Coletável';
+const name = computed(() => props.items.map(nameOf).join(' + '));
+const tag = computed(() => collectibleTag(lead.value));
+// Coluna do número no compacto: "#4" · grupo: "×3" (números de tipos diferentes juntos confundem)
+const numbers = computed(() => (group.value ? `×${props.items.length}` : lead.value.n ? `#${lead.value.n}` : ''));
+// Título do grupo como no PowerPyx: "Artefato #1: Military Pamphlet + Artefato #2: Boston Q.Z. Map"
+const parts = computed(() => props.items.map((it) => ({ id: it.id, tag: collectibleTag(it), name: nameOf(it) })));
+const types = computed(() => [...new Set(props.items.map((it) => it.type).filter(Boolean))].join(' + '));
+const missable = computed(() => props.items.some((it) => it.missable));
+
+const credit = computed(() => cleanCredit(lead.value.credit));
+const video = computed(() => normalizeUrl(lead.value.video ?? ''));
+const images = computed(() => (lead.value.images ?? []).map((u) => normalizeUrl(u)).filter(Boolean));
+const hasBody = computed(() => !!(types.value || lead.value.location || lead.value.description || images.value.length || video.value || credit.value || group.value));
+
+const doneCount = computed(() => props.items.filter((it) => props.isDone(it.id)).length);
+const allDone = computed(() => doneCount.value === props.items.length);
+// Caixa da linha compacta: marca os que faltam ou, tudo marcado, desmarca todos
+const toggleAll = () => props.items.filter((it) => props.isDone(it.id) === allDone.value).forEach((it) => emit('toggle', it.id));
 
 const expanded = ref(false);
 const open = computed(() => !props.compact || expanded.value);
@@ -29,56 +46,70 @@ const open = computed(() => !props.compact || expanded.value);
 
 <template>
   <article
-    :id="collectibleAnchorId(item.id)"
+    :id="collectibleAnchorId(lead.id)"
     class="ccard radius-2"
-    :class="{ 'is-collected': collected, 'is-compact': compact, 'is-open': open }"
+    :class="{ 'is-collected': allDone, 'is-compact': compact, 'is-open': open }"
   >
+    <!-- Âncoras dos que estão juntos (o chip no texto leva até o cartão) -->
+    <span v-for="it in items.slice(1)" :id="collectibleAnchorId(it.id)" :key="it.id" class="ccard__anchor" aria-hidden="true" />
+
     <!-- Compacto: caixa + número + nome; tocar abre os detalhes -->
     <div v-if="compact" class="ccard__row d-flex align-center gap-2 px-2 py-1">
       <button
         v-if="canToggle"
         type="button"
         class="ccard__box d-flex align-center justify-center radius-1 shrink-0"
-        :aria-pressed="collected"
-        :aria-label="collected ? `Desmarcar ${name}` : `Marcar ${name} como coletado`"
-        @click="emit('toggle', item.id)"
+        :class="{ 'is-partial': doneCount && !allDone }"
+        :aria-pressed="allDone"
+        :aria-label="allDone ? `Desmarcar ${name}` : `Marcar ${name} como coletado`"
+        @click="toggleAll"
       >
-        <Check v-if="collected" :size="16" :stroke-width="3" />
+        <Check v-if="allDone" :size="16" :stroke-width="3" />
+        <span v-else-if="doneCount" class="text-xs fw-700">{{ doneCount }}</span>
       </button>
       <button type="button" class="ccard__summary d-flex align-center gap-2 flex-1 min-w-0" :aria-expanded="expanded" @click="expanded = !expanded">
-        <span class="ccard__n text-xs fw-700 shrink-0">{{ item.n ? `#${item.n}` : '' }}</span>
+        <span class="ccard__n text-xs fw-700 shrink-0">{{ numbers }}</span>
         <span class="d-flex flex-column min-w-0">
           <span class="fw-600 truncate">{{ name }}</span>
-          <span v-if="item.type || item.location" class="text-xs text-muted truncate">{{ [item.type, item.location].filter(Boolean).join(' · ') }}</span>
+          <span v-if="types || lead.location" class="text-xs text-muted truncate">{{ [types, lead.location].filter(Boolean).join(' · ') }}</span>
         </span>
         <span class="d-flex align-center gap-1 ml-auto shrink-0">
-          <TriangleAlert v-if="item.missable" :size="16" class="ccard__warn" aria-label="Perdível" />
+          <TriangleAlert v-if="missable" :size="16" class="ccard__warn" aria-label="Perdível" />
           <ChevronDown v-if="hasBody" :size="16" class="ccard__chevron" />
         </span>
       </button>
     </div>
 
-    <header v-else class="ccard__name d-flex align-center gap-1 px-2 py-1">
-      <span class="ccard__side text-xs fw-700">{{ tag }}</span>
-      <span class="flex-1 text-center">{{ name }}</span>
+    <header v-else class="ccard__name d-flex align-center gap-1 px-2 py-1" :class="{ 'is-group': group }">
+      <template v-if="group">
+        <span class="flex-1">
+          <template v-for="(p, i) in parts" :key="p.id">
+            <template v-if="i"> + </template><span v-if="p.tag" class="ccard__tag">{{ p.tag }}:</span> {{ p.name }}
+          </template>
+        </span>
+      </template>
+      <template v-else>
+        <span class="ccard__side text-xs fw-700">{{ tag }}</span>
+        <span class="flex-1 text-center">{{ name }}</span>
+      </template>
       <span class="ccard__side d-flex justify-end gap-1">
-        <span v-if="item.missable" class="badge badge--warning"><TriangleAlert :size="12" /> Perdível</span>
-        <span v-if="item.uncounted" class="badge" data-tooltip="Aparece no jogo, mas não conta para o troféu">Não conta</span>
+        <span v-if="missable" class="badge badge--warning"><TriangleAlert :size="12" /> Perdível</span>
+        <span v-if="!group && lead.uncounted" class="badge" data-tooltip="Aparece no jogo, mas não conta para o troféu">Não conta</span>
       </span>
     </header>
 
     <template v-if="open && (!compact || hasBody)">
-      <div v-if="compact && (item.missable || item.uncounted)" class="ccard__flags d-flex flex-wrap gap-1 px-2 py-1">
-        <span v-if="item.missable" class="badge badge--warning"><TriangleAlert :size="12" /> Perdível</span>
-        <span v-if="item.uncounted" class="badge">Não conta para o troféu</span>
+      <div v-if="compact && !group && (lead.missable || lead.uncounted)" class="ccard__flags d-flex flex-wrap gap-1 px-2 py-1">
+        <span v-if="lead.missable" class="badge badge--warning"><TriangleAlert :size="12" /> Perdível</span>
+        <span v-if="lead.uncounted" class="badge">Não conta para o troféu</span>
       </div>
 
-      <div v-if="!compact && (item.type || item.location)" class="ccard__meta">
-        <p v-if="item.type"><span class="kicker">Tipo</span> {{ item.type }}</p>
-        <p v-if="item.location"><span class="kicker">Local</span> {{ item.location }}</p>
+      <div v-if="!compact && (types || lead.location)" class="ccard__meta">
+        <p v-if="types"><span class="kicker">Tipo</span> {{ types }}</p>
+        <p v-if="lead.location"><span class="kicker">Local</span> {{ lead.location }}</p>
       </div>
 
-      <p v-if="item.description" class="ccard__desc px-2 py-2">{{ item.description }}</p>
+      <p v-if="lead.description" class="ccard__desc px-2 py-2">{{ lead.description }}</p>
 
       <div v-if="images.length" class="ccard__images p-2" :class="{ 'is-single': images.length === 1 }">
         <a v-for="(src, i) in images" :key="i" :href="src" target="_blank" rel="noopener noreferrer" class="radius-1">
@@ -96,12 +127,29 @@ const open = computed(() => !props.compact || expanded.value);
       </div>
     </template>
 
-    <label v-if="canToggle && !compact" class="ccard__check d-flex align-center gap-2 m-2 p-2 radius-1">
-      <input type="checkbox" class="sr-only" :checked="collected" @change="emit('toggle', item.id)" />
-      <span class="ccard__box d-flex align-center justify-center radius-1 shrink-0"><Check v-if="collected" :size="16" :stroke-width="3" /></span>
-      <span class="fw-600">{{ name }}</span>
-      <span v-if="collected" class="ccard__done text-xs fw-600 ml-auto">Coletado</span>
-    </label>
+    <!-- Uma caixa por coletável (no compacto, só no grupo aberto: a linha já tem a caixa do grupo) -->
+    <div v-if="canToggle && (!compact || (group && open))" class="d-flex flex-column gap-1 m-2">
+      <label
+        v-for="it in items"
+        :key="it.id"
+        class="ccard__check d-flex align-center gap-2 p-2 radius-1"
+        :class="{ 'is-done': isDone(it.id) }"
+      >
+        <input type="checkbox" class="sr-only" :checked="isDone(it.id)" @change="emit('toggle', it.id)" />
+        <span class="ccard__box d-flex align-center justify-center radius-1 shrink-0"><Check v-if="isDone(it.id)" :size="16" :stroke-width="3" /></span>
+        <span class="d-flex flex-column min-w-0">
+          <span class="fw-600">{{ nameOf(it) }}</span>
+          <span v-if="group && collectibleTag(it)" class="text-xs text-muted">{{ collectibleTag(it) }}</span>
+        </span>
+        <span class="d-flex align-center gap-1 ml-auto shrink-0">
+          <template v-if="group">
+            <TriangleAlert v-if="it.missable" :size="14" class="ccard__warn" aria-label="Perdível" />
+            <span v-if="it.uncounted" class="text-xs text-subtle">não conta</span>
+          </template>
+          <span v-if="isDone(it.id)" class="ccard__done text-xs fw-600">Coletado</span>
+        </span>
+      </label>
+    </div>
   </article>
 </template>
 
@@ -126,6 +174,16 @@ const open = computed(() => !props.compact || expanded.value);
     flex: 0 1 30%;
     min-width: 0;
     color: var(--text-muted);
+  }
+
+  // Grupo: título corrido à esquerda ("Artefato #1: … + Artefato #2: …"), marcas na direita
+  &__name.is-group &__side {
+    flex: 0 0 auto;
+  }
+
+  &__tag {
+    color: var(--text-muted);
+    font-size: 12px;
   }
 
   &.is-collected {
@@ -262,9 +320,23 @@ const open = computed(() => !props.compact || expanded.value);
     transition: background 0.15s, border-color 0.15s;
   }
 
-  &.is-collected &__box {
+  &.is-collected &__row &__box,
+  &__check.is-done &__box {
     background: var(--earned);
     border-color: var(--earned);
+  }
+
+  // Grupo com parte marcada (compacto): mostra quantos
+  &__box.is-partial {
+    border-color: var(--earned);
+    color: var(--earned);
+  }
+
+  // Âncora de quem está junto no cartão (o chip no texto rola até aqui)
+  &__anchor {
+    display: block;
+    height: 0;
+    scroll-margin-top: calc(var(--nav-offset) + var(--pbar-gap) + var(--pbar-height) + 64px);
   }
 
   &__done {
