@@ -1,4 +1,5 @@
 import { httpError } from '../http.js';
+import { matchScore } from '../text.js';
 
 const mapCounts = (c = {}) => ({
   platinum: c.platinum ?? 0,
@@ -17,6 +18,29 @@ const mapTitle = (t) => ({
   progress: t.progress ?? 0,
 });
 
+const PAGE = 800; // máximo da PSN por chamada de trophyTitles
+
+// Busca automática: listas cujo nome combina com o termo, em vários acervos (sua conta + perfis de referência).
+// sources: [{ name, titles }] → [{ ...title, score, sources: [nomes] }], melhores primeiro (plataforma pedida
+// desempata), sem repetir o mesmo NPWR. min: pontuação mínima (matchScore: 100 igual · 80 começa · 60 contém).
+export function searchTitles(sources, term, { platform = '', limit = 12, min = 60 } = {}) {
+  const byId = new Map();
+  for (const { name, titles } of sources) {
+    for (const t of titles) {
+      const hit = byId.get(t.id);
+      if (hit) {
+        if (!hit.sources.includes(name)) hit.sources.push(name);
+        continue;
+      }
+      const score = matchScore(t.name, term);
+      if (score >= min) byId.set(t.id, { ...t, progress: undefined, score, sources: [name] });
+    }
+  }
+  const wanted = platform.toUpperCase();
+  const bonus = (t) => (wanted && t.platform.toUpperCase().includes(wanted) ? 1 : 0);
+  return [...byId.values()].sort((a, b) => b.score - a.score || bonus(b) - bonus(a)).slice(0, limit);
+}
+
 export const NP_ID_PATTERN = /^NPWR\d{5}_\d{2}$/;
 export const ONLINE_ID_PATTERN = /^[A-Za-z][\w-]{2,15}$/; // ID da PSN: 3–16, letras, números, - e _
 
@@ -27,6 +51,27 @@ export function createTrophyService(client) {
   // Jogos com troféus de uma conta (mais recentes primeiro; máx. 800 por chamada)
   const titlesOf = async (accountId) => (await client.get(`/users/${accountId}/trophyTitles`, { limit: 800 })).trophyTitles.map(mapTitle);
   const userTitles = () => titlesOf('me');
+
+  // Todos os jogos de uma conta (perfis com milhares de jogos): 1ª página diz o total, o resto vem em paralelo (4 por vez)
+  async function allTitlesOf(accountId) {
+    const path = `/users/${accountId}/trophyTitles`;
+    const first = await client.get(path, { limit: PAGE, offset: 0 });
+    const total = first.totalItemCount ?? first.trophyTitles.length;
+    const offsets = [];
+    for (let o = PAGE; o < total; o += PAGE) offsets.push(o);
+    const pages = [first];
+    for (let i = 0; i < offsets.length; i += 4) {
+      pages.push(...(await Promise.all(offsets.slice(i, i + 4).map((offset) => client.get(path, { limit: PAGE, offset })))));
+    }
+    return pages.flatMap((p) => p.trophyTitles ?? []).map(mapTitle);
+  }
+
+  // Todos os jogos de um perfil público pelo ID da PSN (perfis de referência da busca automática)
+  async function playerAllTitles(onlineId) {
+    if (!ONLINE_ID_PATTERN.test(onlineId)) throw httpError(400, 'ID da PSN inválido.');
+    const { profile } = await client.profile(onlineId);
+    return allTitlesOf(profile.accountId);
+  }
 
   // Jogos de outra pessoa pelo ID da PSN: serve para achar o código (NPWR) de um jogo que a conta do
   // NPSSO ainda não tem — a PSN só mostra o código para quem já jogou. Precisa de perfil com troféus públicos.
@@ -137,5 +182,5 @@ export function createTrophyService(client) {
     return { earned, total: data.trophies.length, trophies };
   }
 
-  return { userTitles, playerTitles, trophyList, userProgress };
+  return { userTitles, allTitlesOf, playerTitles, playerAllTitles, trophyList, userProgress };
 }

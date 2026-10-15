@@ -17,6 +17,8 @@ import { compareVersions } from '@/utils/trophies';
 import { dlcGroupsOf, scopeList } from '@/utils/trophyScope';
 import { useQueryParam } from '@/composables/useQueryParam';
 import { PackagePlus } from 'lucide-vue-next';
+import { useRoute, useRouter } from 'vue-router';
+import { NP_ID_PATTERN } from '@/config/trophies';
 
 defineProps({ game: { type: Object, required: true }, tab: { type: Object, default: null } });
 
@@ -59,6 +61,23 @@ function link(title) {
   add(title);
   adding.value = false;
 }
+
+// Vindo da página do jogo ("Criar guia com esta lista": ?lista=NPWR…&svc=&nome=&plat=): vincula sozinho
+const route = useRoute();
+const router = useRouter();
+watch(
+  () => [draft.value, route.query.lista],
+  ([d, id]) => {
+    if (!d || !id) return;
+    if (!versions.value.length && NP_ID_PATTERN.test(String(id))) {
+      const q = route.query;
+      link({ id: String(id), service: q.svc || null, name: String(q.nome ?? ''), platform: String(q.plat ?? '') });
+    }
+    const { lista, svc, nome, plat, ...rest } = route.query;
+    router.replace({ query: rest });
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

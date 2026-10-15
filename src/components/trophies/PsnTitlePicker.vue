@@ -1,17 +1,19 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Link2, Search, TriangleAlert, UserRound, X } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import { Link2, Search, Sparkles, TriangleAlert, UserRound, X } from 'lucide-vue-next';
 import SearchInput from '@/components/ui/SearchInput.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import PsnTitleList from './PsnTitleList.vue';
 import { useAsyncState } from '@/composables/useAsyncState';
 import { useStoredRef } from '@/composables/useStoredRef';
-import { fetchPsnPlayerTitles, fetchPsnTitles } from '@/services/trophies.service';
+import { useDebounceFn } from '@/composables/useDebounceFn';
+import { fetchPsnPlayerTitles, fetchPsnTitles, findTrophyLists } from '@/services/trophies.service';
 import { NP_ID_PATTERN } from '@/config/trophies';
 import { rankByName } from '@/utils/text';
 
 // Vincula o jogo à lista de troféus da PSN. A PSN só mostra o código (NPWR) de um jogo para quem já jogou, então:
+// 0) busca automática pelo nome (sua conta + perfis públicos de referência, mesmo sem você ter jogado — padrão);
 // 1) jogos da sua conta; 2) jogos de outro perfil público (ID da PSN de quem já jogou); 3) colar o código.
 // Os perfis usados ficam guardados no navegador para a próxima vez.
 const props = defineProps({
@@ -23,13 +25,19 @@ const props = defineProps({
 const emit = defineEmits(['select', 'cancel']);
 
 const SOURCES = [
+  { id: 'auto', label: 'Busca automática', icon: Sparkles },
   { id: 'me', label: 'Minha conta' },
   { id: 'player', label: 'Perfil de outra pessoa' },
 ];
 const MAX_RECENT = 5;
 
-const source = ref('me');
+const source = ref('auto');
 const term = ref(props.gameTitle);
+// Busca automática: pelo nome digitado (espera parar de digitar)
+const autoTerm = ref(props.gameTitle.trim());
+const setAutoTerm = useDebounceFn((v) => (autoTerm.value = v.trim()), 500);
+watch(term, (v) => source.value === 'auto' && setAutoTerm(v));
+watch(source, (s) => s === 'auto' && (autoTerm.value = term.value.trim()));
 const playerInput = ref('');
 const player = ref(''); // perfil buscado
 const recent = useStoredRef('mg:psn-players', []);
@@ -37,15 +45,29 @@ const code = ref('');
 const codeError = ref('');
 
 // Uma consulta por vez: "me" (sua conta) ou "@ID" (outro perfil). O cliente da API guarda as respostas da sessão.
-const query = computed(() => (source.value === 'me' ? 'me' : player.value && `@${player.value}`));
-const { data, loading, error, reload } = useAsyncState(query, (q, opts) =>
-  q === 'me' ? fetchPsnTitles(opts).then((titles) => ({ titles })) : fetchPsnPlayerTitles(q.slice(1), opts),
-);
+const query = computed(() => {
+  if (source.value === 'auto') return autoTerm.value.length >= 2 && `?${autoTerm.value}`;
+  return source.value === 'me' ? 'me' : player.value && `@${player.value}`;
+});
+const { data, loading, error, reload } = useAsyncState(query, (q, opts) => {
+  if (q.startsWith('?')) return findTrophyLists(q.slice(1), '', opts).then((titles) => ({ titles }));
+  return q === 'me' ? fetchPsnTitles(opts).then((titles) => ({ titles })) : fetchPsnPlayerTitles(q.slice(1), opts);
+});
 
 const results = computed(() => {
   const list = (data.value?.titles ?? []).filter((t) => !props.exclude.includes(t.id));
+  if (source.value === 'auto') return list; // já vem na ordem da busca
   return term.value.trim() ? rankByName(list, term.value, (t) => t.name) : list;
 });
+
+const PLACEHOLDERS = { auto: 'Nome do jogo (como na PSN)', me: 'Filtrar seus jogos', player: 'Filtrar os jogos dessa pessoa' };
+const loadingText = computed(() =>
+  source.value === 'auto'
+    ? `Procurando “${autoTerm.value}” nos acervos da PSN…`
+    : source.value === 'me'
+      ? 'Carregando seus jogos da PSN…'
+      : `Carregando os jogos de ${player.value}…`,
+);
 
 function searchPlayer(id = playerInput.value) {
   const value = id.trim();
@@ -102,9 +124,14 @@ function submitCode() {
           :aria-selected="source === s.id"
           @click="source = s.id"
         >
-          {{ s.label }}
+          <component :is="s.icon" v-if="s.icon" :size="14" /> {{ s.label }}
         </button>
       </div>
+
+      <p v-if="source === 'auto'" class="text-sm text-muted">
+        Procura pelo nome na sua conta e em perfis públicos com milhares de jogos — funciona mesmo que você não tenha jogado.
+        A 1ª busca demora alguns segundos (os acervos ficam guardados por 24 h).
+      </p>
 
       <!-- Outro perfil: ID da PSN + recentes -->
       <template v-if="source === 'player'">
@@ -132,27 +159,28 @@ function submitCode() {
         </p>
       </template>
 
-      <template v-if="query">
+      <template v-if="query || source === 'auto'">
         <div v-if="data?.player" class="d-flex align-center gap-1 text-sm">
           <img v-if="data.player.avatar" :src="data.player.avatar" alt="" class="avatar radius-full" />
           <span class="text-muted">Jogos de <strong class="player-name">{{ data.player.onlineId }}</strong></span>
         </div>
 
-        <SearchInput v-model="term" :placeholder="source === 'me' ? 'Filtrar seus jogos' : 'Filtrar os jogos dessa pessoa'" />
+        <SearchInput v-model="term" :placeholder="PLACEHOLDERS[source]" />
 
-        <p v-if="loading" class="text-sm text-muted py-1">
-          {{ source === 'me' ? 'Carregando seus jogos da PSN…' : `Carregando os jogos de ${player}…` }}
-        </p>
+        <p v-if="loading" class="text-sm text-muted py-1">{{ loadingText }}</p>
 
-        <EmptyState v-else-if="error" :icon="TriangleAlert" :title="source === 'me' ? 'Não deu para acessar a PSN' : 'Não deu para ver esse perfil'" :text="error">
-          <BaseButton v-if="source === 'me'" size="sm" @click="reload">Tentar de novo</BaseButton>
+        <EmptyState v-else-if="error" :icon="TriangleAlert" :title="source === 'player' ? 'Não deu para ver esse perfil' : 'Não deu para acessar a PSN'" :text="error">
+          <BaseButton v-if="source !== 'player'" size="sm" @click="reload">Tentar de novo</BaseButton>
         </EmptyState>
 
-        <div v-else-if="!results.length" class="d-flex flex-column align-start gap-1 py-1">
-          <p class="text-sm text-muted">
+        <div v-else-if="query && !results.length" class="d-flex flex-column align-start gap-1 py-1">
+          <p v-if="source === 'auto'" class="text-sm text-muted">
+            Nenhuma lista com “{{ autoTerm }}”. Tente o nome em inglês ou mais curto — ou procure no perfil de quem já jogou.
+          </p>
+          <p v-else class="text-sm text-muted">
             Nenhum jogo {{ source === 'me' ? 'da sua conta' : `de ${data?.player?.onlineId ?? player}` }} combina com “{{ term }}”.
           </p>
-          <BaseButton v-if="source === 'me'" size="sm" variant="ghost" :icon="UserRound" @click="source = 'player'">
+          <BaseButton v-if="source !== 'player'" size="sm" variant="ghost" :icon="UserRound" @click="source = 'player'">
             Procurar no perfil de quem já jogou
           </BaseButton>
         </div>

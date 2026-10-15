@@ -2,9 +2,9 @@
 import TrophyCounts from './TrophyCounts.vue';
 
 // Lista de jogos da PSN para escolher (jogos da conta ou de outro perfil): ícone, nome, plataforma,
-// troféus e o progresso de quem é a lista
+// troféus e o progresso de quem é a lista (ou, na busca automática, onde a lista foi achada)
 defineProps({
-  titles: { type: Array, required: true }, // [{ id, name, icon, platform, counts, progress }]
+  titles: { type: Array, required: true }, // [{ id, name, icon, platform, counts, progress?, sources? }]
 });
 defineEmits(['select']);
 </script>
@@ -20,8 +20,9 @@ defineEmits(['select']);
             <span class="tag shrink-0">{{ t.platform }}</span>
           </span>
           <TrophyCounts :counts="t.counts" class="text-xs" />
+          <span v-if="t.sources?.length" class="text-xs text-subtle truncate">Achado em: {{ t.sources.join(' · ') }}</span>
         </span>
-        <span class="text-xs text-subtle shrink-0">{{ t.progress }}%</span>
+        <span v-if="t.progress != null" class="text-xs text-subtle shrink-0">{{ t.progress }}%</span>
       </button>
     </li>
   </ul>

@@ -42,7 +42,7 @@ function mountApis(server) {
 
   const apis = {
     '/api/games': createGamesApi(create(getSecret), others),
-    '/api/trophies': createTrophiesApi(getSecret),
+    '/api/trophies': createTrophiesApi(getSecret, { referencePlayers: env.PSN_REFERENCE_PLAYERS }),
   };
 
   for (const [base, api] of Object.entries(apis)) {

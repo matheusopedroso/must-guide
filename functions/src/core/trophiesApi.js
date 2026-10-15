@@ -1,11 +1,18 @@
 import { createCache } from './memoryCache.js';
-import { createApi, remember } from './http.js';
+import { createApi, httpError, remember } from './http.js';
 import { createPsnClient } from './psn/client.js';
-import { createTrophyService } from './psn/trophies.js';
+import { createTrophyService, searchTitles } from './psn/trophies.js';
 
 const HOUR = 3600;
 
 export const TROPHY_SECRETS = ['PSN_NPSSO'];
+
+// Perfis públicos com acervos enormes (caçadores de troféus): a PSN só mostra o código de uma lista (NPWR) para
+// quem já jogou, então a busca automática procura nos jogos deles. Troque em PSN_REFERENCE_PLAYERS (.env.local,
+// IDs separados por vírgula). Perfil que não existir ou estiver privado é ignorado.
+export const DEFAULT_REFERENCE_PLAYERS = ['Hakoom', 'dav1d123', 'ikemenzi'];
+export const parseReferencePlayers = (value) =>
+  value ? String(value).split(',').map((s) => s.trim()).filter(Boolean) : DEFAULT_REFERENCE_PLAYERS;
 
 // Versão do formato da lista. Aumente quando mudar o que a lista traz (ex.: v2 = nameEn):
 // o cache em memória e os caches HTTP (navegador/CDN, via ?v= do app) deixam de usar respostas antigas.
@@ -18,6 +25,23 @@ const parseService = (value) => (['trophy', 'trophy2'].includes(value) ? value :
 export function createTrophiesApi(getSecret, options = {}) {
   const trophies = createTrophyService(createPsnClient(getSecret));
   const memory = createCache({ max: 100 });
+  const references = parseReferencePlayers(options.referencePlayers);
+
+  // Acervos da busca automática (24 h em memória: um perfil grande são ~20 chamadas na 1ª busca)
+  const searchSources = () =>
+    Promise.all([
+      remember(memory, 'all:me', 10 * 60, () => trophies.allTitlesOf('me'))
+        .then((titles) => ({ name: 'Sua conta', titles }))
+        .catch(() => ({ name: 'Sua conta', titles: [] })),
+      ...references.map((id) =>
+        remember(memory, `ref:${id.toLowerCase()}`, 24 * HOUR, () => trophies.playerAllTitles(id))
+          .then((titles) => ({ name: id, titles }))
+          .catch((e) => {
+            console.warn(`[trophies:find] Perfil de referência ${id} indisponível: ${e.message}`);
+            return { name: id, titles: [] };
+          }),
+      ),
+    ]);
 
   return createApi('trophies', {
     // Lista pessoal (jogos da conta) → sem cache na CDN
@@ -35,6 +59,18 @@ export function createTrophiesApi(getSecret, options = {}) {
       async run({ id }) {
         const onlineId = String(id ?? '').trim();
         return remember(memory, `u:${onlineId.toLowerCase()}`, 10 * 60, () => trophies.playerTitles(onlineId));
+      },
+    },
+
+    // Busca automática de listas pelo nome do jogo: sua conta + perfis de referência (ver DEFAULT_REFERENCE_PLAYERS).
+    // ?q=nome&platform=PS5 → { results: [{ id, name, platform, service, icon, counts, score, sources }] }
+    find: {
+      private: true,
+      cache: 'private, max-age=600',
+      async run({ query }) {
+        const term = String(query.q ?? '').trim().slice(0, 100);
+        if (term.length < 2) throw httpError(400, 'Digite o nome do jogo.');
+        return { results: searchTitles(await searchSources(), term, { platform: String(query.platform ?? '') }) };
       },
     },
 

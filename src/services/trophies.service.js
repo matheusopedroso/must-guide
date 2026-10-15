@@ -20,6 +20,13 @@ export function fetchTrophyProgress(npId, service, opts) {
   return request(`/progress/${encodeURIComponent(npId)}${qs}`, { ...opts, noCache: true, auth: true }).then((d) => d.progress);
 }
 
+// Busca automática da lista pelo nome do jogo (sua conta + perfis de referência do servidor). Rota privada.
+// → [{ id, name, platform, service, icon, counts, score, sources: ['Sua conta' | ID da PSN] }]
+export function findTrophyLists(title, platform = '', opts) {
+  const qs = new URLSearchParams({ q: title, ...(platform && { platform }) });
+  return request(`/find?${qs}`, { ...opts, auth: true }).then((d) => d.results);
+}
+
 // Jogos de outra pessoa pelo ID da PSN → { player: { onlineId, avatar }, titles }. Serve para vincular jogos que a
 // conta do servidor ainda não tem (a PSN só mostra o código da lista para quem já jogou). Rota privada.
 export const fetchPsnPlayerTitles = (onlineId, opts) => request(`/player/${encodeURIComponent(onlineId)}`, { ...opts, auth: true });

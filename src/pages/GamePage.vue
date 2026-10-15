@@ -12,6 +12,7 @@ import VideoModal from '@/components/ui/VideoModal.vue';
 import GameGrid from '@/components/games/GameGrid.vue';
 import GameCard from '@/components/games/GameCard.vue';
 import GameAbout from '@/components/games/GameAbout.vue';
+import GameTrophies from '@/components/games/GameTrophies.vue';
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
 import LibraryButton from '@/components/library/LibraryButton.vue';
 import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
@@ -130,6 +131,9 @@ const back = () => (window.history.state?.back ? router.back() : router.push({ n
             </template>
           </aside>
         </div>
+
+        <!-- Troféus do jogo (busca automática da lista), mesmo sem guia -->
+        <GameTrophies :game="game" :has-guide="!!guide" />
 
         <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="Guias de DLC" />
 

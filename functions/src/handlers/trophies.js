@@ -6,7 +6,8 @@ import { parseApiUrl } from '../core/http.js';
 import { requireAdmin } from '../auth.js';
 
 const secrets = Object.fromEntries(TROPHY_SECRETS.map((name) => [name, defineSecret(name)]));
-const api = createTrophiesApi((name) => secrets[name].value(), { authorize: requireAdmin });
+// PSN_REFERENCE_PLAYERS (opcional, não é segredo): perfis da busca automática — ver DEFAULT_REFERENCE_PLAYERS
+const api = createTrophiesApi((name) => secrets[name].value(), { authorize: requireAdmin, referencePlayers: process.env.PSN_REFERENCE_PLAYERS });
 
 // Servida pelo Hosting em /api/trophies/**
 export const trophies = onRequest({ ...BASE_OPTIONS, secrets: Object.values(secrets) }, async (req, res) => {

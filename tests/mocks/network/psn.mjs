@@ -7,11 +7,17 @@ const titles = [
   { npServiceName: 'trophy2', npCommunicationId: 'NPWR22814_00', trophyTitleName: 'ASTRO\'s PLAYROOM', trophyTitleIconUrl: null, trophyTitlePlatform: 'PS5', definedTrophies: { bronze: 37, silver: 11, gold: 2, platinum: 1 }, progress: 100 },
   { npServiceName: 'trophy', npCommunicationId: 'NPWR13348_00', trophyTitleName: 'God of War', trophyTitleIconUrl: null, trophyTitlePlatform: 'PS4', definedTrophies: { bronze: 26, silver: 7, gold: 3, platinum: 1 }, progress: 64 },
 ];
-const other = [{ npServiceName: 'trophy2', npCommunicationId: 'NPWR40001_00', trophyTitleName: '007 First Light', trophyTitleIconUrl: null, trophyTitlePlatform: 'PS5', definedTrophies: { bronze: 30, silver: 8, gold: 4, platinum: 1 }, progress: 58 }, titles[3]];
+const other = [
+  { npServiceName: 'trophy2', npCommunicationId: 'NPWR40001_00', trophyTitleName: '007 First Light', trophyTitleIconUrl: null, trophyTitlePlatform: 'PS5', definedTrophies: { bronze: 30, silver: 8, gold: 4, platinum: 1 }, progress: 58 },
+  titles[3],
+  // Só nos perfis de outras pessoas (busca automática acha sem você ter jogado)
+  { npServiceName: 'trophy2', npCommunicationId: 'NPWR40002_00', trophyTitleName: 'Split Fiction™', trophyTitleIconUrl: null, trophyTitlePlatform: 'PS5', definedTrophies: { bronze: 5, silver: 2, gold: 2, platinum: 1 }, progress: 100 },
+];
 const svg = (c) => 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="${c}"/><circle cx="32" cy="32" r="14" fill="#fff6"/></svg>`);
 titles.forEach((t, i) => (t.trophyTitleIconUrl = svg(['#6b4e71', '#7b3f3f', '#8a4b4b', '#3d5a80', '#556b2f'][i])));
 other[0].trophyTitleIconUrl = svg('#1f3a2e');
-const allTitles = [...titles, other[0]];
+other[2].trophyTitleIconUrl = svg('#2e4a7a');
+const allTitles = [...titles, other[0], other[2]];
 const types = ['platinum', 'gold', 'gold', 'silver', 'silver', 'bronze', 'bronze', 'bronze', 'bronze', 'bronze'];
 const namesEn = ['Legend of Ezo', 'Revenge Complete', 'Blade Master', 'Bounty Hunter', 'Six of Yotei', 'First Blood', 'Curious Fox', 'Hot Springs', 'Haiku', 'Bamboo Shrine'];
 const names = ['Lenda de Ezo', 'Vingança completa', 'Mestre da lâmina', 'Caçadora de recompensas', 'Seis de Yōtei', 'Primeiro sangue', 'Raposa curiosa', 'Fontes termais', 'Haiku', 'Santuário de bambu'];
@@ -38,7 +44,8 @@ globalThis.fetch = async (url, opts = {}, ...rest) => {
     if (p.pathname.endsWith('/trophyTitles')) {
       const acc = p.pathname.split('/')[5];
       if (acc === 'priv') return { ok: false, status: 403, headers: new Headers(), json: async () => ({ error: { message: 'Not permitted' } }) };
-      return ok({ trophyTitles: acc === 'me' ? titles : other });
+      const list = acc === 'me' ? titles : other;
+      return ok({ trophyTitles: Number(p.searchParams.get('offset') ?? 0) > 0 ? [] : list, totalItemCount: list.length });
     }
     if (p.pathname.includes('/users/me/npCommunicationIds/')) {
       const uid = p.pathname.split('/')[7]; const ut = titles.find((x) => x.npCommunicationId === uid);

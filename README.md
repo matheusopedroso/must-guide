@@ -78,12 +78,22 @@ Em produção o Hosting guarda as respostas na CDN (`s-maxage`), então a maiori
 |---|---|---|
 | `GET /api/trophies/titles` | jogos com troféus da conta do NPSSO | 5 min / sem CDN |
 | `GET /api/trophies/player/:psnId` | jogos de outro perfil público (`{ player, titles }`) — para vincular jogo que a conta não tem | 10 min / sem CDN |
+| `GET /api/trophies/find?q=nome&platform=` | **busca automática** da lista pelo nome: sua conta + perfis de referência (`{ results }` com `sources`) | 10 min / sem CDN |
 | `GET /api/trophies/list/:npId?service=` | grupos + troféus (pt-BR, com `nameEn` em inglês) de qualquer jogo | 1 h / 24 h |
 | `GET /api/trophies/progress/:npId?service=` | conquistados, data e raridade na conta (`null` se não tem o jogo) | 1 min / sem CDN |
 
-**Vincular um jogo:** a PSN só mostra o código da lista (NPWR) de jogos que a conta já abriu. No editor
-(`PsnTitlePicker`): sua conta, **perfil de outra pessoa** (ID da PSN de quem já jogou, com troféus públicos — os
-usados ficam em `mg:psn-players`) ou o código colado.
+**Vincular um jogo:** a PSN só mostra o código da lista (NPWR) de jogos que *alguém* já abriu. No editor
+(`PsnTitlePicker`): **busca automática** (padrão), sua conta, **perfil de outra pessoa** (ID da PSN de quem já jogou,
+com troféus públicos — os usados ficam em `mg:psn-players`) ou o código colado.
+
+**Busca automática (jogos que você nunca jogou):** procura pelo nome na sua conta e nos acervos de perfis públicos
+de caçadores de troféus com milhares de jogos (`PSN_REFERENCE_PLAYERS` no `.env.local`, IDs separados por vírgula;
+vazio = `Hakoom,dav1d123,ikemenzi`). Lê todas as páginas de cada perfil (800 jogos por chamada, 4 em paralelo) e
+guarda 24 h na memória do servidor — a 1ª busca depois de subir o `npm run dev` leva alguns segundos. Perfil que não
+existir ou ficar privado é ignorado (aviso no terminal). Nome comparado sem acento/™ (`functions/src/core/text.js`,
+o mesmo do app). Jogo lançado agora pode ainda não estar em nenhum acervo: aí vale o perfil de quem já jogou.
+- **Página do jogo:** seção **Troféus** (quem edita) com a lista achada — versões PS4/PS5 em chips, os troféus do
+  jogo base e **Criar guia com esta lista** (abre o editor já vinculado: `?lista=NPWR…`).
 
 Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO` vale ~2 meses:
 logado em playstation.com, abra https://ca.account.sony.com/api/v1/ssocookie e copie o `npsso`.
