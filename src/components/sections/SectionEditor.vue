@@ -1,12 +1,14 @@
 <script setup>
 import { computed, ref, useTemplateRef } from 'vue';
-import { ArrowDown, ArrowUp, CirclePlay, FileOutput, Plus, Quote, Trash2 } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, CirclePlay, FileOutput, Map as MapIcon, MapPin, Plus, Quote, Trash2 } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import RefTextEditor from '@/components/trophies/RefTextEditor.vue';
 import TrophyRefPicker from '@/components/trophies/TrophyRefPicker.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleListEditor from '@/components/collectibles/CollectibleListEditor.vue';
+import CollectibleMapEditor from '@/components/collectibles/CollectibleMapEditor.vue';
+import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { sectionWords } from '@/utils/sections';
 import { normalizeUrl } from '@/utils/url';
 import { useClickOutside } from '@/composables/useClickOutside';
@@ -34,6 +36,12 @@ const emit = defineEmits([
 
 const sectionTrophies = computed(() => props.section.trophies.map((id) => props.byId.get(id)).filter(Boolean));
 const w = computed(() => sectionWords(props.cfg));
+
+// Mapa da região (coletáveis): link da imagem e os pontos de cada coletável (com o número por tipo do guia)
+const colCtx = useCollectibleContext();
+const regionItems = computed(() => (props.section.items ?? []).map((i) => ({ ...i, ...colCtx?.byId.value.get(i.id), pin: i.pin })));
+const pinned = computed(() => regionItems.value.filter((i) => i.pin).length);
+const mapOpen = ref(false);
 
 // Seletor "Adicionar troféu": fica aberto para escolher vários seguidos
 const picking = ref(false);
@@ -94,6 +102,32 @@ useClickOutside(pickerWrap, picking, () => (picking.value = false));
         @change="emit('update', { video: normalizeUrl($event.target.value) })"
       />
     </label>
+
+    <!-- Mapa da região (aba Coletáveis): imagem por link + pontos dos coletáveis -->
+    <div v-if="cfg.items" class="d-flex align-center flex-wrap gap-1">
+      <label class="section__video d-flex align-center gap-1 flex-1">
+        <MapIcon :size="16" class="shrink-0 text-subtle" />
+        <input
+          :value="section.map ?? ''"
+          class="input"
+          type="url"
+          :placeholder="`Mapa ${w.of} ${w.name} (link da imagem, opcional)`"
+          :aria-label="`Mapa ${w.of} ${w.name}`"
+          @change="emit('update', { map: normalizeUrl($event.target.value) })"
+        />
+      </label>
+      <BaseButton v-if="section.map && regionItems.length" :icon="MapPin" size="sm" @click="mapOpen = true">
+        Pontos no mapa ({{ pinned }}/{{ regionItems.length }})
+      </BaseButton>
+    </div>
+    <CollectibleMapEditor
+      v-if="cfg.items && section.map"
+      v-model="mapOpen"
+      :src="section.map"
+      :items="regionItems"
+      :title="section.title || `${cfg.unit} ${index + 1}`"
+      @pin="(itemId, pin) => emit('update-item', itemId, { pin })"
+    />
 
     <RefTextEditor
       :model-value="section.body"

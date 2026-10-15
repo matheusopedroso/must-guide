@@ -48,6 +48,7 @@ export const createDraft = (game, { dlc = null } = {}) => ({
   walkthrough: [],
   missables: [],
   online: [],
+  collectibleTypes: {}, // tipos de coletável → troféu: { Artefato: { trophy: 12 } } — utils/collectibles
   credits: [], // créditos do guia: [{ id, name, url, role }] — utils/collectibles (createCredit)
   updatedAt: null, // ISO da última edição (decide entre a cópia do navegador e a da nuvem)
 });

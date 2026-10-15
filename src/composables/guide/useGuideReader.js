@@ -37,6 +37,7 @@ export function useGuideReader(guideId) {
     collected,
     toggle: toggleCollected,
     reset: clearCollected, // desmarca todos (Recomeçar)
+    types: computed(() => guide.value?.collectibleTypes ?? {}), // tipo → troféu
     open: (id) => (openCollectible.value = id),
   });
 

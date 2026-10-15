@@ -8,6 +8,7 @@ import EmptyState from '@/components/ui/EmptyState.vue';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import SectionEditor from '@/components/sections/SectionEditor.vue';
 import PageNavEditor from '@/components/sections/PageNavEditor.vue';
+import CollectibleTypesEditor from '@/components/collectibles/CollectibleTypesEditor.vue';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useSections } from '@/composables/guide/useSections';
 import { usePages } from '@/composables/guide/usePages';
@@ -135,6 +136,9 @@ function moveToPage(sectionId, i) {
       </span>
       <span v-else>Marque os troféus como {{ flag.label }} na aba Troféus (Detalhes) e eles aparecem sozinhos no topo desta aba.</span>
     </p>
+
+    <!-- Coletáveis: cada tipo ligado ao troféu dele -->
+    <CollectibleTypesEditor v-if="cfg.items && types.length && draft" v-model="draft.collectibleTypes" :types="types" :trophies="trophies" />
 
     <!-- Aba paginada sem páginas -->
     <EmptyState v-if="paged && !pg.pages.value.length" :icon="tab.icon" :title="tab.label" :text="cfg.emptyText">

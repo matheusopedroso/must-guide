@@ -66,3 +66,17 @@ Optional Conversation #6`;
     ]);
   });
 });
+
+describe('tipo ↔ troféu e pontos do mapa', () => {
+  it('liga tipos a troféus e monta o rótulo do ponto', async () => {
+    const { pinLabel, typeTrophyId, typesOfTrophy } = await import('@/utils/collectibles');
+    const types = { Artefato: { trophy: 5 }, Pingente: { trophy: 7 }, Quadrinho: { trophy: 5 } };
+    expect(typeTrophyId(types, 'Pingente')).toBe(7);
+    expect(typeTrophyId(types, 'Outro')).toBeNull();
+    expect(typesOfTrophy(types, 5)).toEqual(['Artefato', 'Quadrinho']);
+    expect(pinLabel({ type: 'artefato', n: 3 })).toBe('A3');
+    expect(pinLabel({ type: '', n: 2 })).toBe('2');
+    expect(pinLabel({ type: 'Joke' })).toBe('J');
+    expect(pinLabel({})).toBe('•');
+  });
+});

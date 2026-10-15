@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue';
 import { useCollectibleContext } from './useCollectibles';
 import { useStoredRef } from '@/composables/useStoredRef';
+import { useQueryParam } from '@/composables/useQueryParam';
 import { groupCollectibles, matchesFilter, summarizeByType } from '@/utils/collectibles';
 
 // Leitura da aba Coletáveis: progresso (geral, por tipo e por região), filtro (tipo ou perdíveis),
@@ -11,7 +12,10 @@ export function useCollectibleView(sections) {
   const isDone = (id) => !!col?.collected?.value.has(id);
   const hideDone = useStoredRef('mg:hide-collected', false);
   const compact = useStoredRef('mg:collectibles-compact', false);
-  const filter = ref(''); // '' · 'missable' · 'type:<tipo>'
+  // Filtro: '' · 'missable' · 'type:<tipo>'. Vindo da página do troféu (?tipo=Artefato) já abre filtrado
+  const tipo = useQueryParam('tipo');
+  const filter = ref(tipo.value ? `type:${tipo.value}` : '');
+  if (tipo.value) tipo.value = '';
 
   const full = (it) => col?.byId.value.get(it.id) ?? it;
   const itemsOf = (s) => (s.items ?? []).map(full);
@@ -33,5 +37,5 @@ export function useCollectibleView(sections) {
   const regionCount = (s) => countOf(itemsOf(s));
   const regionTypes = (s) => summarizeByType(itemsOf(s), isDone);
 
-  return { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, nextMissing, regionCount, regionTypes };
+  return { col, isDone, hideDone, compact, filter, overall, byType, missable, itemsOf, shown, nextMissing, regionCount, regionTypes };
 }

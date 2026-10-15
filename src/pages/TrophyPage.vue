@@ -11,6 +11,7 @@ import ProgressBar from '@/components/ui/ProgressBar.vue';
 import PrevNextNav from '@/components/ui/PrevNextNav.vue';
 import VideoModal from '@/components/ui/VideoModal.vue';
 import RefText from '@/components/trophies/RefText.vue';
+import TrophyCollectibles from '@/components/collectibles/TrophyCollectibles.vue';
 import TrophyMetaTags from '@/components/trophies/TrophyMetaTags.vue';
 import ButtonStyleToggle from '@/components/trophies/ButtonStyleToggle.vue';
 import SectionTrophyGrid from '@/components/sections/SectionTrophyGrid.vue';
@@ -170,6 +171,9 @@ async function share() {
               <p v-else class="text-muted">O guia ainda não tem dica para este troféu.</p>
               <TrophyMetaTags :trophy="trophy" :note="note" :stats="stats" class="mt-1" />
             </section>
+
+            <!-- Coletáveis dos tipos ligados a este troféu ("Artefato" → este) -->
+            <TrophyCollectibles :guide-id="guideId" :trophy-id="trophyId" />
 
             <!-- Onde aparece no guia -->
             <section v-if="citations.length" class="d-flex flex-column gap-2">

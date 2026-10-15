@@ -5,6 +5,7 @@ import RefText from '@/components/trophies/RefText.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleCard from '@/components/collectibles/CollectibleCard.vue';
 import CollectiblesOverview from '@/components/collectibles/CollectiblesOverview.vue';
+import CollectibleMap from '@/components/collectibles/CollectibleMap.vue';
 import VideoButton from '@/components/ui/VideoButton.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import { Gem, Pencil } from 'lucide-vue-next';
@@ -43,16 +44,29 @@ const visible = computed(() =>
 
 // Coletáveis (cfg.items): progresso (geral, por tipo, por região), filtro, esconder coletados e modo compacto
 const cv = props.cfg.items ? useCollectibleView(computed(() => props.sections)) : null;
-const { col, isDone, hideDone, compact, filter, overall, byType, missable, shown, nextMissing, regionCount, regionTypes } = cv ?? {};
-// "Próximo que falta": rola até o cartão dele (o de um grupo também) e pisca a borda
-function goNext() {
-  const id = nextMissing();
-  const card = id && document.getElementById(collectibleAnchorId(id))?.closest('.ccard');
+const { col, isDone, hideDone, compact, filter, overall, byType, missable, itemsOf, shown, nextMissing, regionCount, regionTypes } = cv ?? {};
+// Chips por tipo com o troféu ligado ao tipo (editor → "Tipos ligados a troféus")
+const typeRows = computed(() =>
+  (byType?.value ?? []).map((t) => ({ ...t, trophy: byId.value.get(col?.types?.value?.[t.type]?.trophy) ?? null })),
+);
+// Leva ao cartão de um coletável (o de um grupo também) e pisca a borda. Escondido pelo filtro ou por
+// "Esconder coletados" (ex.: ponto do mapa já coletado)? Tira os dois para ele aparecer.
+const cardOf = (id) => document.getElementById(collectibleAnchorId(id))?.closest('.ccard');
+async function focusCard(id) {
+  let card = id && cardOf(id);
+  if (id && !card && cv) {
+    filter.value = '';
+    hideDone.value = false;
+    await nextTick();
+    card = cardOf(id);
+  }
   if (!card) return;
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   card.classList.add('is-flash');
   setTimeout(() => card.classList.remove('is-flash'), 1600);
 }
+// "Próximo que falta"
+const goNext = () => focusCard(nextMissing());
 // Com filtro: só as regiões que têm algum coletável dele
 const listed = computed(() => (filter?.value ? visible.value.filter((s) => shown(s).length) : visible.value));
 const w = computed(() => sectionWords(props.cfg));
@@ -119,7 +133,7 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
       v-model:hide-done="hideDone"
       v-model:compact="compact"
       :overall="overall"
-      :by-type="byType"
+      :by-type="typeRows"
       :missable="missable"
       :can-reset="!!col?.reset"
       @next="goNext"
@@ -161,6 +175,7 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
         <span v-for="t in regionTypes(s)" :key="t.type" class="tag">{{ t.type || 'Sem tipo' }} {{ t.done }}/{{ t.total }}</span>
       </p>
       <RefText :html="s.body" class="section__body" @trophy="$emit('open-trophy', $event)" />
+      <CollectibleMap v-if="cv && s.map" :src="s.map" :items="itemsOf(s)" :is-done="isDone" :title="`Mapa: ${s.label}`" @go="focusCard" />
       <div v-if="cv && s.items?.length" class="d-flex flex-column" :class="compact ? 'gap-1' : 'gap-2'">
         <CollectibleCard
           v-for="g in shown(s)"

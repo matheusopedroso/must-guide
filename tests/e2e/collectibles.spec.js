@@ -233,3 +233,45 @@ test('coletáveis: tela cheia, próximo que falta, recomeçar e perdíveis', asy
   await page.goto('/guia/rawg-1002?aba=coletaveis');
   await expect(page.locator('[aria-label="Filtrar coletáveis"] .chip').filter({ hasText: 'Pingente' })).toContainText('1/1');
 });
+
+// Tipo ligado ao troféu (chip + página do troféu) e mapa da região com pontos
+test('coletáveis: tipo ligado ao troféu e mapa com pontos', async ({ page }) => {
+  await fakeIgdbImages(page);
+  await seed(page, [guide()]);
+  await page.goto('/guia/rawg-1002/editar?aba=coletaveis');
+
+  // Artefato → troféu 2 (Mestre da lâmina)
+  await page.click('summary:has-text("Tipos ligados a troféus")');
+  await page.getByLabel('Troféu do tipo Artefato').selectOption('2');
+  await expect.poll(async () => (await readDraft(page, 'rawg-1002'))?.collectibleTypes).toEqual({ Artefato: { trophy: 2 } });
+
+  // Mapa da Floresta + ponto do "Mapa velho" (o 1º sem ponto já vem escolhido)
+  const floresta = page.locator('[data-section="r1"]');
+  await floresta.getByLabel('Mapa da região').fill('https://images.igdb.com/mapa.jpg');
+  await floresta.getByLabel('Mapa da região').press('Tab');
+  await floresta.locator('button:has-text("Pontos no mapa")').click();
+  const map = page.locator('.modal .map__img');
+  const box = await map.boundingBox();
+  await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.5);
+  await page.click('.modal button:has-text("Pronto")');
+  await expect(floresta.locator('button:has-text("Pontos no mapa")')).toContainText('1/3');
+  await expect // em % da imagem (arredondado: o clique cai num pixel)
+    .poll(async () => Object.values((await readDraft(page, 'rawg-1002'))?.collectibles?.[0]?.items?.[0]?.pin ?? {}).map(Math.round))
+    .toEqual([25, 50]);
+
+  // Leitura: troféu no chip, ponto "A1" no mapa leva ao cartão
+  await page.goto('/guia/rawg-1002?aba=coletaveis');
+  await expect(page.locator('[aria-label="Filtrar coletáveis"] .chip').filter({ hasText: 'Artefato' })).toHaveAttribute('title', 'Troféu: Mestre da lâmina');
+  const pin = page.locator('#secao-r1 .cmap__pin');
+  await expect(pin).toHaveText('A1');
+  await pin.click();
+  await expect(page.locator('.ccard#coletavel-a')).toHaveClass(/is-flash/);
+
+  // Página do troféu: coletáveis do tipo ligado, com atalho para a aba já filtrada
+  await page.goto('/guia/rawg-1002/trofeu/2');
+  await expect(page.locator('.tcol')).toContainText('Artefato');
+  await expect(page.locator('.tcol')).toContainText('0/3');
+  await page.click('.tcol');
+  await expect(page.locator('[aria-label="Filtrar coletáveis"] .chip.is-active')).toContainText('Artefato');
+  await expect(page.locator('.ccard#coletavel-b')).toHaveCount(0); // Pingente fica fora do filtro
+});

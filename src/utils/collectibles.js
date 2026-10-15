@@ -139,3 +139,25 @@ export function parseCollectibleLines(text = '', defaultType = '') {
   }
   return out;
 }
+
+// --- Tipo de coletável ↔ troféu ("Artefato" → troféu de pegar todos os artefatos) ---
+// guide.collectibleTypes: { [tipo]: { trophy: id } }
+export const typeTrophyId = (types, type) => types?.[type]?.trophy ?? null;
+export const typesOfTrophy = (types, trophyId) =>
+  Object.entries(types ?? {})
+    .filter(([, v]) => v?.trophy === trophyId)
+    .map(([type]) => type);
+
+// --- Mapa da região: cada coletável pode ter um ponto { x, y } (em % da imagem do mapa: section.map) ---
+// Rótulo do ponto: inicial do tipo + número ("A3" = Artefato #3); sem número, só a inicial (ou •)
+export function pinLabel(it) {
+  const initial = it.type?.trim()?.[0]?.toUpperCase() ?? '';
+  return it.n ? `${initial}${it.n}` : initial || '•';
+}
+
+// Clique na imagem → ponto em % (1 casa), dentro dos limites
+export function pinFromClick(e, el) {
+  const r = el.getBoundingClientRect();
+  const pct = (v, size) => Math.round(Math.min(Math.max(v / size, 0), 1) * 1000) / 10;
+  return { x: pct(e.clientX - r.left, r.width), y: pct(e.clientY - r.top, r.height) };
+}

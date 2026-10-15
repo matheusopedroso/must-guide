@@ -281,6 +281,16 @@ complete os detalhes no lápis. Toda seção (de qualquer aba) aceita um **víde
 - **Perdíveis:** os coletáveis marcados como Perdível entram sozinhos na aba **Perdíveis** (linha compacta, dá para
   marcar ali) e a Visão geral mostra "x/y · N perdíveis" no cartão Para platinar.
 
+- **Mapa da região** (como o IGN): imagem por link na região e um ponto por coletável (inicial do tipo + número:
+  "A3"); verde quando coletado. Tocar no ponto leva ao cartão (tira o filtro / "Esconder coletados" se ele estiver
+  escondido); o botão de ampliar abre o mapa em tela cheia. No editor: **Pontos no mapa** → escolha o coletável e toque
+  no mapa (passa sozinho para o próximo sem ponto). Pontos em % da imagem (`item.pin = { x, y }`).
+- **Tipo ligado ao troféu** (editor, aba Coletáveis → "Tipos ligados a troféus"; `guide.collectibleTypes`): o chip do
+  tipo mostra o troféu e a **página do troféu** mostra "Coletáveis deste troféu" com o progresso e o atalho para a aba
+  já filtrada (`?tipo=`).
+- Imagens no meio do texto (todas as abas) também abrem em **tela cheia** — uma janela só no app (`useLightbox` +
+  `LightboxHost`), passando entre as imagens daquele texto.
+
 **No editor:** o campo de adicionar tem o **tipo** (fica lembrado entre regiões) e aceita **colar uma lista** — uma
 linha por coletável: `Nome`, `Tipo: Nome`, `Tipo #3: Nome` (formato do PowerPyx) e marcadores de lista; vários na
 mesma linha com ` + ` entram como "mesmo lugar do anterior" (`parseCollectibleLines`). Na janela do coletável,

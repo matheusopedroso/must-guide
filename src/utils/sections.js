@@ -12,7 +12,7 @@ export const createSection = () => ({
   trophies: [],
 });
 
-export const sectionHasContent = (s) => !!(s.title.trim() || hasRichContent(s.body) || s.trophies.length || s.items?.length || s.video);
+export const sectionHasContent = (s) => !!(s.title.trim() || hasRichContent(s.body) || s.trophies.length || s.items?.length || s.video || s.map);
 
 // Rótulo: numerado ("Etapa 2: Jogada da história") ou só o título ("Introdução")
 export function sectionLabel(s, index, cfg) {

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
-import { Check, LocateFixed, RotateCcw, TriangleAlert } from 'lucide-vue-next';
+import { Check, LocateFixed, RotateCcw, Trophy, TriangleAlert } from 'lucide-vue-next';
+import { TROPHY_TYPE_MAP } from '@/config/trophies';
 import ProgressBar from '@/components/ui/ProgressBar.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
@@ -10,7 +11,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 // Ações: "Próximo que falta" (rola até ele) e "Recomeçar" (desmarca todos, com confirmação — nova jogada).
 defineProps({
   overall: { type: Object, required: true }, // { done, total }
-  byType: { type: Array, default: () => [] }, // [{ type, done, total }]
+  byType: { type: Array, default: () => [] }, // [{ type, done, total, trophy? }]
   missable: { type: Number, default: 0 },
   canReset: Boolean,
 });
@@ -56,9 +57,17 @@ function reset() {
         class="chip chip--sm"
         :class="{ 'is-active': filter === `type:${t.type}` }"
         :aria-pressed="filter === `type:${t.type}`"
+        :title="t.trophy ? `Troféu: ${t.trophy.name}` : undefined"
         @click="pick(`type:${t.type}`)"
       >
         <Check v-if="t.done === t.total" :size="14" :stroke-width="3" class="chip__check" />
+        <Trophy
+          v-else-if="t.trophy"
+          :size="14"
+          class="chip__trophy"
+          :style="{ color: TROPHY_TYPE_MAP[t.trophy.type]?.color }"
+          :aria-label="`Troféu: ${t.trophy.name}`"
+        />
         {{ t.type || 'Sem tipo' }} <span class="chip__count">{{ t.done }}/{{ t.total }}</span>
       </button>
       <button

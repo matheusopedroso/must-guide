@@ -6,6 +6,7 @@ import { useTrophyContext } from '@/composables/guide/useTrophyContext';
 import { useTrophyChecklist } from '@/composables/guide/useTrophyChecklist';
 import { fillTrophyCard, promoteLoneTrophyRefs } from '@/utils/trophyRef';
 import { fullImageSrc } from '@/utils/textBlocks';
+import { useLightbox } from '@/composables/useLightbox';
 
 // Leitura de um texto do guia (HTML do editor, sempre filtrado). Chip de troféu → emite `trophy` (id);
 // outros links abrem normal; tocar no resto do texto → `text` (ex.: abrir a edição).
@@ -20,6 +21,7 @@ const collectibles = useCollectibleContext();
 const trophyCtx = useTrophyContext();
 const checklist = useTrophyChecklist();
 const root = useTemplateRef('root');
+const lightbox = useLightbox();
 const safeHtml = computed(() => (hasRichContent(props.html) ? sanitizeHtml(textToHtml(props.html)) : ''));
 
 // Estado dos chips de coletável (marcado / apagado do guia), direto no DOM do v-html
@@ -62,10 +64,12 @@ function onClick(e) {
     spoiler.classList.add('is-revealed');
     return;
   }
-  // Imagem: abre a versão grande em outra aba
+  // Imagem: abre em tela cheia (versão grande), passando entre as imagens deste texto
   const img = e.target.closest('figure.guide-img img');
   if (img) {
-    window.open(fullImageSrc(img.src), '_blank', 'noopener');
+    const all = [...root.value.querySelectorAll('figure.guide-img img')];
+    const list = all.map((el) => ({ src: fullImageSrc(el.src), alt: el.closest('figure').querySelector('figcaption')?.textContent || el.alt || '' }));
+    lightbox.open(list, all.indexOf(img));
     return;
   }
   const trophyEl = e.target.closest('a.trophy-ref, [data-trophy-card]');

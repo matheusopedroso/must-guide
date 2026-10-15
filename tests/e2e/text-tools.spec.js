@@ -92,6 +92,9 @@ test('caixa de aviso, spoiler e imagem do jogo', async ({ page }) => {
   await expect(spoiler).not.toHaveClass(/is-revealed/);
   await spoiler.click();
   await expect(spoiler).toHaveClass(/is-revealed/);
-  const [popup] = await Promise.all([page.waitForEvent('popup'), page.click('.paged .guide-img img')]);
-  expect(popup.url()).toContain('/t_1080p/');
+  // Imagem do texto: tela cheia dentro do app, na versão grande
+  await page.click('.paged .guide-img img');
+  await expect(page.locator('.lightbox img')).toHaveAttribute('src', /\/t_1080p\//);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.lightbox')).toHaveCount(0);
 });
