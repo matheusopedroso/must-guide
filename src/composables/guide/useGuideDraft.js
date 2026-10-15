@@ -159,6 +159,12 @@ export function provideGuideDraft(game, guideId) {
     return status.value === 'cloud';
   }
 
+  // Antes de mover/copiar o guia: grava o que estiver pendente (navegador e nuvem) e espera terminar
+  async function settle() {
+    flushLocal();
+    await flushCloud();
+  }
+
   // Guia apagado: para de gravar (nenhuma gravação pendente pode trazer ele de volta)
   function discard() {
     clearTimeout(localTimer);
@@ -181,7 +187,7 @@ export function provideGuideDraft(game, guideId) {
     flushAll();
   });
 
-  const api = { draft, status, syncing, cloud, setStatus, discard, flush: flushAll };
+  const api = { draft, status, syncing, cloud, setStatus, discard, settle, flush: flushAll };
   provide(KEY, api);
   return api;
 }

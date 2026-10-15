@@ -56,3 +56,12 @@ export async function deleteGuides(guideIds) {
   for (const id of guideIds) batch.delete(fs.doc(db, COLLECTIONS.guides, id));
   await batch.commit();
 }
+
+// Troca o jogo do guia: grava as cópias com o id novo e apaga as antigas numa escrita só (tudo ou nada)
+export async function moveGuides(guides, oldIds, uid) {
+  const { db, fs } = await getFirestore();
+  const batch = fs.writeBatch(db);
+  for (const g of guides) batch.set(fs.doc(db, COLLECTIONS.guides, guideIdOf(g)), { ...g, updatedBy: uid, savedAt: fs.serverTimestamp() });
+  for (const id of oldIds) batch.delete(fs.doc(db, COLLECTIONS.guides, id));
+  await batch.commit();
+}

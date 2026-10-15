@@ -198,6 +198,14 @@ coletáveis, dificuldade e status próprios — como no PSNProfiles.
 - **Regras:** `guides/{guideId}` exige `guideId` (ou `gameId`, nos antigos) igual ao id do documento. Rode
   `firebase deploy --only firestore` depois de atualizar o `firestore.rules`.
 
+## Trocar o jogo do guia
+
+O id do guia é o id do jogo (`rawg-123`, `igdb-456`). No editor, o botão ⇄ do card do jogo num guia com conteúdo abre
+`ChangeGameModal`: escolhe o jogo novo (ex.: a edição Director's Cut) e `useMoveGuide` muda o guia de id — dicas,
+abas, listas da PSN e status vão junto, e os guias das DLCs viram `novo~grupo`. Nuvem numa escrita só
+(`moveGuides`: grava os novos e apaga os antigos), depois o navegador (rascunhos + coletáveis marcados).
+Não sobrescreve: se o jogo escolhido já tem guia, avisa. Guia vazio: o ⇄ só volta para a escolha do jogo.
+
 ## Apagar guia
 
 Em **Meus guias** (lixeira no card) ou no **editor** (menu ⋯ → Apagar guia). O modal (`DeleteGuideModal`) confirma e

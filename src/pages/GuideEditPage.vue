@@ -1,5 +1,5 @@
 <script setup>
-import { computed, useTemplateRef, watch } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Trash2, TriangleAlert } from 'lucide-vue-next';
 import PageHeader from '@/components/ui/PageHeader.vue';
@@ -8,6 +8,7 @@ import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseTabs from '@/components/ui/BaseTabs.vue';
 import GamePicker from '@/components/games/GamePicker.vue';
 import SelectedGameCard from '@/components/guide-editor/SelectedGameCard.vue';
+import ChangeGameModal from '@/components/guide-editor/ChangeGameModal.vue';
 import AddTabMenu from '@/components/guide-editor/AddTabMenu.vue';
 import TabPlaceholder from '@/components/guide-editor/TabPlaceholder.vue';
 import SaveStatus from '@/components/guide-editor/SaveStatus.vue';
@@ -18,6 +19,7 @@ import { provideGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useIsStuck } from '@/composables/useIsStuck';
 import { provideCollectibleContext } from '@/composables/guide/useCollectibles';
 import { collectiblesOf } from '@/utils/collectibles';
+import { isBlankDraft } from '@/utils/guideDraft';
 import { parseGuideId } from '@/utils/guideIds';
 import { normalizeName } from '@/utils/text';
 import { listDrafts, loadDraft } from '@/services/draft.service';
@@ -67,7 +69,14 @@ function selectGame(selected) {
   });
 }
 
-const changeGame = () => router.push({ name: 'guide-new' });
+// Trocar o jogo: guia vazio → só escolhe outro; com conteúdo → o guia passa para o jogo novo (ChangeGameModal)
+const changing = ref(false);
+const changeGame = () => (draft.value && !isBlankDraft(draft.value) ? (changing.value = true) : router.push({ name: 'guide-new' }));
+
+function onMoved(id, newGame) {
+  setGame(newGame);
+  router.replace({ name: 'guide-edit', params: { id }, query: route.query });
+}
 
 // Abas grudadas embaixo da barra → tapam o vão acima delas (ver .tabs-bar.is-stuck)
 const stuck = useIsStuck(useTemplateRef('tabsSentinel'));
@@ -102,6 +111,7 @@ watch([game, () => draft.value?.dlc?.name], ([g, dlcName]) => {
 
     <template v-else>
       <SelectedGameCard :game="game" :loading="loading" :changeable="!isDlc" class="mb-2" @change="changeGame" />
+      <ChangeGameModal v-model="changing" @moved="onMoved" />
 
       <template v-if="game">
         <div ref="tabsSentinel" aria-hidden="true" />

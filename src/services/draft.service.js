@@ -33,6 +33,16 @@ export function deleteDraft(guideId) {
   }
 }
 
+// Guia mudou de id (trocou o jogo): leva junto os coletáveis marcados neste navegador
+export function moveCollected(fromId, toId) {
+  try {
+    const raw = localStorage.getItem(`mg:collected:${fromId}`);
+    if (raw) localStorage.setItem(`mg:collected:${toId}`, raw);
+  } catch {
+    /* armazenamento bloqueado */
+  }
+}
+
 // Todos os rascunhos deste navegador (lista "Meus guias")
 export function listDrafts() {
   const drafts = [];

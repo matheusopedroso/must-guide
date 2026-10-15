@@ -7,8 +7,9 @@ import ProviderCredit from '@/components/ui/ProviderCredit.vue';
 import { useGameSearch } from '@/composables/useGameSearch';
 import { useClickOutside } from '@/composables/useClickOutside';
 
-// "Select" de jogo com pesquisa: abre com os populares e filtra ao digitar
-defineProps({ autofocus: Boolean });
+// "Select" de jogo com pesquisa: abre com os populares e filtra ao digitar.
+// inline: a lista fica no fluxo da página em vez de flutuar (dentro de modal, onde seria cortada)
+defineProps({ autofocus: Boolean, inline: Boolean });
 const emit = defineEmits(['select']);
 
 const LIST_ID = 'game-picker-list';
@@ -66,7 +67,7 @@ const meta = (g) => [g.kind, g.year, g.platforms.slice(0, 3).join(' · ')].filte
 </script>
 
 <template>
-  <div ref="root" class="picker relative">
+  <div ref="root" class="picker relative" :class="{ 'picker--inline': inline }">
     <SearchInput
       v-model="term"
       size="lg"
@@ -128,6 +129,11 @@ const meta = (g) => [g.kind, g.year, g.platforms.slice(0, 3).join(' · ')].filte
     z-index: 20;
     box-shadow: var(--shadow);
     overflow: hidden;
+  }
+
+  &--inline &__panel {
+    position: static;
+    box-shadow: none;
   }
 
   &__list {
