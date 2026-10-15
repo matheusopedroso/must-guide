@@ -45,6 +45,10 @@ test('coletáveis: resumo, numeração, filtro, compacto e créditos', async ({ 
   await expect(page.locator('.ccard#coletavel-c .ccard__desc')).toContainText('Linha 1');
   await expect(page.locator('[aria-label="Botões do controle"]')).toBeVisible();
 
+  // Contagem por tipo em toda região, mesmo com um tipo só (Vila: só Artefato)
+  await expect(page.locator('#secao-r1 .tag')).toHaveText([/Artefato\s*0\/1/, /Pingente\s*0\/1/]);
+  await expect(page.locator('#secao-r2 .tag')).toHaveText([/Artefato\s*0\/2/]);
+
   // Mesmo lugar: um cartão só ("Artefato #2: Carta + Artefato #3: Mapa da Vila"), local do 1º e uma caixa para cada
   const pair = page.locator('.ccard#coletavel-c');
   await expect(pair.locator('.ccard__name')).toHaveText(/Artefato #2:\s*Carta \+ Artefato #3:\s*Mapa da Vila/);

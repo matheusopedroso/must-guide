@@ -101,8 +101,9 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
         <VideoButton v-if="s.video" :url="s.video" :title="s.label" size="sm" variant="ghost" />
         <span v-if="cv && s.items?.length" class="text-sm fw-600 text-subtle">{{ regionCount(s).done }}/{{ regionCount(s).total }}</span>
       </div>
-      <!-- Contagem por tipo da região (linha do PowerPyx: "7 Artefatos | 3 Pingentes") -->
-      <p v-if="cv && regionTypes(s).length > 1" class="d-flex flex-wrap gap-1">
+      <!-- Contagem por tipo da região (linha do PowerPyx: "7 Artefatos | 3 Pingentes"), mesmo com um tipo só
+           (igual em todas as regiões); some só se nenhum coletável da região tiver tipo -->
+      <p v-if="cv && regionTypes(s).some((t) => t.type)" class="d-flex flex-wrap gap-1">
         <span v-for="t in regionTypes(s)" :key="t.type" class="tag">{{ t.type || 'Sem tipo' }} {{ t.done }}/{{ t.total }}</span>
       </p>
       <RefText :html="s.body" class="section__body" @trophy="$emit('open-trophy', $event)" />
