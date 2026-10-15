@@ -1,15 +1,17 @@
 <script setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { HardDrive, MessageSquareText, Pencil } from 'lucide-vue-next';
+import { HardDrive, MessageSquareText, Pencil, Trash2 } from 'lucide-vue-next';
 import GameCover from '@/components/ui/GameCover.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import DifficultyBadge from '@/components/guide-editor/DifficultyBadge.vue';
 import { GUIDE_STATUS } from '@/utils/guideDraft';
 import { formatDate, formatDateTime } from '@/utils/date';
 
-// Card de um guia na lista "Meus guias". Tocar abre a leitura; o lápis abre o editor.
+// Card de um guia na lista "Meus guias". Tocar abre a leitura; o lápis abre o editor; a lixeira pede para apagar
+// (o modal fica na página: um só para a lista toda).
 const props = defineProps({ guide: { type: Object, required: true } }); // summarizeGuide()
+defineEmits(['delete']);
 
 const router = useRouter();
 const view = computed(() => ({ name: 'guide-view', params: { id: props.guide.guideId } }));
@@ -50,6 +52,16 @@ const status = computed(() => GUIDE_STATUS[props.guide.status]);
       data-tooltip="Editar"
       @click.stop
     />
+    <BaseButton
+      :icon="Trash2"
+      icon-only
+      size="sm"
+      variant="ghost"
+      class="gcard__delete shrink-0 tooltip-left"
+      aria-label="Apagar guia"
+      data-tooltip="Apagar"
+      @click.stop="$emit('delete', guide)"
+    />
   </article>
 </template>
 
@@ -70,6 +82,10 @@ const status = computed(() => GUIDE_STATUS[props.guide.status]);
       aspect-ratio: 1;
       object-fit: cover;
     }
+  }
+
+  &__delete:hover {
+    color: var(--danger);
   }
 
   &__title {

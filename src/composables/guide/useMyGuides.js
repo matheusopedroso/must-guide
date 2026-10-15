@@ -48,5 +48,8 @@ export function useMyGuides() {
     published: items.value.filter((g) => g.status === 'published').length,
   }));
 
-  return { items, counts, loading, error, reload: load };
+  // Guias apagados saem da lista sem ir de novo à nuvem
+  const drop = (ids) => (items.value = items.value.filter((g) => !ids.includes(g.guideId)));
+
+  return { items, counts, loading, error, reload: load, drop };
 }

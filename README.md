@@ -198,6 +198,14 @@ coletáveis, dificuldade e status próprios — como no PSNProfiles.
 - **Regras:** `guides/{guideId}` exige `guideId` (ou `gameId`, nos antigos) igual ao id do documento. Rode
   `firebase deploy --only firestore` depois de atualizar o `firestore.rules`.
 
+## Apagar guia
+
+Em **Meus guias** (lixeira no card) ou no **editor** (menu ⋯ → Apagar guia). O modal (`DeleteGuideModal`) confirma e
+`useDeleteGuide` apaga da nuvem numa escrita só (`deleteGuides`, só o admin — `firestore.rules`) e depois deste
+navegador (rascunho + coletáveis marcados — `deleteDraft`). O guia de um jogo leva junto os guias das DLCs dele.
+Com o Firebase configurado, sem admin não apaga (o guia voltaria da nuvem no próximo login). No editor, `discard()`
+cancela as gravações pendentes antes de sair, para nada recriar o guia.
+
 ## Rascunho do guia
 
 O guia em edição fica sempre no navegador (`localStorage`, chave `mg:guide-draft:<guideId>`) e, com o admin logado,

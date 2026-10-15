@@ -1,18 +1,20 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { EllipsisVertical, Eye, Globe, Link as LinkIcon, Undo2 } from 'lucide-vue-next';
+import { EllipsisVertical, Eye, Globe, Link as LinkIcon, Trash2, Undo2 } from 'lucide-vue-next';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
+import DeleteGuideModal from '@/components/guides/DeleteGuideModal.vue';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useToast } from '@/composables/useToast';
 import { absoluteUrl, copyText } from '@/utils/share';
 import { guideIdOf } from '@/utils/guideIds';
+import { summarizeGuide } from '@/utils/guideDraft';
 
-// Publicar o guia (rascunho → publicado) e as ações do publicado: ver, copiar link, voltar para rascunho.
-// Publicar exige o admin logado (grava na nuvem) e a lista de troféus vinculada.
-const { draft, cloud, setStatus } = useGuideDraft();
+// Publicar o guia (rascunho → publicado) e o menu de ações: copiar link e voltar para rascunho (publicado)
+// e apagar o guia. Publicar exige o admin logado (grava na nuvem) e a lista de troféus vinculada.
+const { draft, cloud, setStatus, discard } = useGuideDraft();
 const router = useRouter();
 const toast = useToast();
 
@@ -51,6 +53,17 @@ async function confirm() {
   toast.show(ok ? copy.value.done : 'Não foi possível salvar na nuvem. Tente de novo.', ok ? 'success' : 'error');
 }
 
+// Apagar: o modal confirma e apaga; aqui para de gravar e sai (DLC → aba DLCs do jogo; jogo → Meus guias)
+const deleting = ref(false);
+const summary = computed(() => (deleting.value ? summarizeGuide(draft.value) : null));
+
+function onDeleted() {
+  const d = draft.value;
+  const back = d.dlc ? { name: 'guide-edit', params: { id: d.parentId }, query: { aba: 'dlc' } } : { name: 'my-guides' };
+  discard();
+  router.push(back);
+}
+
 async function copyLink() {
   const ok = await copyText(absoluteUrl(router, viewRoute.value));
   toast.show(ok ? 'Link copiado.' : 'Não foi possível copiar o link.', ok ? 'success' : 'error');
@@ -68,7 +81,7 @@ async function copyLink() {
       </BaseButton>
     </span>
 
-    <DropdownMenu v-else label="Ações do guia publicado">
+    <DropdownMenu label="Ações do guia">
       <template #trigger="{ open, toggle }">
         <BaseButton
           :icon="EllipsisVertical"
@@ -82,21 +95,22 @@ async function copyLink() {
         />
       </template>
       <template #default="{ close }">
-        <button type="button" role="menuitem" class="menu__item" @click="copyLink(), close()">
-          <LinkIcon :size="16" /> Copiar link
-        </button>
-        <button
-          type="button"
-          role="menuitem"
-          class="menu__item menu__item--danger"
-          :disabled="!!blocked"
-          @click="(confirming = 'draft'), close()"
-        >
-          <Undo2 :size="16" /> Voltar para rascunho
+        <template v-if="published">
+          <button type="button" role="menuitem" class="menu__item" @click="copyLink(), close()">
+            <LinkIcon :size="16" /> Copiar link
+          </button>
+          <button type="button" role="menuitem" class="menu__item" :disabled="!!blocked" @click="(confirming = 'draft'), close()">
+            <Undo2 :size="16" /> Voltar para rascunho
+          </button>
+        </template>
+        <button type="button" role="menuitem" class="menu__item menu__item--danger" @click="(deleting = true), close()">
+          <Trash2 :size="16" /> Apagar guia
         </button>
       </template>
     </DropdownMenu>
   </div>
+
+  <DeleteGuideModal v-model="deleting" :guide="summary" @deleted="onDeleted" />
 
   <BaseModal :model-value="!!confirming" :title="copy.title" @update:model-value="(v) => !v && (confirming = null)">
     <p class="text-muted">{{ copy.text }}</p>

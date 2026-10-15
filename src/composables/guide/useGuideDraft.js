@@ -159,6 +159,16 @@ export function provideGuideDraft(game, guideId) {
     return status.value === 'cloud';
   }
 
+  // Guia apagado: para de gravar (nenhuma gravação pendente pode trazer ele de volta)
+  function discard() {
+    clearTimeout(localTimer);
+    clearTimeout(cloudTimer);
+    localTimer = cloudTimer = null;
+    localDirty = cloudDirty = false;
+    status.value = 'idle';
+    replace(null);
+  }
+
   // Não perde a última edição ao minimizar o app ou sair da página
   const flushAll = () => {
     flushLocal();
@@ -171,7 +181,7 @@ export function provideGuideDraft(game, guideId) {
     flushAll();
   });
 
-  const api = { draft, status, syncing, cloud, setStatus, flush: flushAll };
+  const api = { draft, status, syncing, cloud, setStatus, discard, flush: flushAll };
   provide(KEY, api);
   return api;
 }

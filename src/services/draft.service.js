@@ -23,6 +23,16 @@ export function saveDraft(draft) {
   }
 }
 
+// Tira o guia deste navegador: rascunho e coletáveis marcados (mg:collected:<guideId>, useCollected)
+export function deleteDraft(guideId) {
+  try {
+    localStorage.removeItem(key(guideId));
+    localStorage.removeItem(`mg:collected:${guideId}`);
+  } catch {
+    /* armazenamento bloqueado */
+  }
+}
+
 // Todos os rascunhos deste navegador (lista "Meus guias")
 export function listDrafts() {
   const drafts = [];

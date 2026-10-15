@@ -5,16 +5,25 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import GuideCard from '@/components/guides/GuideCard.vue';
+import DeleteGuideModal from '@/components/guides/DeleteGuideModal.vue';
 import { useMyGuides } from '@/composables/guide/useMyGuides';
 import { useAuth } from '@/composables/useAuth';
 import { GUIDE_STATUS } from '@/utils/guideDraft';
 
 // Meus guias: rascunhos e publicados (nuvem + este navegador), com filtro por status
-const { items, counts, loading, error } = useMyGuides();
+const { items, counts, loading, error, drop } = useMyGuides();
 const { enabled, user, isAdmin, login, busy } = useAuth();
 
 const filter = ref('all');
 const FILTERS = [{ id: 'all', label: 'Todos' }, ...Object.entries(GUIDE_STATUS).map(([id, s]) => ({ id, label: `${s.label}s` }))];
+// Apagar: o card pede, o modal (um só) confirma; apagou → sai da lista sem recarregar
+const deleting = ref(null);
+const deleteOpen = ref(false);
+const askDelete = (guide) => {
+  deleting.value = guide;
+  deleteOpen.value = true;
+};
+
 const visible = computed(() => (filter.value === 'all' ? items.value : items.value.filter((g) => g.status === filter.value)));
 </script>
 
@@ -61,10 +70,12 @@ const visible = computed(() => (filter.value === 'all' ? items.value : items.val
       </div>
 
       <div class="d-flex flex-column gap-2">
-        <GuideCard v-for="g in visible" :key="g.guideId" :guide="g" />
+        <GuideCard v-for="g in visible" :key="g.guideId" :guide="g" @delete="askDelete" />
         <p v-if="!visible.length" class="text-sm text-muted py-2">Nenhum guia neste filtro.</p>
       </div>
     </template>
+
+    <DeleteGuideModal v-model="deleteOpen" :guide="deleting" @deleted="drop" />
   </div>
 </template>
 

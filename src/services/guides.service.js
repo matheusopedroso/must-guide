@@ -47,3 +47,12 @@ export async function saveGuide(guide, uid) {
     savedAt: fs.serverTimestamp(),
   });
 }
+
+// Apaga guias (ex.: o do jogo + os das DLCs) numa escrita só. Só o admin (firestore.rules)
+export async function deleteGuides(guideIds) {
+  if (!guideIds.length) return;
+  const { db, fs } = await getFirestore();
+  const batch = fs.writeBatch(db);
+  for (const id of guideIds) batch.delete(fs.doc(db, COLLECTIONS.guides, id));
+  await batch.commit();
+}
