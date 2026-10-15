@@ -3,8 +3,10 @@ import { computed, reactive, watch } from 'vue';
 import { ImagePlus, Link2, Trash2, X } from 'lucide-vue-next';
 import BaseModal from '@/components/ui/BaseModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
+import RefTextEditor from '@/components/trophies/RefTextEditor.vue';
 import { MAX_IMAGES, cleanCredit, creditsOf } from '@/utils/collectibles';
 import { normalizeUrl } from '@/utils/url';
+import { hasRichContent, textToHtml } from '@/utils/html';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 
 // Edição de um coletável (editor): nome, tipo, local/checkpoint, descrição, imagens (links), vídeo,
@@ -24,7 +26,12 @@ const form = reactive({ ...EMPTY });
 watch(open, (v) => {
   if (!v || !props.item) return;
   const { credit, images, ...rest } = props.item;
-  Object.assign(form, EMPTY, rest, { images: [...(images ?? [])], creditName: credit?.name ?? '', creditUrl: credit?.url ?? '' });
+  Object.assign(form, EMPTY, rest, {
+    description: textToHtml(rest.description ?? ''), // texto antigo (simples) → parágrafos
+    images: [...(images ?? [])],
+    creditName: credit?.name ?? '',
+    creditUrl: credit?.url ?? '',
+  });
 });
 
 // Créditos já usados no guia (lista do guia + outros coletáveis): sugestão no nome; escolher um preenche o link
@@ -43,7 +50,7 @@ function save() {
     name: form.name.trim(),
     type: form.type.trim(),
     location: form.location.trim(),
-    description: form.description.trim(),
+    description: hasRichContent(form.description) ? form.description : '',
     images: form.images.map((u) => normalizeUrl(u.trim())).filter(Boolean),
     video: normalizeUrl(form.video),
     missable: form.missable,
@@ -91,10 +98,11 @@ function save() {
       </p>
 
       <template v-if="!joined">
-        <label class="field">
+        <div class="field">
           <span class="field__label">Como achar</span>
-          <textarea v-model="form.description" class="input" rows="4" placeholder="Onde fica e como chegar até ele." />
-        </label>
+          <!-- Mesmo editor das abas: botões do controle, troféus, spoiler… -->
+          <RefTextEditor v-model="form.description" placeholder="Onde fica e como chegar até ele. Use o controle na barra para botões (△, R2…)." />
+        </div>
 
         <div class="field">
           <span class="field__label">Imagens (links, até {{ MAX_IMAGES }})</span>

@@ -37,7 +37,7 @@ export function buildSearchIndex({ guide, trophies = [], getNote = () => ({}) })
             id: item.id,
             title: item.name || 'Coletável',
             where: ['Coletável', s.title.trim()].filter(Boolean).join(' · '),
-            text: [item.type, item.location, item.description].filter(Boolean).join(' · '),
+            text: [item.type, item.location, htmlToPlain(item.description ?? '')].filter(Boolean).join(' · '),
           });
         }
       }),

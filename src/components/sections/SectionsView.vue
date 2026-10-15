@@ -45,8 +45,9 @@ const w = computed(() => sectionWords(props.cfg));
 const checklist = useTrophyChecklist();
 const trophyCount = (s) => (checklist && s.trophyItems.length ? countDone(s.trophyItems.map((t) => t.id), checklist.isDone) : null);
 
-// Texto com botões de controle: mostra a escolha PlayStation / Xbox
-const hasKeys = computed(() => props.sections.some((s) => s.body?.includes('btn-key')));
+// Texto com botões de controle (seções e "como achar" dos coletáveis): mostra a escolha PlayStation / Xbox
+const hasKey = (html) => !!html?.includes('btn-key');
+const hasKeys = computed(() => props.sections.some((s) => hasKey(s.body) || s.items?.some((i) => hasKey(i.description))));
 const flag = computed(() => TROPHY_FLAGS.find((f) => f.id === props.cfg.flag) ?? null);
 const anchor = (s) => `secao-${s.id}`;
 
@@ -114,6 +115,7 @@ const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ be
           :can-toggle="!!col?.toggle"
           :compact="compact"
           @toggle="col.toggle"
+          @open-trophy="$emit('open-trophy', $event)"
         />
         <p v-if="!shown(s).length" class="text-sm text-muted">{{ filter ? 'Nada deste filtro aqui.' : 'Tudo coletado aqui. ✓' }}</p>
       </div>

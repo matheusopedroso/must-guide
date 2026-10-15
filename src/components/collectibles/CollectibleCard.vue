@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Check, ChevronDown, TriangleAlert } from 'lucide-vue-next';
 import VideoButton from '@/components/ui/VideoButton.vue';
+import RefText from '@/components/trophies/RefText.vue';
 import { collectibleAnchorId, collectibleTag, cleanCredit } from '@/utils/collectibles';
 import { normalizeUrl } from '@/utils/url';
 
@@ -16,7 +17,7 @@ const props = defineProps({
   canToggle: { type: Boolean, default: true },
   compact: Boolean,
 });
-const emit = defineEmits(['toggle']);
+const emit = defineEmits(['toggle', 'open-trophy']);
 
 const lead = computed(() => props.items[0]); // dono do local, descrição, imagens, vídeo e crédito
 const group = computed(() => props.items.length > 1);
@@ -109,7 +110,8 @@ const open = computed(() => !props.compact || expanded.value);
         <p v-if="lead.location"><span class="kicker">Local</span> {{ lead.location }}</p>
       </div>
 
-      <p v-if="lead.description" class="ccard__desc px-2 py-2">{{ lead.description }}</p>
+      <!-- Como achar: texto do editor (botões do controle, troféus citados…); texto antigo simples vira parágrafo -->
+      <RefText v-if="lead.description" :html="lead.description" class="ccard__desc px-2 py-2" @trophy="emit('open-trophy', $event)" />
 
       <div v-if="images.length" class="ccard__images p-2" :class="{ 'is-single': images.length === 1 }">
         <a v-for="(src, i) in images" :key="i" :href="src" target="_blank" rel="noopener noreferrer" class="radius-1">
@@ -259,7 +261,6 @@ const open = computed(() => !props.compact || expanded.value);
     border-top: 1px solid var(--border);
     color: var(--text-muted);
     line-height: 1.6;
-    white-space: pre-line;
   }
 
   &__images {

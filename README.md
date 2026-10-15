@@ -249,7 +249,8 @@ Guardado junto com os coletáveis (`usePersonalProgress`: navegador `mg:collecte
 
 ## Coletáveis (modelo do IGN + PowerPyx)
 
-Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar,
+Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, **como achar** (mesmo
+editor Pell das abas: botões do controle PS/Xbox, troféus citados, spoiler, caixa de aviso… — texto antigo simples vira parágrafo),
 até 4 imagens (links), vídeo (YouTube com tempo toca no app), marcas **Perdível** e **Não conta para o troféu** e o
 **crédito** de quem fez as imagens/vídeo (nome + link). No editor: digite o nome + Enter para adicionar rápido e
 complete os detalhes no lápis. Toda seção (de qualquer aba) aceita um **vídeo** — vira o botão "Ver vídeo" no título.

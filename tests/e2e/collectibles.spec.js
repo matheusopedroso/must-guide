@@ -15,7 +15,7 @@ const guide = () =>
         trophies: [],
         video: 'https://youtu.be/abcdefghijk?t=30',
         items: [
-          item('a', 'Mapa velho', 'Artefato'),
+          item('a', 'Mapa velho', 'Artefato', { description: '<p>Aperte <span class="btn-key" data-key="face-up" contenteditable="false">△</span> no corpo.</p>' }),
           item('b', 'Pingente da Ana', 'Pingente', { missable: true, credit: { name: 'Ana', url: 'https://ana.dev/' } }),
           item('x', 'Quadrinho', 'Artefato', { uncounted: true }),
         ],
@@ -26,7 +26,7 @@ const guide = () =>
         body: '',
         trophies: [],
         items: [
-          item('c', 'Carta', 'Artefato', { location: 'Casa do ferreiro', video: 'https://youtu.be/abcdefghijk' }),
+          item('c', 'Carta', 'Artefato', { location: 'Casa do ferreiro', description: 'Linha 1\nLinha 2', video: 'https://youtu.be/abcdefghijk' }),
           item('d', 'Mapa da Vila', 'Artefato', { samePlace: true, location: 'ignorado' }), // pego junto com a Carta
         ],
       },
@@ -40,6 +40,11 @@ test('coletáveis: resumo, numeração, filtro, compacto e créditos', async ({ 
 
   const chips = page.locator('[aria-label="Filtrar coletáveis"] .chip');
   await expect(chips).toHaveText([/Todos/, /Artefato\s*0\/3/, /Pingente\s*0\/1/, /Perdíveis\s*1/]);
+  // Como achar com botão do controle (texto do editor) e texto antigo simples
+  await expect(page.locator('.ccard#coletavel-a .ccard__desc .btn-key')).toHaveCount(1);
+  await expect(page.locator('.ccard#coletavel-c .ccard__desc')).toContainText('Linha 1');
+  await expect(page.locator('[aria-label="Botões do controle"]')).toBeVisible();
+
   // Mesmo lugar: um cartão só ("Artefato #2: Carta + Artefato #3: Mapa da Vila"), local do 1º e uma caixa para cada
   const pair = page.locator('.ccard#coletavel-c');
   await expect(pair.locator('.ccard__name')).toHaveText(/Artefato #2:\s*Carta \+ Artefato #3:\s*Mapa da Vila/);
@@ -80,8 +85,13 @@ test('coletáveis no editor: marcas, vídeo e crédito; créditos do guia', asyn
 
   await page.click('.clist__row:has-text("Mapa velho") button:has-text("Mapa velho")');
   const modal = page.locator('.modal:has-text("Crédito das imagens")');
-  await modal.getByLabel('Perdível').check();
+  await modal.getByLabel('Perdível', { exact: true }).check();
   await modal.locator('input[placeholder^="https://youtu.be"]').fill('youtu.be/abcdefghijk?t=95');
+  // Como achar: mesmo editor das abas, com os botões do controle
+  await modal.locator('.rte__content').click();
+  await page.keyboard.type('Aperte ');
+  await modal.locator('.rte__btn[aria-label^="Botão do controle"]').click();
+  await page.click('.keys button[aria-label="Triângulo"]');
   await modal.getByLabel('Nome do crédito').fill('PowerPyx');
   await modal.getByLabel('Nome do crédito').dispatchEvent('change'); // nome conhecido → completa o link
   await expect(modal.getByLabel('Link do crédito')).toHaveValue('https://www.powerpyx.com/');
@@ -90,6 +100,7 @@ test('coletáveis no editor: marcas, vídeo e crédito; créditos do guia', asyn
   await expect
     .poll(async () => (await readDraft(page, 'rawg-1002'))?.collectibles?.[0]?.items?.[0])
     .toMatchObject({ missable: true, video: 'https://youtu.be/abcdefghijk?t=95', credit: { name: 'PowerPyx', url: 'https://www.powerpyx.com/' } });
+  expect((await readDraft(page, 'rawg-1002')).collectibles[0].items[0].description).toContain('data-key="face-up"');
 
   // "Mesmo lugar do anterior": esconde local/imagens/crédito e a linha fica recuada
   await page.click('.clist__row:has-text("Pingente da Ana") button:has-text("Pingente da Ana")');
