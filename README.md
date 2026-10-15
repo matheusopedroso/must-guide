@@ -95,7 +95,12 @@ o mesmo do app). Jogo lançado agora pode ainda não estar em nenhum acervo: aí
 - **Página do jogo:** abas **Detalhes** · **Troféus** (`?aba=trofeus`, só quem edita; a busca roda ao abrir a aba)
   com a lista achada — versões PS4/PS5 em chips (região repetida mostra o código), os troféus do jogo base e
   **Criar guia com esta lista** (abre o editor já vinculado: `?lista=NPWR…`).
-- Nome que some na normalização (só japonês/chinês/coreano) não casa com nenhuma busca.
+- **Comparação de nomes** (`functions/src/core/text.js`, a mesma no app e na API): por palavras inteiras; nome em
+  escrita japonesa/chinesa/coreana ou largura total nunca casa com nome latino. A **página do jogo só escolhe a lista
+  sozinha se for o MESMO jogo** (`isSameGame`: nome igual tirando ™ e sufixos de edição como Remastered, Director's
+  Cut, PS5); parecido fica para escolher à mão no editor ("Não é este jogo? Escolher outra lista").
+- Mudou a regra da busca? Suba `FIND_VERSION` em `trophies.service.js` (a resposta fica 10 min no navegador) e
+  **reinicie o `npm run dev`** (o código da API em `functions/` roda no servidor do Vite).
 
 Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO` vale ~2 meses:
 logado em playstation.com, abra https://ca.account.sony.com/api/v1/ssocookie e copie o `npsso`.

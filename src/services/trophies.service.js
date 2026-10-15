@@ -25,7 +25,7 @@ export function fetchTrophyProgress(npId, service, opts) {
 // → [{ id, name, platform, service, icon, counts, score, sources: ['Sua conta' | ID da PSN] }]
 // FIND_VERSION muda a URL quando a regra da busca muda (o navegador guarda a resposta por 10 min).
 // Confere de novo aqui com a mesma regra (matchScore): resposta antiga guardada não traz lista errada.
-const FIND_VERSION = 2;
+const FIND_VERSION = 3;
 export function findTrophyLists(title, platform = '', opts) {
   const qs = new URLSearchParams({ q: title, v: FIND_VERSION, ...(platform && { platform }) });
   return request(`/find?${qs}`, { ...opts, auth: true }).then((d) =>

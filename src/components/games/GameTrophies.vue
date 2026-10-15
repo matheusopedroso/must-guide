@@ -10,6 +10,7 @@ import { useAsyncState } from '@/composables/useAsyncState';
 import { useAuth } from '@/composables/useAuth';
 import { findTrophyLists } from '@/services/trophies.service';
 import { loadTrophyList } from '@/services/trophyListSource';
+import { isSameGame } from '@/utils/text';
 
 // Aba Troféus da página do jogo, mesmo sem guia e sem você ter jogado: busca automática da lista pelo nome
 // (sua conta + perfis públicos de referência — ver API /find). Versões (PS4/PS5) viram chips; mostra os troféus
@@ -24,10 +25,11 @@ const { enabled, isAdmin } = useAuth();
 const canEdit = computed(() => !enabled || isAdmin.value);
 const router = useRouter();
 
-const STRONG = 80; // nome igual ou começando igual (evita "Ghost of Tsushima" para "Ghost of Yōtei")
 const query = computed(() => (canEdit.value && props.game.title) || null);
 const { data: results, loading, error } = useAsyncState(query, (title, opts) => findTrophyLists(title, '', opts));
-const versions = computed(() => (results.value ?? []).filter((r) => r.score >= STRONG).slice(0, 4));
+// Só o MESMO jogo (nome igual, tirando sufixos de edição como "Remastered"/"PS5"): parecido não serve aqui —
+// "God of War" não pode trazer "God of War Ragnarök". Para escolher entre parecidos, o editor lista todos.
+const versions = computed(() => (results.value ?? []).filter((r) => isSameGame(r.name, props.game.title)).slice(0, 4));
 // Chip da versão: plataforma; nome diferente (edição) ou mesma plataforma repetida (região) ganha o detalhe
 const chipLabel = (v) => {
   const samePlatform = versions.value.filter((x) => x.platform === v.platform).length > 1;
@@ -95,6 +97,9 @@ function createGuide() {
         <span class="d-flex flex-column align-end gap-1 ml-auto">
           <BaseButton v-if="!hasGuide" :icon="Plus" size="sm" variant="primary" @click="createGuide">Criar guia com esta lista</BaseButton>
           <span class="text-xs text-subtle">Achado em: {{ selected.sources.join(' · ') }}</span>
+          <RouterLink v-if="!hasGuide" :to="{ name: 'guide-edit', params: { id: game.id } }" class="text-xs text-accent">
+            Não é este jogo? Escolher outra lista
+          </RouterLink>
         </span>
       </div>
 

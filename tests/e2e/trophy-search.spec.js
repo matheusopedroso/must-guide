@@ -43,3 +43,14 @@ test('busca automática: o app descarta lista que não combina com o nome', asyn
   await expect(page.locator('#game-trophies')).toContainText('Split Fiction');
   await expect(page.locator('#game-trophies [aria-label="Versão"]')).toHaveCount(0);
 });
+
+// Nada do mesmo jogo (só parecido ou em japonês): não escolhe sozinho — mostra "não encontrada"
+test('busca automática: parecido não vira a lista do jogo', async ({ page }) => {
+  await seed(page, []);
+  const r = (id, name) => ({ id, name, platform: 'PS4', service: 'trophy', icon: null, counts: { platinum: 1, gold: 0, silver: 0, bronze: 1 }, score: 80, sources: ['ikemenzi'] });
+  await page.route('**/api/trophies/find**', (route) =>
+    route.fulfill({ json: { results: [r('NPWR1_00', '恋愛０キロメートルＶ'), r('NPWR2_00', 'Elden Ring Nightreign Deluxe Pack Extra')] } }),
+  );
+  await page.goto('/jogo/rawg-1000?aba=trofeus'); // Elden Ring Nightreign
+  await expect(page.locator('#game-trophies')).toContainText('Lista de troféus não encontrada');
+});
