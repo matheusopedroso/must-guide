@@ -17,4 +17,4 @@ export const FIREBASE_CONFIG = {
 export const firebaseEnabled = ['apiKey', 'authDomain', 'projectId', 'appId'].every((k) => FIREBASE_CONFIG[k]);
 
 // Coleções do Firestore
-export const COLLECTIONS = { guides: 'guides' };
+export const COLLECTIONS = { guides: 'guides', trophyLists: 'trophyLists' };

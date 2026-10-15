@@ -251,6 +251,7 @@ test('coletáveis: tipo ligado ao troféu e mapa com pontos', async ({ page }) =
   await floresta.getByLabel('Mapa da região').press('Tab');
   await floresta.locator('button:has-text("Pontos no mapa")').click();
   const map = page.locator('.modal .map__img');
+  await expect.poll(() => map.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true); // tamanho final
   const box = await map.boundingBox();
   await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.5);
   await page.click('.modal button:has-text("Pronto")');

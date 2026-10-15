@@ -13,7 +13,6 @@ import { useTrophyData } from '@/composables/guide/useTrophyData';
 import { useGuideDraft } from '@/composables/guide/useGuideDraft';
 import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
 import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
-import { fetchTrophyList } from '@/services/trophies.service';
 import { compareVersions } from '@/utils/trophies';
 import { dlcGroupsOf, scopeList } from '@/utils/trophyScope';
 import { useQueryParam } from '@/composables/useQueryParam';
@@ -28,11 +27,11 @@ const { versions, principal, active, activeId, add, sync, remove, makePrincipal 
 const adding = ref(false);
 
 // Só os troféus deste guia: jogo base (as DLCs têm guia próprio) ou a DLC
-const { list, progress, fullList, loading, error, load } = useTrophyData(active, { scope: draft });
+const { list, progress, fullList, loading, error, loadList } = useTrophyData(active, { scope: draft });
 
 // Lista principal só é buscada quando outra versão está aberta (para comparar)
 const otherOpen = computed(() => (active.value && active.value.id !== principal.value?.id ? principal.value : null));
-const { data: principalFull } = useAsyncState(otherOpen, load(fetchTrophyList));
+const { data: principalFull } = useAsyncState(otherOpen, loadList);
 const principalList = computed(() => scopeList(principalFull.value, draft.value));
 
 // Guia do jogo com DLCs na lista: aviso levando para a aba DLCs (cada uma vira um guia separado)

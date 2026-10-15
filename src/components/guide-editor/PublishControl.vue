@@ -11,6 +11,7 @@ import { useToast } from '@/composables/useToast';
 import { absoluteUrl, copyText } from '@/utils/share';
 import { guideIdOf } from '@/utils/guideIds';
 import { summarizeGuide } from '@/utils/guideDraft';
+import { ensureListCopies } from '@/services/trophyListSource';
 
 // Publicar o guia (rascunho → publicado) e o menu de ações: copiar link e voltar para rascunho (publicado)
 // e apagar o guia. Publicar exige o admin logado (grava na nuvem) e a lista de troféus vinculada.
@@ -48,6 +49,8 @@ async function confirm() {
   busy.value = true;
   const next = confirming.value;
   const ok = await setStatus(next);
+  // Publicou: garante a cópia das listas de troféus na nuvem (quem lê não depende da API da PSN)
+  if (ok && next === 'published') ensureListCopies(draft.value.versions);
   busy.value = false;
   confirming.value = null;
   toast.show(ok ? copy.value.done : 'Não foi possível salvar na nuvem. Tente de novo.', ok ? 'success' : 'error');

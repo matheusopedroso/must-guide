@@ -141,6 +141,19 @@ jogo (nome, capa, ano, plataformas), então a página abre sem ir à API de jogo
 `config/library.js` (status), `services/library.service.js`, `components/library/` (`LibraryButton`, `LibraryBadge`).
 **Publique as regras novas:** `firebase deploy --only firestore:rules`.
 
+## Lista de troféus com cópia no Firestore
+
+A leitura do guia não depende da API da PSN rodando (útil no site publicado sem functions — plano Spark):
+- **Editor** (admin): busca a lista na API (sempre a mais nova) e confere a cópia em `trophyLists/{NPWR…}` uma vez por
+  sessão — grava se faltar, se for de formato antigo (`LIST_VERSION`) ou se a lista mudou. Ao **publicar**, garante a
+  cópia de todas as versões do guia.
+- **Leitura** (todo mundo): cópia do Firestore primeiro (1 leitura), API se não houver cópia; sem nenhuma das duas
+  (sem internet), a última lista vista neste navegador (`mg:trophy-list:<npId>`).
+- Regras: leitura pública (são dados públicos da PSN), escrita só do admin. **Publique as regras:**
+  `firebase deploy --only firestore:rules`. O progresso pessoal (conquistados, raridade) continua vindo da API.
+Peças: `services/trophyListSource.js` (de onde vem a lista), `services/trophyLists.service.js` (Firestore),
+`useTrophyData` (`prefer: 'api' | 'saved'`).
+
 ## Publicar e ler o guia
 
 | Rota | O quê |

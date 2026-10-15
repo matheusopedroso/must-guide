@@ -19,6 +19,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Cópias das listas de troféus da PSN: trophyLists/{NPWR12345_00} = { v, list, savedAt }.
+    //   Dados públicos da PSN → qualquer pessoa lê (a leitura do guia não depende da API rodando).
+    //   Só o admin grava (o editor atualiza a cópia ao abrir a lista pela API).
+    match /trophyLists/{npId} {
+      allow read: if true;
+      allow write: if isAdmin() && npId.matches('NPWR[0-9]{5}_[0-9]{2}');
+    }
+
     // Progresso pessoal (coletáveis marcados): só a própria pessoa, logada, lê e grava o seu
     match /users/{uid}/progress/{gameId} {
       allow read, write: if request.auth != null && request.auth.uid == uid;

@@ -25,7 +25,7 @@ export function useGuideReader(guideId) {
   const { getNote, backlinks } = useTrophyNotes(guide);
   const { versions, active, activeId } = useTrophyVersions(guide);
   const withProgress = computed(() => !enabled || isAdmin.value); // progresso da conta: só o admin
-  const { list, progress, loading: listLoading, error: listError } = useTrophyData(active, { withProgress, scope: guide });
+  const { list, progress, loading: listLoading, error: listError } = useTrophyData(active, { withProgress, scope: guide, prefer: 'saved' }); // cópia na nuvem: não depende da API
 
   // Progresso pessoal: coletáveis marcados e troféus marcados como feitos
   const { collected, toggleCollected, clearCollected, checked, toggleChecked } = usePersonalProgress(guideId);
