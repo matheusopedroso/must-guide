@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { ChevronDown, Plus, Sparkles, Trophy } from 'lucide-vue-next';
+import { ChevronDown, Plus, SearchX, Sparkles } from 'lucide-vue-next';
+import EmptyState from '@/components/ui/EmptyState.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import TrophyCounts from '@/components/trophies/TrophyCounts.vue';
 import SectionTrophyGrid from '@/components/sections/SectionTrophyGrid.vue';
@@ -10,7 +11,7 @@ import { useAuth } from '@/composables/useAuth';
 import { findTrophyLists } from '@/services/trophies.service';
 import { loadTrophyList } from '@/services/trophyListSource';
 
-// Troféus do jogo na página do jogo, mesmo sem guia e sem você ter jogado: busca automática da lista pelo nome
+// Aba Troféus da página do jogo, mesmo sem guia e sem você ter jogado: busca automática da lista pelo nome
 // (sua conta + perfis públicos de referência — ver API /find). Versões (PS4/PS5) viram chips; mostra os troféus
 // do jogo base (DLCs à parte) e leva ao editor já com a lista vinculada. Só para quem edita (a busca usa a PSN
 // do servidor, rota privada).
@@ -27,6 +28,12 @@ const STRONG = 80; // nome igual ou começando igual (evita "Ghost of Tsushima" 
 const query = computed(() => (canEdit.value && props.game.title) || null);
 const { data: results, loading, error } = useAsyncState(query, (title, opts) => findTrophyLists(title, '', opts));
 const versions = computed(() => (results.value ?? []).filter((r) => r.score >= STRONG).slice(0, 4));
+// Chip da versão: plataforma; nome diferente (edição) ou mesma plataforma repetida (região) ganha o detalhe
+const chipLabel = (v) => {
+  const samePlatform = versions.value.filter((x) => x.platform === v.platform).length > 1;
+  const named = v.name !== versions.value[0].name;
+  return [v.platform, named ? v.name : '', samePlatform && !named ? v.id : ''].filter(Boolean).join(' · ');
+};
 
 const selectedId = ref(null);
 watch(versions, (v) => (selectedId.value = v.find((x) => x.platform.includes('PS5'))?.id ?? v[0]?.id ?? null), { immediate: true });
@@ -50,16 +57,20 @@ function createGuide() {
 </script>
 
 <template>
-  <section v-if="canEdit && (loading || versions.length || error)" class="d-flex flex-column gap-2" aria-labelledby="game-trophies">
-    <div class="d-flex align-center justify-between flex-wrap gap-1">
-      <h2 id="game-trophies" class="section-heading d-flex align-center gap-1"><Trophy :size="18" /> Troféus</h2>
-      <BaseButton v-if="selected && !hasGuide" :icon="Plus" size="sm" variant="primary" @click="createGuide">Criar guia com esta lista</BaseButton>
-    </div>
-
+  <section v-if="canEdit" id="game-trophies" class="d-flex flex-column gap-2" aria-label="Troféus do jogo">
     <p v-if="loading" class="d-flex align-center gap-1 text-sm text-muted"><Sparkles :size="14" /> Procurando a lista de troféus na PSN…</p>
     <p v-else-if="error" class="text-sm text-muted">Não deu para buscar a lista agora ({{ error }}).</p>
 
-    <template v-else-if="selected">
+    <EmptyState
+      v-else-if="!selected"
+      :icon="SearchX"
+      title="Lista de troféus não encontrada"
+      text="Nenhum dos acervos tem este jogo com esse nome. No editor dá para procurar pelo nome em inglês, no perfil de quem já jogou ou colar o código (NPWR)."
+    >
+      <BaseButton v-if="!hasGuide" :to="{ name: 'guide-edit', params: { id: game.id } }" :icon="Plus">Criar guia e procurar a lista</BaseButton>
+    </EmptyState>
+
+    <template v-else>
       <div v-if="versions.length > 1" class="d-flex flex-wrap gap-1" role="group" aria-label="Versão">
         <button
           v-for="v in versions"
@@ -71,7 +82,7 @@ function createGuide() {
           :title="v.name"
           @click="(selectedId = v.id), (showAll = false)"
         >
-          {{ v.platform }}<template v-if="v.name !== versions[0].name"> · {{ v.name }}</template>
+          {{ chipLabel(v) }}
         </button>
       </div>
 
@@ -81,7 +92,10 @@ function createGuide() {
           <strong class="text-body">{{ selected.name }} <span class="tag">{{ selected.platform }}</span></strong>
           <TrophyCounts :counts="selected.counts" class="text-xs" />
         </span>
-        <span class="text-xs text-subtle ml-auto">Achado em: {{ selected.sources.join(' · ') }}</span>
+        <span class="d-flex flex-column align-end gap-1 ml-auto">
+          <BaseButton v-if="!hasGuide" :icon="Plus" size="sm" variant="primary" @click="createGuide">Criar guia com esta lista</BaseButton>
+          <span class="text-xs text-subtle">Achado em: {{ selected.sources.join(' · ') }}</span>
+        </span>
       </div>
 
       <p v-if="listLoading" class="text-sm text-muted">Carregando os troféus…</p>

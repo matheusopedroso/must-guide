@@ -12,6 +12,8 @@ const other = [
   titles[3],
   // Só nos perfis de outras pessoas (busca automática acha sem você ter jogado)
   { npServiceName: 'trophy2', npCommunicationId: 'NPWR40002_00', trophyTitleName: 'Split Fiction™', trophyTitleIconUrl: null, trophyTitlePlatform: 'PS5', definedTrophies: { bronze: 5, silver: 2, gold: 2, platinum: 1 }, progress: 100 },
+  // Nome só em japonês: não pode casar com nenhuma busca
+  { npServiceName: 'trophy', npCommunicationId: 'NPWR40003_00', trophyTitleName: '五等分の花嫁 ごとぱずストーリー', trophyTitleIconUrl: null, trophyTitlePlatform: 'PS4', definedTrophies: { bronze: 5, silver: 2, gold: 2, platinum: 1 }, progress: 30 },
 ];
 const svg = (c) => 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="${c}"/><circle cx="32" cy="32" r="14" fill="#fff6"/></svg>`);
 titles.forEach((t, i) => (t.trophyTitleIconUrl = svg(['#6b4e71', '#7b3f3f', '#8a4b4b', '#3d5a80', '#556b2f'][i])));

@@ -92,8 +92,10 @@ vazio = `Hakoom,dav1d123,ikemenzi`). Lê todas as páginas de cada perfil (800 j
 guarda 24 h na memória do servidor — a 1ª busca depois de subir o `npm run dev` leva alguns segundos. Perfil que não
 existir ou ficar privado é ignorado (aviso no terminal). Nome comparado sem acento/™ (`functions/src/core/text.js`,
 o mesmo do app). Jogo lançado agora pode ainda não estar em nenhum acervo: aí vale o perfil de quem já jogou.
-- **Página do jogo:** seção **Troféus** (quem edita) com a lista achada — versões PS4/PS5 em chips, os troféus do
-  jogo base e **Criar guia com esta lista** (abre o editor já vinculado: `?lista=NPWR…`).
+- **Página do jogo:** abas **Detalhes** · **Troféus** (`?aba=trofeus`, só quem edita; a busca roda ao abrir a aba)
+  com a lista achada — versões PS4/PS5 em chips (região repetida mostra o código), os troféus do jogo base e
+  **Criar guia com esta lista** (abre o editor já vinculado: `?lista=NPWR…`).
+- Nome que some na normalização (só japonês/chinês/coreano) não casa com nenhuma busca.
 
 Usa a API não oficial da PSN (mesmo fluxo da biblioteca psn-api). O `PSN_NPSSO` vale ~2 meses:
 logado em playstation.com, abra https://ca.account.sony.com/api/v1/ssocookie e copie o `npsso`.

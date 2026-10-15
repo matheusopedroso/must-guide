@@ -18,6 +18,11 @@ describe('busca automática de listas', () => {
     expect(r[0].progress).toBeUndefined(); // progresso de outra pessoa não vale para você
   });
 
+  it('nome que some na normalização (japonês) não casa com tudo', () => {
+    const jp = [{ name: 'Hakoom', titles: [t('NPWR9_00', '五等分の花嫁 ごとぱずストーリー', 'PS4'), t('NPWR8_00', 'Dispatch', 'PS5')] }];
+    expect(searchTitles(jp, 'Dispatch').map((x) => x.id)).toEqual(['NPWR8_00']);
+  });
+
   it('plataforma pedida desempata; nome que não combina fica de fora', () => {
     expect(searchTitles(sources, 'Split Fiction', { platform: 'PS4' })[0].id).toBe('NPWR3_00');
     expect(searchTitles(sources, 'Ghost of Yotei')).toEqual([]);

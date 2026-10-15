@@ -6,11 +6,15 @@ import { seed } from './helpers.js';
 test('troféus sem ter jogado: página do jogo e guia já vinculado', async ({ page }) => {
   await seed(page, []);
   await page.goto('/jogo/rawg-1005'); // Split Fiction (não está na sua conta da PSN simulada)
+  await expect(page.locator('#game-trophies')).toHaveCount(0); // aba Detalhes: a busca só roda na aba Troféus
+  await page.click('[role="tablist"] :text("Troféus")');
+  await expect(page).toHaveURL(/aba=trofeus/);
 
-  const section = page.locator('section:has(#game-trophies)');
+  const section = page.locator('#game-trophies');
   await expect(section).toContainText('Split Fiction');
   await expect(section).toContainText('Achado em: Hakoom');
   await expect(section.locator('.trophy-tile')).toHaveCount(10);
+  await expect(section.locator('[aria-label="Versão"]')).toHaveCount(0); // a lista em japonês não entra como versão
 
   await section.locator('button:has-text("Criar guia com esta lista")').click();
   await expect(page).toHaveURL(/\/guia\/rawg-1005\/editar$/); // o ?lista= sai depois de vincular

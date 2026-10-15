@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { BookOpen, CirclePlay, ExternalLink, FileQuestion, MessageSquareText, Pencil, Plus } from 'lucide-vue-next';
 import PageBar from '@/components/ui/PageBar.vue';
+import PillTabs from '@/components/ui/PillTabs.vue';
 import DetailHero from '@/components/ui/DetailHero.vue';
 import ActionIcon from '@/components/ui/ActionIcon.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
@@ -20,6 +21,7 @@ import { useGameDetails } from '@/composables/useGameDetails';
 import { useGuide } from '@/composables/guide/useGuide';
 import { useDlcGuides } from '@/composables/guide/useDlcGuides';
 import { useAuth } from '@/composables/useAuth';
+import { useQueryParam } from '@/composables/useQueryParam';
 import { GUIDE_STATUS, summarizeGuide } from '@/utils/guideDraft';
 import { providerInfo } from '@/config/providers';
 import { APP_NAME } from '@/config/app';
@@ -39,6 +41,14 @@ const { items: dlcGuides } = useDlcGuides(gameId);
 const { enabled, isAdmin } = useAuth();
 
 const canEdit = computed(() => !enabled || isAdmin.value);
+
+// Abas: Detalhes (padrão) · Troféus (quem edita: busca automática da lista na PSN, só ao abrir a aba)
+const tabParam = useQueryParam('aba');
+const TABS = computed(() => [{ id: 'detalhes', label: 'Detalhes' }, ...(canEdit.value ? [{ id: 'trofeus', label: 'Troféus' }] : [])]);
+const tab = computed({
+  get: () => (TABS.value.some((t) => t.id === tabParam.value) ? tabParam.value : 'detalhes'),
+  set: (id) => (tabParam.value = id === 'detalhes' ? '' : id),
+});
 const guide = computed(() => (rawGuide.value ? summarizeGuide(rawGuide.value) : null));
 const viewRoute = computed(() => ({ name: 'guide-view', params: { id: gameId.value } }));
 const editRoute = computed(() => ({ name: 'guide-edit', params: { id: gameId.value } }));
@@ -102,47 +112,51 @@ const back = () => (window.history.state?.back ? router.back() : router.push({ n
       </DetailHero>
 
       <div class="container game-page__content d-flex flex-column gap-5">
-        <div class="game-page__grid">
-          <div class="d-flex flex-column gap-3 min-w-0">
-            <GameAbout :game="game" />
-            <dl v-if="facts.length" class="facts">
-              <div v-for="f in facts" :key="f.label">
-                <dt>{{ f.label }}</dt>
-                <dd>{{ f.value }}</dd>
-              </div>
-            </dl>
+        <PillTabs v-if="TABS.length > 1" v-model="tab" :tabs="TABS" label="Seções do jogo" />
+
+        <!-- Troféus: lista achada pela busca automática (mesmo sem guia e sem ter jogado) -->
+        <GameTrophies v-if="tab === 'trofeus'" :game="game" :has-guide="!!guide" />
+
+        <template v-else>
+          <div class="game-page__grid">
+            <div class="d-flex flex-column gap-3 min-w-0">
+              <GameAbout :game="game" />
+              <dl v-if="facts.length" class="facts">
+                <div v-for="f in facts" :key="f.label">
+                  <dt>{{ f.label }}</dt>
+                  <dd>{{ f.value }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <!-- Guia do jogo (lugar do "Para platinar" na leitura) -->
+            <aside class="guide-card surface radius-2 p-2 d-flex flex-column gap-2">
+              <p class="kicker">Guia de troféus</p>
+              <p v-if="guideLoading" class="text-sm text-muted">Procurando guia…</p>
+              <template v-else-if="guide">
+                <div class="d-flex align-center flex-wrap gap-1 text-sm text-muted">
+                  <span class="badge" :class="`badge--${GUIDE_STATUS[guide.status].tone}`">{{ GUIDE_STATUS[guide.status].label }}</span>
+                  <DifficultyBadge v-if="guide.difficulty" :value="guide.difficulty" show-label />
+                  <span class="d-inline-flex align-center gap-1"><MessageSquareText :size="14" /> {{ guide.tips }} dica(s)</span>
+                </div>
+                <BaseButton :to="viewRoute" :icon="BookOpen" variant="primary" class="w-100">Ler guia</BaseButton>
+              </template>
+              <template v-else>
+                <p class="text-sm text-muted">Ainda não tem guia para este jogo.</p>
+                <BaseButton v-if="canEdit" :to="editRoute" :icon="Plus" variant="primary" class="w-100">Criar guia</BaseButton>
+              </template>
+            </aside>
           </div>
 
-          <!-- Guia do jogo (lugar do "Para platinar" na leitura) -->
-          <aside class="guide-card surface radius-2 p-2 d-flex flex-column gap-2">
-            <p class="kicker">Guia de troféus</p>
-            <p v-if="guideLoading" class="text-sm text-muted">Procurando guia…</p>
-            <template v-else-if="guide">
-              <div class="d-flex align-center flex-wrap gap-1 text-sm text-muted">
-                <span class="badge" :class="`badge--${GUIDE_STATUS[guide.status].tone}`">{{ GUIDE_STATUS[guide.status].label }}</span>
-                <DifficultyBadge v-if="guide.difficulty" :value="guide.difficulty" show-label />
-                <span class="d-inline-flex align-center gap-1"><MessageSquareText :size="14" /> {{ guide.tips }} dica(s)</span>
-              </div>
-              <BaseButton :to="viewRoute" :icon="BookOpen" variant="primary" class="w-100">Ler guia</BaseButton>
-            </template>
-            <template v-else>
-              <p class="text-sm text-muted">Ainda não tem guia para este jogo.</p>
-              <BaseButton v-if="canEdit" :to="editRoute" :icon="Plus" variant="primary" class="w-100">Criar guia</BaseButton>
-            </template>
-          </aside>
-        </div>
+          <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="Guias de DLC" />
 
-        <!-- Troféus do jogo (busca automática da lista), mesmo sem guia -->
-        <GameTrophies :game="game" :has-guide="!!guide" />
-
-        <GuideLinkList v-if="dlcGuides.length" :items="dlcGuides" title="Guias de DLC" />
-
-        <section v-if="related.length" class="d-flex flex-column gap-2">
-          <h2 class="section-heading">Outras versões e relacionados <span class="text-subtle fw-500">{{ related.length }}</span></h2>
-          <GameGrid>
-            <GameCard v-for="r in related" :key="r.id" :game="r" />
-          </GameGrid>
-        </section>
+          <section v-if="related.length" class="d-flex flex-column gap-2">
+            <h2 class="section-heading">Outras versões e relacionados <span class="text-subtle fw-500">{{ related.length }}</span></h2>
+            <GameGrid>
+              <GameCard v-for="r in related" :key="r.id" :game="r" />
+            </GameGrid>
+          </section>
+        </template>
         <ProviderCredit v-if="game.provider" :providers="[game.provider]" />
       </div>
 

@@ -14,7 +14,9 @@ export const normalizeName = (s = '') =>
 export function matchScore(name, term) {
   const a = normalizeName(name);
   const b = normalizeName(term);
-  if (!b) return 0;
+  // Nome que some na normalização (ex.: só japonês: "五等分の花嫁") não combina com nada —
+  // senão "".startsWith/includes casaria com qualquer termo
+  if (!a || !b) return 0;
   if (a === b) return 100;
   if (a.startsWith(b) || b.startsWith(a)) return 80;
   if (a.includes(b) || b.includes(a)) return 60;
