@@ -4,8 +4,11 @@ import { createApi, httpError, remember } from './http.js';
 // max-age = navegador · s-maxage = CDN do Firebase Hosting
 const HOUR = 3600;
 
-// Rotas da API de jogos (/api/games/**). provider = RAWG ou IGDB (mesmo formato de saída)
-export function createGamesApi(provider) {
+// Rotas da API de jogos (/api/games/**). provider = RAWG ou IGDB (mesmo formato de saída): o ativo responde
+// popular/busca. others = demais provedores configurados ({ rawg, igdb }): /game/:id usa o do prefixo do id,
+// assim guias feitos com um provedor continuam abrindo depois de trocar para o outro.
+export function createGamesApi(provider, others = {}) {
+  const byName = { ...others, [provider.name]: provider };
   const memory = createCache({ max: 300 });
   const tag = { provider: provider.name };
 
@@ -29,12 +32,13 @@ export function createGamesApi(provider) {
       async run({ id }) {
         const [prefix, providerId] = String(id ?? '').split('-');
         if (!/^\d+$/.test(providerId ?? '')) throw httpError(400, 'ID inválido.');
-        if (prefix !== provider.name) {
-          throw httpError(409, `Este jogo é do ${prefix.toUpperCase()}, mas o provedor ativo é ${provider.name.toUpperCase()}.`);
+        const source = byName[prefix];
+        if (!source) {
+          throw httpError(409, `Este jogo é do ${prefix.toUpperCase()}, mas só o ${provider.name.toUpperCase()} está configurado.`);
         }
-        const game = await remember(memory, `g:${id}`, 24 * HOUR, () => provider.getById(providerId));
+        const game = await remember(memory, `g:${id}`, 24 * HOUR, () => source.getById(providerId));
         if (!game) throw httpError(404, 'Jogo não encontrado.');
-        return { ...tag, game };
+        return { provider: source.name, game };
       },
     },
   });

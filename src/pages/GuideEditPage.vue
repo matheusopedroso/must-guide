@@ -19,6 +19,9 @@ import { useIsStuck } from '@/composables/useIsStuck';
 import { provideCollectibleContext } from '@/composables/guide/useCollectibles';
 import { collectiblesOf } from '@/utils/collectibles';
 import { parseGuideId } from '@/utils/guideIds';
+import { normalizeName } from '@/utils/text';
+import { listDrafts, loadDraft } from '@/services/draft.service';
+import { useToast } from '@/composables/useToast';
 import { APP_NAME } from '@/config/app';
 
 // /guia/novo → escolher o jogo · /guia/:id/editar → editor (aba aberta em ?aba=).
@@ -30,7 +33,9 @@ const guideId = computed(() => String(route.params.id ?? ''));
 const parsed = computed(() => parseGuideId(guideId.value));
 const gameId = computed(() => parsed.value.gameId ?? '');
 const isDlc = computed(() => !!parsed.value.groupId);
-const { game, loading, error, set: setGame } = useGameDetails(gameId);
+// Jogo: a cópia guardada no guia (deste guia ou, numa DLC nova, do jogo base) → sem ir à API de jogos
+const savedGame = (id) => loadDraft(guideId.value)?.game ?? loadDraft(id)?.game;
+const { game, loading, error, set: setGame } = useGameDetails(gameId, { saved: savedGame });
 const { draft, status: saveStatus, syncing, cloud } = provideGuideDraft(game, guideId);
 const pageTitle = computed(() => (!gameId.value ? 'Novo guia' : isDlc.value ? 'Editar guia da DLC' : 'Editar guia'));
 const subtitle = computed(() => {
@@ -43,9 +48,23 @@ const { tabs, available, activeTab, active, add: addTab, remove: removeTab } = u
 const collectibleItems = computed(() => collectiblesOf(draft.value));
 provideCollectibleContext({ items: collectibleItems, byId: computed(() => new Map(collectibleItems.value.map((c) => [c.id, c]))) });
 
-function selectGame(selected) {
+const toast = useToast();
+
+function openGame(selected) {
   setGame(selected); // já temos os dados: evita buscar de novo
   router.replace({ name: 'guide-edit', params: { id: selected.id } });
+}
+
+// Já existe guia deste jogo com outro id (ex.: feito com o RAWG e agora a busca é no IGDB)? Abre o existente
+// — "Criar outro" segue com o novo (remake com o mesmo nome, por exemplo).
+function selectGame(selected) {
+  const name = normalizeName(selected.title);
+  const existing = listDrafts().find((d) => !d.dlc && d.gameId !== selected.id && normalizeName(d.game?.title) === name);
+  if (!existing) return openGame(selected);
+  router.replace({ name: 'guide-edit', params: { id: existing.gameId } });
+  toast.show(`Você já tem um guia de ${existing.game.title} — abri ele.`, 'info', {
+    action: { label: 'Criar outro', run: () => openGame(selected) },
+  });
 }
 
 const changeGame = () => router.push({ name: 'guide-new' });

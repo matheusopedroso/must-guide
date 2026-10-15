@@ -6,6 +6,21 @@ import { hasRichContent } from './html';
 // Formato do guia. É o mesmo documento do Firestore (guides/{gameId}) e do rascunho no navegador.
 export const DRAFT_VERSION = 1;
 
+// Dados do jogo guardados no próprio guia: abrir, editar e ler não dependem da API de jogos (nem do provedor
+// ativo — trocar RAWG ⇄ IGDB não "perde" os guias). Só entram campos preenchidos, por cima da cópia salva:
+// um jogo vindo da busca (sem resumo) não apaga o resumo já guardado.
+const GAME_FIELDS = ['id', 'provider', 'providerId', 'title', 'slug', 'summary', 'cover', 'year', 'platforms', 'genres', 'sourceUrl'];
+const filled = (v) => v != null && v !== '' && !(Array.isArray(v) && !v.length);
+
+export function gameSnapshot(game, saved = null) {
+  const snap = { ...saved };
+  for (const key of GAME_FIELDS) if (filled(game?.[key])) snap[key] = game[key];
+  return snap;
+}
+
+// Cópia incompleta (antiga: só id, título e capa; ou da busca: sem resumo) → vale completar com a API
+export const isPartialSnapshot = (g) => !g?.summary || !('year' in g || 'platforms' in g);
+
 // dlc: { groupId, name, icon } → guia separado da DLC (guideId "jogo~grupo", parentId = jogo)
 export const createDraft = (game, { dlc = null } = {}) => ({
   v: DRAFT_VERSION,
@@ -13,7 +28,7 @@ export const createDraft = (game, { dlc = null } = {}) => ({
   gameId: game.id,
   parentId: dlc ? game.id : null, // guia de DLC: o guia do jogo base
   dlc: dlc ? { groupId: dlc.groupId, name: dlc.name ?? '', icon: dlc.icon ?? null } : null,
-  game: { id: game.id, title: game.title, cover: game.cover ?? null },
+  game: gameSnapshot(game),
   status: 'draft', // draft | published (publicado = qualquer um lê; ver firestore.rules)
   publishedAt: null, // ISO da 1ª publicação
   tabs: [], // abas opcionais ativadas (ids de config/guideTabs)
@@ -33,7 +48,7 @@ export const createDraft = (game, { dlc = null } = {}) => ({
 // Garante todos os campos ao ler um rascunho antigo ou incompleto
 export function normalizeDraft(raw, game) {
   const base = createDraft(game, { dlc: raw?.dlc });
-  return { ...base, ...raw, guideId: raw?.guideId ?? base.guideId, game: base.game, stats: { ...base.stats, ...raw?.stats } };
+  return { ...base, ...raw, guideId: raw?.guideId ?? base.guideId, game: gameSnapshot(game, raw?.game), stats: { ...base.stats, ...raw?.stats } };
 }
 
 // Vazia = nenhum campo preenchido (texto sem conteúdo real também conta como vazio)

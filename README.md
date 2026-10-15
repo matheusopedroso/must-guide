@@ -280,8 +280,15 @@ Estilo em `src/styles/components/_tooltip.scss` (só CSS; não aparece em telas 
 | IGDB | `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | app em dev.twitch.tv (exige 2FA) · capas verticais |
 
 1. Coloque as chaves no `.env.local` (dev) e no Secret Manager (`firebase functions:secrets:set NOME`).
-2. Crie `functions/.env` a partir do `functions/.env.example` e mude `GAMES_PROVIDER`.
+2. Mude `GAMES_PROVIDER` (no `.env.local` ou no `functions/.env`, a partir do `functions/.env.example`).
 3. Reinicie o `npm run dev` / rode `npm run deploy:functions`.
+
+**Guias feitos com o outro provedor continuam abrindo.** O id do jogo leva o provedor (`rawg-123`, `igdb-456`), mas:
+- o guia guarda uma cópia do jogo (`game`: título, capa, ano, plataformas, gêneros, resumo — `gameSnapshot` em
+  `src/utils/guideDraft.js`) → editor e leitura usam a cópia, sem ir à API; cópia incompleta é completada em segundo plano;
+- `/api/games/game/:id` usa o provedor do prefixo do id quando a chave dele também está no `.env.local`;
+- ao escolher um jogo em "Criar guia", se já existir guia com o mesmo nome (de outro provedor), abre o existente
+  (com a opção "Criar outro").
 
 ## Utilitárias SCSS
 

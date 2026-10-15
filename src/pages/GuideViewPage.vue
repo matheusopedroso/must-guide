@@ -43,7 +43,7 @@ const gameId = computed(() => parseGuideId(guideId.value).gameId ?? '');
 const isDlc = computed(() => !!guide.value?.dlc);
 
 const { guide, source, loading, error } = useGuide(guideId);
-const { game } = useGameDetails(computed(() => (guide.value ? gameId.value : ''))); // ano, gêneros, resumo
+const { game } = useGameDetails(computed(() => (guide.value ? gameId.value : '')), { saved: () => guide.value?.game }); // ano, gêneros, resumo (guardados no guia)
 // Guia do jogo: os guias das DLCs (cada DLC é um guia separado)
 const { items: dlcGuides } = useDlcGuides(computed(() => (guide.value && !guide.value.dlc ? gameId.value : '')));
 const { enabled, isAdmin } = useAuth();

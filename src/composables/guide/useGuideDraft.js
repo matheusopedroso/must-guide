@@ -2,7 +2,7 @@ import { computed, inject, nextTick, onBeforeUnmount, provide, ref, watch } from
 import { loadDraft, saveDraft } from '@/services/draft.service';
 import { fetchGuide, saveGuide } from '@/services/guides.service';
 import { useAuth } from '@/composables/useAuth';
-import { createDraft, editedAt, isBlankDraft, normalizeDraft } from '@/utils/guideDraft';
+import { createDraft, editedAt, gameSnapshot, isBlankDraft, normalizeDraft } from '@/utils/guideDraft';
 import { guideIdOf, parseGuideId } from '@/utils/guideIds';
 
 const KEY = Symbol('guide-draft');
@@ -133,6 +133,14 @@ export function provideGuideDraft(game, guideId) {
     },
     { immediate: true },
   );
+
+  // Jogo completado depois de abrir (ex.: veio da busca sem resumo): atualiza a cópia guardada no guia
+  watch(game, (g) => {
+    const d = draft.value;
+    if (!d || !g || g.id !== d.gameId) return;
+    const snap = gameSnapshot(g, d.game);
+    if (JSON.stringify(snap) !== JSON.stringify(d.game)) d.game = snap;
+  });
 
   // Entrou (ou virou admin) com o guia aberto: sincroniza
   watch(cloud, (on) => on && syncFromCloud());

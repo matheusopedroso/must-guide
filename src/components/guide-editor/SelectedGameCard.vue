@@ -13,7 +13,7 @@ const props = defineProps({
 defineEmits(['change']);
 
 const meta = computed(() =>
-  props.game ? [props.game.year, props.game.platforms.slice(0, 4).join(' · ')].filter(Boolean).join(' · ') : '',
+  props.game ? [props.game.year, (props.game.platforms ?? []).slice(0, 4).join(' · ')].filter(Boolean).join(' · ') : '',
 );
 </script>
 

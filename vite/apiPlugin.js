@@ -26,8 +26,15 @@ export function apiPlugin() {
       if (missing.length) logger.warn(`\n[api] Faltando no .env.local: ${missing.join(', ')}\n`);
       logger.info(`[api] jogos: ${provider} · troféus: psn`);
 
+      // Outros provedores com chave no .env.local: abrem os jogos dos guias antigos (rawg-… com IGDB ativo e vice-versa)
+      const others = Object.fromEntries(
+        Object.entries(PROVIDERS)
+          .filter(([name, p]) => name !== provider && p.secrets.every((s) => env[s]))
+          .map(([name, p]) => [name, p.create(getSecret)]),
+      );
+
       const apis = {
-        '/api/games': createGamesApi(create(getSecret)),
+        '/api/games': createGamesApi(create(getSecret), others),
         '/api/trophies': createTrophiesApi(getSecret),
       };
 
