@@ -101,6 +101,7 @@ export function summarizeGuide(g, source) {
     cover: g.game?.cover ?? null,
     status: g.status === 'published' ? 'published' : 'draft',
     updatedAt: g.updatedAt ?? null,
+    publishedAt: g.publishedAt ?? null,
     platforms: (g.versions ?? []).map((v) => v.platform).filter(Boolean),
     tips: Object.values(g.trophies ?? {}).filter((n) => hasRichContent(n.tip)).length,
     difficulty: g.stats?.difficulty ?? 0,

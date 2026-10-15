@@ -115,6 +115,18 @@ o app continua funcionando só com o rascunho no navegador.
 
 O SDK só é baixado se o aparelho já teve login ou ao clicar em **Entrar** (quem só visita não carrega nada).
 
+## Início
+
+Sem busca, antes dos "Populares agora":
+- **Continuar editando** (só quem edita): os 4 guias editados por último (navegador + nuvem), com status, dificuldade
+  e "editado há 5 minutos" — tocar abre o **editor**.
+- **Guias publicados** (todo mundo): capa, nome, dificuldade e dicas, do mais novo para o mais antigo (até 12) —
+  tocar abre a **leitura**.
+
+O admin já lê todos os guias para a primeira lista, então os publicados saem dali (sem outra leitura no Firestore);
+quem não é admin lê só os publicados, guardados 5 min na memória. Peças: `useHomeGuides.js`, `GuideCoverCard.vue`,
+`GuideLinkList` (modo `edit`) e `timeAgo` em `utils/date.js`.
+
 ## Publicar e ler o guia
 
 | Rota | O quê |
