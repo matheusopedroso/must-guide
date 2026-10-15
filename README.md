@@ -182,8 +182,10 @@ soltas) viram a Página 1 ao abrir (`toPages` em `normalizeDraft`).
 No editor de qualquer aba de texto:
 - **Cartão do troféu** (ícone de cartão): escolhe o troféu e ele entra como bloco entre os parágrafos
   (`<div class="trophy-card" data-trophy-card="12">Nome</div>`). Na leitura, `RefText` monta o cartão completo
-  com a lista e o seu progresso (`fillTrophyCard`): ícone, descrição, tipo, % dos jogadores com barra e "você tem";
-  tocar abre o troféu.
+  com a lista e o seu progresso (`fillTrophyCard`), com o **mesmo visual da grade "Troféus desta seção"**
+  (`.trophy-tile`, global em `_trophy-ref.scss`): ícone, troféu na cor do tipo + nome, descrição e o check verde se
+  você tem; raridade na dica. Tocar abre o troféu. Troféu citado **sozinho numa linha** (o parágrafo só tem o chip)
+  também vira esse cartão na leitura (`promoteLoneTrophyRefs`); no meio da frase continua chip.
 - **Contador** (#): "6/18 chefes derrotados" — feito, total, texto e troféu ligado (opcional; o total vem da PSN
   quando o troféu tem contador). Com troféu vira um chip que leva a ele (`a.trophy-ref.trophy-count`); sem, `span.count-tag`.
 - **Troféu citado entra na lista da seção:** chip, contador ou cartão novo no texto → o troféu vai sozinho para

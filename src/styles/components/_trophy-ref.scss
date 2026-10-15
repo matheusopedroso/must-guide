@@ -105,127 +105,135 @@ a.trophy-ref.trophy-count b,
   -webkit-box-decoration-break: clone;
 }
 
-// Cartão do troféu no texto (como o TrueAchievements). No editor (e antes de carregar a lista) é só o nome
-// com o troféu na cor do tipo; na leitura (is-filled) ganha ícone, descrição, tipo, raridade e "você tem".
-.trophy-card {
+// Cartão de troféu (.trophy-tile): o MESMO visual na grade "Troféus desta seção" (SectionTrophyGrid) e no troféu
+// citado no texto (cartão do troféu ou troféu sozinho numa linha — RefText). Ícone, troféu na cor do tipo + nome,
+// descrição; conquistado fica verde com o check.
+.trophy-tile {
   display: flex;
   align-items: center;
   gap: space(2);
-  margin: space(2) 0;
-  padding: space(1) space(2);
+  padding: space(1);
   border: 1px solid var(--border);
-  border-radius: $r2;
-  background: var(--surface-2);
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  transition: border-color 0.15s, background 0.15s;
+  border-radius: $r1;
+  background: var(--surface);
+  transition: border-color 0.15s;
 
-  &:hover,
-  &:focus-visible {
+  &:hover {
     border-color: var(--border-strong);
-  }
-
-  // Ícone do troféu na cor do tipo (some quando o cartão é montado com o ícone de verdade)
-  &:not(.is-filled)::before {
-    content: '';
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    background: var(--trophy-bronze);
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978'/%3E%3Cpath d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978'/%3E%3Cpath d='M18 9h1.5a1 1 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z'/%3E%3Cpath d='M6 9H4.5a1 1 0 0 1 0-5H6'/%3E%3C/svg%3E") center / contain no-repeat;
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978'/%3E%3Cpath d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978'/%3E%3Cpath d='M18 9h1.5a1 1 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z'/%3E%3Cpath d='M6 9H4.5a1 1 0 0 1 0-5H6'/%3E%3C/svg%3E") center / contain no-repeat;
-  }
-
-  @each $type in 'platinum', 'gold', 'silver', 'bronze' {
-    &[data-type='#{$type}']::before {
-      background: var(--trophy-#{$type});
-    }
-
-    &[data-type='#{$type}'] .trophy-card__name::before {
-      background: var(--trophy-#{$type});
-    }
-  }
-
-  &.is-filled {
-    align-items: flex-start;
-    padding: space(2);
-    font-weight: 400;
   }
 
   &.is-earned {
     border-color: color-mix(in srgb, var(--earned) 45%, transparent);
-    background: color-mix(in srgb, var(--earned) 8%, var(--surface-2));
+    background: color-mix(in srgb, var(--earned) 10%, var(--surface));
+  }
+
+  &__main {
+    text-align: left;
   }
 
   &__icon {
-    width: 64px;
-    height: 64px;
+    position: relative;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
     border-radius: $r1;
-    background: var(--surface);
-    overflow: hidden;
+    background: var(--surface-2);
 
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      border-radius: inherit;
     }
   }
 
-  &__body {
+  &__check {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
     display: flex;
-    flex-direction: column;
-    gap: $space-half;
-    flex: 1;
-    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--earned);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    box-shadow: 0 0 0 2px var(--surface);
   }
 
   &__name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+// Troféu na cor do tipo (o mesmo desenho do ícone da grade), para o cartão montado fora do Vue
+.trophy-type-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background: var(--trophy-bronze);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978'/%3E%3Cpath d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978'/%3E%3Cpath d='M18 9h1.5a1 1 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z'/%3E%3Cpath d='M6 9H4.5a1 1 0 0 1 0-5H6'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978'/%3E%3Cpath d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978'/%3E%3Cpath d='M18 9h1.5a1 1 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z'/%3E%3Cpath d='M6 9H4.5a1 1 0 0 1 0-5H6'/%3E%3C/svg%3E") center / contain no-repeat;
+
+  @each $type in 'platinum', 'gold', 'silver', 'bronze' {
+    &[data-type='#{$type}'] {
+      background: var(--trophy-#{$type});
+    }
+  }
+}
+
+// Troféu no meio do texto (como o TrueAchievements): bloco entre os parágrafos com o visual do .trophy-tile,
+// da largura de uma coluna da grade. No editor (e antes de carregar a lista) mostra só o troféu e o nome.
+.trophy-card {
+  margin: space(2) 0;
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+
+  @include up(md) {
+    max-width: calc(50% - #{$space-half});
+  }
+
+  // Ainda sem os dados: troféu na cor do tipo + nome, no mesmo cartão
+  &:not(.is-filled) {
     display: flex;
     align-items: center;
     gap: space(1);
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 1.3;
+    padding: space(1) space(2);
+    border: 1px solid var(--border);
+    border-radius: $r1;
+    background: var(--surface);
 
-    // bolinha na cor do tipo
     &::before {
       content: '';
-      width: 8px;
-      height: 8px;
+      width: 14px;
+      height: 14px;
       flex-shrink: 0;
-      border-radius: 50%;
       background: var(--trophy-bronze);
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978'/%3E%3Cpath d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978'/%3E%3Cpath d='M18 9h1.5a1 1 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z'/%3E%3Cpath d='M6 9H4.5a1 1 0 0 1 0-5H6'/%3E%3C/svg%3E") center / contain no-repeat;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978'/%3E%3Cpath d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978'/%3E%3Cpath d='M18 9h1.5a1 1 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z'/%3E%3Cpath d='M6 9H4.5a1 1 0 0 1 0-5H6'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+    @each $type in 'platinum', 'gold', 'silver', 'bronze' {
+      &[data-type='#{$type}']::before {
+        background: var(--trophy-#{$type});
+      }
     }
   }
 
-  &__detail {
-    color: var(--text-muted);
-    font-size: 14px;
-    line-height: 1.5;
+  &.is-filled {
+    font-weight: 400;
   }
 
-  &__meta {
-    color: var(--text-subtle);
-    font-size: 12px;
-  }
-
-  &__bar {
-    height: 4px;
-    margin-top: $space-half;
-    border-radius: $r-full;
-    background: var(--surface);
-    overflow: hidden;
-
-    span {
-      display: block;
-      height: 100%;
-      background: var(--accent);
-    }
-  }
-
-  &.is-earned &__bar span {
-    background: var(--earned);
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }

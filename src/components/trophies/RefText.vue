@@ -3,7 +3,7 @@ import { computed, onMounted, useTemplateRef, watch } from 'vue';
 import { hasRichContent, sanitizeHtml, textToHtml } from '@/utils/html';
 import { useCollectibleContext } from '@/composables/guide/useCollectibles';
 import { useTrophyContext } from '@/composables/guide/useTrophyContext';
-import { fillTrophyCard } from '@/utils/trophyRef';
+import { fillTrophyCard, promoteLoneTrophyRefs } from '@/utils/trophyRef';
 
 // Leitura de um texto do guia (HTML do editor, sempre filtrado). Chip de troféu → emite `trophy` (id);
 // outros links abrem normal; tocar no resto do texto → `text` (ex.: abrir a edição).
@@ -32,8 +32,10 @@ function paintCollectibles() {
 onMounted(paintCollectibles);
 watch([safeHtml, () => collectibles?.collected?.value, () => collectibles?.byId?.value], paintCollectibles, { flush: 'post' });
 
-// Cartões dos troféus: monta com os dados da lista (sem a lista, fica o nome guardado no texto)
+// Cartões dos troféus: monta com os dados da lista (sem a lista, fica o nome guardado no texto).
+// Troféu citado sozinho numa linha também vira cartão (o mesmo da grade "Troféus desta seção").
 function paintTrophyCards() {
+  if (root.value && trophyCtx) promoteLoneTrophyRefs(root.value);
   const cards = root.value?.querySelectorAll('[data-trophy-card]');
   if (!cards?.length || !trophyCtx) return;
   const byId = new Map((trophyCtx.trophies.value ?? []).map((t) => [t.id, t]));

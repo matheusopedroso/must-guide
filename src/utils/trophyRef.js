@@ -30,42 +30,62 @@ export function counterHtml({ done, total, label, trophy }) {
 export const controllerKeyHtml = (key) =>
   `<span class="btn-key" data-key="${key.id}" title="${escapeHtml(key.ps === key.xbox ? key.ps : `${key.ps} / ${key.xbox}`)}" contenteditable="false">${escapeHtml(key.ps)}</span>`;
 
-// Monta o cartão completo dentro do bloco (leitura). DOM com textContent: nada do texto vira HTML.
+// Monta o cartão do troféu (leitura) com o mesmo visual da grade "Troféus desta seção" (.trophy-tile):
+// ícone (check verde se você tem), troféu na cor do tipo + nome e descrição. DOM com textContent: nada vira HTML.
 export function fillTrophyCard(el, trophy, stats) {
   const make = (tag, cls, text) => {
     const node = document.createElement(tag);
-    node.className = cls;
+    if (cls) node.className = cls;
     if (text) node.textContent = text;
     return node;
   };
   const type = TROPHY_TYPE_MAP[trophy.type] ?? TROPHY_TYPE_MAP.bronze;
-  const icon = make('span', 'trophy-card__icon');
+  const earned = !!stats?.earned;
+
+  const icon = make('span', 'trophy-tile__icon');
   if (trophy.icon) {
-    const img = make('img', '');
+    const img = make('img');
     img.src = trophy.icon;
     img.alt = '';
     img.loading = 'lazy';
     icon.append(img);
   }
-  const body = make('span', 'trophy-card__body');
-  body.append(make('span', 'trophy-card__name', trophy.name || 'Troféu oculto'));
-  if (trophy.detail) body.append(make('span', 'trophy-card__detail', trophy.detail));
-  const rate = stats?.rate;
-  const meta = [type.label, rate != null && `${formatRate(rate)} dos jogadores`, RARITY_LABELS[stats?.rarity], stats?.earned && 'Você tem ✓'];
-  body.append(make('span', 'trophy-card__meta', meta.filter(Boolean).join(' · ')));
-  if (rate != null) {
-    const bar = make('span', 'trophy-card__bar');
-    const fill = make('span', '');
-    fill.style.width = `${Math.min(100, Math.max(2, rate))}%`;
-    bar.append(fill);
-    body.append(bar);
-  }
+  if (earned) icon.append(make('span', 'trophy-tile__check', '✓'));
+
+  const typeIcon = make('span', 'trophy-type-icon');
+  typeIcon.dataset.type = trophy.type;
+  typeIcon.setAttribute('aria-label', type.label);
+  const name = make('span', 'trophy-tile__name d-flex align-center gap-1');
+  name.append(typeIcon, make('span', 'min-w-0', trophy.name || 'Troféu oculto'));
+
+  const body = make('span', 'd-flex flex-column min-w-0');
+  body.append(name);
+  if (trophy.detail) body.append(make('span', 'text-xs text-muted', trophy.detail));
+
   el.replaceChildren(icon, body);
-  el.classList.add('is-filled');
-  el.classList.toggle('is-earned', !!stats?.earned);
+  el.classList.add('trophy-tile', 'is-filled');
+  el.classList.toggle('is-earned', earned);
   el.setAttribute('role', 'button');
   el.tabIndex = 0;
+  el.title = [type.label, stats?.rate != null && `${formatRate(stats.rate)} dos jogadores`, RARITY_LABELS[stats?.rarity]].filter(Boolean).join(' · ');
   el.setAttribute('aria-label', `Troféu ${trophy.name}: ver na lista`);
+}
+
+// Troféu citado sozinho numa linha (o parágrafo só tem o chip) → vira o cartão (leitura).
+// Devolve os parágrafos trocados por <div data-trophy-card> para o RefText montar.
+export function promoteLoneTrophyRefs(root) {
+  for (const p of root.querySelectorAll('p')) {
+    const chips = p.querySelectorAll('a.trophy-ref:not(.trophy-count)');
+    if (chips.length !== 1) continue;
+    const rest = p.textContent.replace(chips[0].textContent, '').replace(/[\s\u00a0.,;:!?-]/g, '');
+    if (rest) continue; // tem texto além do chip: fica o chip no texto
+    const card = document.createElement('div');
+    card.className = 'trophy-card';
+    card.dataset.trophyCard = chips[0].dataset.trophy;
+    card.dataset.type = chips[0].dataset.type ?? 'bronze';
+    card.textContent = chips[0].textContent;
+    p.replaceWith(card);
+  }
 }
 
 // ids dos troféus citados num texto (chip, contador ou cartão; sem repetir)
