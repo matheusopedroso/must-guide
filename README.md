@@ -285,7 +285,7 @@ Estilo em `src/styles/components/_tooltip.scss` (só CSS; não aparece em telas 
 | Provedor | Chaves | Observações |
 |---|---|---|
 | RAWG | `RAWG_API_KEY` | capas horizontais (cortadas no card) · exige crédito com link (já exibido) |
-| IGDB | `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | app em dev.twitch.tv (exige 2FA) · capas verticais |
+| IGDB | `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | app em dev.twitch.tv (exige 2FA) · capas verticais · busca traz edições, remasters, expansões e DLCs com rótulo (`kind`) |
 
 1. Coloque as chaves no `.env.local` (dev) e no Secret Manager (`firebase functions:secrets:set NOME`).
 2. Mude `GAMES_PROVIDER` (no `.env.local` ou no `functions/.env`, a partir do `functions/.env.example`).

@@ -9,7 +9,7 @@ export const DRAFT_VERSION = 1;
 // Dados do jogo guardados no próprio guia: abrir, editar e ler não dependem da API de jogos (nem do provedor
 // ativo — trocar RAWG ⇄ IGDB não "perde" os guias). Só entram campos preenchidos, por cima da cópia salva:
 // um jogo vindo da busca (sem resumo) não apaga o resumo já guardado.
-const GAME_FIELDS = ['id', 'provider', 'providerId', 'title', 'slug', 'summary', 'cover', 'year', 'platforms', 'genres', 'sourceUrl'];
+const GAME_FIELDS = ['id', 'provider', 'providerId', 'title', 'slug', 'summary', 'cover', 'year', 'platforms', 'genres', 'sourceUrl', 'kind'];
 const filled = (v) => v != null && v !== '' && !(Array.isArray(v) && !v.length);
 
 export function gameSnapshot(game, saved = null) {

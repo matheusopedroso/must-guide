@@ -4,7 +4,7 @@ import GameCover from '@/components/ui/GameCover.vue';
 
 const props = defineProps({ game: { type: Object, required: true } });
 
-const meta = computed(() => [props.game.year, props.game.platforms.slice(0, 2).join(' · ')].filter(Boolean).join(' · '));
+const meta = computed(() => [props.game.kind, props.game.year, props.game.platforms.slice(0, 2).join(' · ')].filter(Boolean).join(' · '));
 </script>
 
 <template>

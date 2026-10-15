@@ -62,7 +62,7 @@ function onKeydown(e) {
 
 useClickOutside(root, open, close);
 
-const meta = (g) => [g.year, g.platforms.slice(0, 3).join(' · ')].filter(Boolean).join(' · ');
+const meta = (g) => [g.kind, g.year, g.platforms.slice(0, 3).join(' · ')].filter(Boolean).join(' · '); // kind: edição, remaster, DLC…
 </script>
 
 <template>

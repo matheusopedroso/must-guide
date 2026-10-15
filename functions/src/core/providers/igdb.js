@@ -14,7 +14,35 @@ const FIELDS = [
   'cover.image_id',
   'platforms.name',
   'genres.name',
+  'version_title',
+  'version_parent',
+  'game_type.type',
 ].join(',');
+
+// Tipo do jogo no IGDB (game_type.type) → rótulo em português. Jogo principal fica sem rótulo.
+// Edições (Deluxe, Director's Cut…) são "versões" de outro jogo (version_parent) e também aparecem na busca:
+// cada uma pode ter lista de troféus própria na PSN.
+const KIND_LABELS = {
+  DLC: 'DLC',
+  Expansion: 'Expansão',
+  Bundle: 'Coletânea',
+  'Standalone Expansion': 'Expansão independente',
+  Episode: 'Episódio',
+  Season: 'Temporada',
+  Remake: 'Remake',
+  Remaster: 'Remaster',
+  'Expanded Game': 'Versão ampliada',
+  Port: 'Port',
+};
+const HIDDEN_TYPES = new Set(['Mod', 'Update', 'Fork', 'Pack']); // não viram guia de troféus
+
+function kindOf(g) {
+  if (g.version_parent) {
+    const title = g.version_title?.trim();
+    return title && !g.name.toLowerCase().includes(title.toLowerCase()) ? `Edição: ${title}` : 'Edição';
+  }
+  return KIND_LABELS[g.game_type?.type] ?? null;
+}
 
 const escape = (s) => s.replace(/["\\]/g, '\\$&');
 
@@ -32,6 +60,7 @@ const mapGame = (g) =>
     genres: (g.genres ?? []).map((x) => x.name),
     rating: g.total_rating ? Math.round(g.total_rating) : null,
     sourceUrl: g.url ?? null,
+    kind: kindOf(g),
   });
 
 // getSecret(nome) → valor. Sem dependência do Firebase: roda no Vite (dev) e na function
@@ -69,14 +98,15 @@ export function createIgdbProvider(getSecret) {
 
     if (res.status === 401 && retry) return query(body, false);
     if (!res.ok) throw new Error(`IGDB games ${res.status}: ${await res.text()}`);
-    return (await res.json()).map(mapGame);
+    return (await res.json()).filter((g) => !HIDDEN_TYPES.has(g.game_type?.type)).map(mapGame);
   }
 
   return {
     name: 'igdb',
 
-    search: (text, limit = 20) =>
-      query(`search "${escape(text)}"; fields ${FIELDS}; where version_parent = null; limit ${limit};`),
+    // Inclui edições e versões (antes ficavam de fora); pede alguns a mais porque mods/updates são descartados
+    search: async (text, limit = 30) =>
+      (await query(`search "${escape(text)}"; fields ${FIELDS}; limit ${limit + 10};`)).slice(0, limit),
 
     // Mais avaliados entre os lançados no último ano
     popular: (limit = 20) => {
