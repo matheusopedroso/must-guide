@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { FileQuestion, Pencil, Share2 } from 'lucide-vue-next';
 import PageBar from '@/components/ui/PageBar.vue';
@@ -15,6 +15,7 @@ import SectionsView from '@/components/sections/SectionsView.vue';
 import PagedSectionsView from '@/components/sections/PagedSectionsView.vue';
 import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailModal.vue';
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
+import GuideSearchModal from '@/components/guides/GuideSearchModal.vue';
 import { useDlcGuides } from '@/composables/guide/useDlcGuides';
 import { useGuideReader } from '@/composables/guide/useGuideReader';
 import { useQueryParam } from '@/composables/useQueryParam';
@@ -70,6 +71,17 @@ const tab = computed({
   set: (id) => (tabParam.value = id === 'geral' ? '' : id),
 });
 
+// Busca no guia: botão na barra ou a tecla "/" (fora de campos de texto)
+const searching = ref(false);
+function onSlash(e) {
+  if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || !guide.value) return;
+  if (e.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+  e.preventDefault();
+  searching.value = true;
+}
+onMounted(() => window.addEventListener('keydown', onSlash));
+onBeforeUnmount(() => window.removeEventListener('keydown', onSlash));
+
 // Tocar num troféu (texto, cartões, Visão geral) → página do troféu
 const pageOf = (id) => trophyPageRoute(guideId.value, id);
 const openTrophy = (id) => router.push(pageOf(id));
@@ -114,7 +126,15 @@ async function share() {
 
 <template>
   <div class="guide-page">
-    <PageBar :title="pageTitle" :share="guide?.status === 'published'" class="guide-page__bar" @back="back" @share="share" />
+    <PageBar
+      :title="pageTitle"
+      :share="guide?.status === 'published'"
+      :search="!!guide"
+      class="guide-page__bar"
+      @back="back"
+      @share="share"
+      @search="searching = true"
+    />
 
     <div v-if="loading" class="guide-page__skeleton" aria-busy="true" />
 
@@ -199,6 +219,14 @@ async function share() {
       </div>
 
       <CollectibleDetailModal v-model="openCollectible" />
+      <GuideSearchModal
+        v-model="searching"
+        :guide-id="guideId"
+        :guide="guide"
+        :trophies="list?.trophies ?? []"
+        :get-note="getNote"
+        @open-collectible="openCollectible = $event"
+      />
     </template>
   </div>
 </template>

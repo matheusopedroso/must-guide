@@ -138,6 +138,15 @@ Classes de texto das páginas de detalhe em `src/styles/components/_detail-page.
 No celular (rota com `meta.immersive`): sem a barra de navegação do topo, a imagem do jogo nítida (1280px) na largura
 da tela até o alto, voltar/compartilhar redondos por cima e a PageBar completa só depois de rolar — como no Must Watch.
 
+### Busca no guia
+
+Lupa na `PageBar` da leitura ou a tecla **/** (fora de campos de texto) abrem `GuideSearchModal`: busca no texto de
+todas as abas e páginas, nos troféus (nome PT/EN, descrição, dica e capítulo) e nos coletáveis (nome, tipo, local e
+descrição). Sem acento e sem maiúsculas ("lamina" acha "lâmina"), resultados separados por tipo com o trecho em destaque.
+Tocar leva à seção (aba, página e `#secao-…`), à página do troféu ou abre o coletável; **Enter** abre o primeiro.
+Lógica em `src/utils/guideSearch.js` (`buildSearchIndex` monta o índice só com a busca aberta; `searchGuide` pontua:
+título que começa com o termo > título que contém > só no texto).
+
 ## Abas de seções (Guia, Roadmap, Coletáveis, Detonado, Perdíveis, Online, Dicas)
 
 As duas abas usam o mesmo modelo, configurado em `src/config/guideTabs.js` (`sections`: onde guardar, nome da
@@ -417,9 +426,9 @@ npm run test:all                 # os dois — rode antes de cada commit
 
 - **Unidade** (`tests/unit`, Vitest + jsdom): funções de `src/utils` — o que passa e o que sai no filtro do texto,
   varinha, troféu sozinho vira cartão, cópia do jogo, guia antigo → páginas, recorte jogo base/DLC, "onde aparece",
-  plano do backup.
+  plano do backup, busca no guia.
 - **Ponta a ponta** (`tests/e2e`, Playwright): DLC, Guia em páginas, ferramentas do texto (contador, cartão, botões
-  PS/Xbox, caixa de aviso, spoiler, imagem), página do troféu, checklist, apagar, trocar o jogo, backup e página do jogo.
+  PS/Xbox, caixa de aviso, spoiler, imagem), página do troféu, busca no guia, checklist, apagar, trocar o jogo, backup e página do jogo.
 - **Sem internet e sem as suas chaves:** `playwright.config.js` sobe o Vite com `tests/mocks/vite.config.js`
   (Firebase de mentira no localStorage — `tests/mocks/firebase`) e simula RAWG, IGDB e PSN no servidor
   (`tests/mocks/network`, via `NODE_OPTIONS`). As variáveis do teste vencem o `.env.local`.

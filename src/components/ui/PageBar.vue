@@ -1,5 +1,5 @@
 <script setup>
-import { ArrowLeft, Share2 } from 'lucide-vue-next';
+import { ArrowLeft, Search, Share2 } from 'lucide-vue-next';
 import { useScrolledPast } from '@/composables/useScrolledPast';
 
 // Barra flutuante das páginas de detalhe (igual à BarraFlutuante do Must Watch):
@@ -9,8 +9,9 @@ import { useScrolledPast } from '@/composables/useScrolledPast';
 defineProps({
   title: { type: String, default: '' },
   share: { type: Boolean, default: true },
+  search: Boolean, // botão de busca (ex.: buscar no guia)
 });
-defineEmits(['back', 'share']);
+defineEmits(['back', 'share', 'search']);
 
 const scrolled = useScrolledPast(140);
 </script>
@@ -23,6 +24,16 @@ const scrolled = useScrolledPast(140);
     <p class="pbar__title truncate fw-600" :title="title">{{ title }}</p>
     <div class="d-flex align-center gap-1">
       <slot name="actions" />
+      <button
+        v-if="search"
+        type="button"
+        class="pbar__btn d-flex align-center justify-center tooltip-left"
+        aria-label="Buscar no guia"
+        data-tooltip="Buscar (/)"
+        @click="$emit('search')"
+      >
+        <Search :size="18" :stroke-width="1.9" />
+      </button>
       <button
         v-if="share"
         type="button"
