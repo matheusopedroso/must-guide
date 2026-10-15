@@ -17,6 +17,7 @@ const props = defineProps({
   getNote: { type: Function, required: true },
   backlinks: { type: Map, required: true },
   focus: { type: Number, default: null },
+  pageOf: { type: Function, default: null }, // id → rota da página do troféu (tocar no troféu abre a página)
 });
 const emit = defineEmits(['select-version', 'focused']);
 
@@ -47,6 +48,6 @@ watch(
     />
 
     <EmptyState v-if="error" :icon="TriangleAlert" title="Não deu para carregar os troféus" :text="error" />
-    <TrophyList v-else-if="list" ref="trophyList" :list="list" :progress="progress" :get-note="getNote" :backlinks="backlinks" readonly />
+    <TrophyList v-else-if="list" ref="trophyList" :list="list" :progress="progress" :get-note="getNote" :backlinks="backlinks" :page-of="pageOf" readonly />
   </div>
 </template>

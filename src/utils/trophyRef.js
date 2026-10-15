@@ -10,6 +10,9 @@ export const trophyRefHtml = (trophy, label = '') =>
 
 export const trophyAnchorId = (id) => `trofeu-${id}`;
 
+// Página do troféu (/guia/:id/trofeu/:trophyId) — leitura: tocar num troféu leva até ela
+export const trophyPageRoute = (guideId, trophyId) => ({ name: 'trophy-view', params: { id: guideId, trophyId: String(trophyId) } });
+
 // Cartão do troféu no meio do texto (como o TrueAchievements): bloco próprio, entre os parágrafos.
 // Guardado só com o id e o nome (o texto que aparece no editor); na leitura vira o cartão completo
 // (ícone, descrição, tipo, raridade e se você já tem) com os dados da lista — fillTrophyCard.

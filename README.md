@@ -200,6 +200,20 @@ A escolha (`useButtonStyle`, guardada no navegador) vai para `<html data-buttons
 (`styles/components/_controller-keys.scss`, formas em SVG e letras — sem logotipos). Na leitura, texto com botões
 mostra a escolha PlayStation / Xbox. Para um botão novo: adicione na config e o desenho no SCSS (mesmo id).
 
+## Página do troféu (`/guia/:id/trofeu/:trophyId`)
+
+Como a página de conquista do TrueAchievements (`TrophyPage`): topo (`DetailHero` com o ícone do troféu, tipo,
+selos — você tem, Perdível… —, descrição, nome em inglês, % de jogadores e "Troféu N de M"), ações (Na lista,
+Vídeo, Editar, Compartilhar), **Como conseguir** (o texto do guia, com botões PS/Xbox e troféus citados) + etiquetas,
+**Onde aparece no guia** (seções de todas as abas que citam o troféu ou o têm na lista — `utils/citations.js`, leva
+direto à seção: `?aba=…&pagina=…#secao-…`), **Citado nas dicas de** (outros troféus) e anterior/próximo
+(`PrevNextNav`, o mesmo das páginas do guia). Lateral: raridade com barra e quando você conquistou.
+- Na leitura, **tocar num troféu abre a página dele**: texto, cartões, grade da seção, Visão geral e o nome na aba
+  Troféus (`pageOf` → `trophyPageRoute`). "Na lista" volta à aba Troféus já no troféu (`?aba=trofeus&trofeu=12`).
+  No editor nada muda (rola até o troféu na lista).
+- A leitura do guia e a do troféu montam os dados do mesmo jeito: `useGuideReader` (guia, jogo, anotações,
+  versões, lista e progresso, coletáveis).
+
 ## Coletáveis (modelo do IGN)
 
 Na aba Coletáveis cada **região** (seção) tem a lista de coletáveis: nome, tipo, local/checkpoint, como achar e

@@ -1,8 +1,8 @@
 <script setup>
 import { computed, nextTick, useTemplateRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import SectionsView from './SectionsView.vue';
+import PrevNextNav from '@/components/ui/PrevNextNav.vue';
 import { pageName } from '@/utils/pages';
 
 // Aba paginada na leitura (Guia — como o IGN e o TrueAchievements): sumário das páginas (ao lado no desktop,
@@ -82,23 +82,7 @@ async function go(i) {
         @open-trophy="$emit('open-trophy', $event)"
       />
 
-      <!-- Anterior / próxima -->
-      <nav v-if="prev || next" class="pager" aria-label="Navegar entre as páginas">
-        <button v-if="prev" type="button" class="pager__btn surface radius-2 p-2 d-flex align-center gap-1" @click="go(prev.i)">
-          <ChevronLeft :size="20" class="shrink-0" />
-          <span class="d-flex flex-column min-w-0">
-            <span class="text-xs text-muted">Anterior</span>
-            <span class="fw-600 truncate">{{ prev.name }}</span>
-          </span>
-        </button>
-        <button v-if="next" type="button" class="pager__btn pager__btn--next surface radius-2 p-2 d-flex align-center gap-1" @click="go(next.i)">
-          <span class="d-flex flex-column min-w-0">
-            <span class="text-xs text-muted">Próxima</span>
-            <span class="fw-600 truncate">{{ next.name }}</span>
-          </span>
-          <ChevronRight :size="20" class="shrink-0" />
-        </button>
-      </nav>
+      <PrevNextNav :prev="prev" :next="next" label="Navegar entre as páginas" @go="go($event === 'prev' ? prev.i : next.i)" />
     </div>
   </div>
 </template>
@@ -161,28 +145,4 @@ async function go(i) {
   }
 }
 
-.pager {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: space(2);
-
-  &__btn {
-    text-align: left;
-    transition: background 0.15s, border-color 0.15s;
-
-    &:hover {
-      background: var(--surface-hover);
-    }
-
-    &--next {
-      grid-column: 2;
-      justify-content: flex-end;
-      text-align: right;
-
-      span {
-        align-items: flex-end;
-      }
-    }
-  }
-}
 </style>

@@ -21,6 +21,7 @@ const props = defineProps({
   citedBy: { type: Array, default: () => [] }, // troféus cujo "Como conseguir" cita este
   spoiler: Boolean, // troféu oculto com nomes escondidos (até tocar)
   readonly: Boolean, // leitura do guia: sem os botões de edição
+  to: { type: Object, default: null }, // leitura: página do troféu (o nome vira link)
 });
 const emit = defineEmits(['update-note']);
 const update = (patch) => emit('update-note', props.trophy.id, patch);
@@ -68,7 +69,8 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
 
       <div class="trophy__title d-flex flex-column gap-1 min-w-0">
         <h4 class="trophy__name spoil" @click="reveal">
-          {{ trophy.name || 'Troféu oculto' }}
+          <RouterLink v-if="to && !blurred" :to="to" class="trophy__link">{{ trophy.name || 'Troféu oculto' }}</RouterLink>
+          <template v-else>{{ trophy.name || 'Troféu oculto' }}</template>
           <span v-if="nameEn" class="trophy__name-en" lang="en">({{ nameEn }})</span>
         </h4>
         <p v-if="trophy.detail" class="trophy__detail spoil" @click="reveal">{{ trophy.detail }}</p>
@@ -173,6 +175,15 @@ const hasBody = computed(() => hasTip.value || editingTip.value || editingDetail
 </template>
 
 <style lang="scss" scoped>
+.trophy__link {
+  color: inherit;
+
+  &:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+}
+
 .trophy {
   scroll-margin-top: calc(var(--nav-space) + 64px); // barra de navegação + barra de abas fixa
   transition: box-shadow 0.2s;

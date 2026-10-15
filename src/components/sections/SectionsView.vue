@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import RefText from '@/components/trophies/RefText.vue';
 import SectionTrophyGrid from './SectionTrophyGrid.vue';
 import CollectibleCard from '@/components/collectibles/CollectibleCard.vue';
@@ -45,6 +46,14 @@ const w = computed(() => sectionWords(props.cfg));
 const hasKeys = computed(() => props.sections.some((s) => s.body?.includes('btn-key')));
 const flag = computed(() => TROPHY_FLAGS.find((f) => f.id === props.cfg.flag) ?? null);
 const anchor = (s) => `secao-${s.id}`;
+
+// Aberto com #secao-… (ex.: "Onde aparece no guia", na página do troféu): rola até a seção
+const route = useRoute();
+onMounted(async () => {
+  if (!route.hash.startsWith('#secao-')) return;
+  await nextTick();
+  document.getElementById(route.hash.slice(1))?.scrollIntoView({ block: 'start' });
+});
 const goToStage = (s) => document.getElementById(anchor(s))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 </script>
 

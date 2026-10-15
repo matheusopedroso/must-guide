@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, toRef } from 'vue';
+import { useRouter } from 'vue-router';
 import TrophyItem from './TrophyItem.vue';
 import TrophyCounts from './TrophyCounts.vue';
 import TrophyToolbar from './TrophyToolbar.vue';
@@ -15,6 +16,7 @@ const props = defineProps({
   getNote: { type: Function, required: true },
   backlinks: { type: Map, default: () => new Map() }, // troféu citado → ids de quem cita
   readonly: Boolean, // leitura do guia (sem edição)
+  pageOf: { type: Function, default: null }, // leitura: id → rota da página do troféu (nome e citações levam até ela)
 });
 defineEmits(['update-note']);
 
@@ -43,7 +45,10 @@ async function goTo(id) {
   el.classList.add('is-flash');
 }
 
-provideTrophyContext({ trophies: computed(() => props.list.trophies), progress: computed(() => props.progress), goTo });
+// Com página do troféu (leitura), citar um troféu leva à página dele; no editor, rola até ele na lista
+const router = useRouter();
+const open = (id) => (props.pageOf ? router.push(props.pageOf(id)) : goTo(id));
+provideTrophyContext({ trophies: computed(() => props.list.trophies), progress: computed(() => props.progress), goTo: open });
 defineExpose({ goTo }); // ex.: a Visão geral do guia leva até um troféu
 
 const showGroups = computed(() => props.list.groups.length > 1);
@@ -76,6 +81,7 @@ const groupName = (g) => (g.id === 'default' ? 'Jogo base' : g.name);
           v-for="t in g.trophies"
           :key="t.id"
           :trophy="t"
+          :to="pageOf ? pageOf(t.id) : null"
           :note="getNote(t.id)"
           :stats="stats(t.id)"
           :cited-by="citedBy(t.id)"

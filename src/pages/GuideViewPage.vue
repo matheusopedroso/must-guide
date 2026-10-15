@@ -14,18 +14,11 @@ import GuideTrophiesView from '@/components/guides/GuideTrophiesView.vue';
 import SectionsView from '@/components/sections/SectionsView.vue';
 import PagedSectionsView from '@/components/sections/PagedSectionsView.vue';
 import CollectibleDetailModal from '@/components/collectibles/CollectibleDetailModal.vue';
-import { provideCollectibleContext, useCollected } from '@/composables/guide/useCollectibles';
-import { collectiblesOf } from '@/utils/collectibles';
-import { parseGuideId } from '@/utils/guideIds';
 import GuideLinkList from '@/components/guides/GuideLinkList.vue';
 import { useDlcGuides } from '@/composables/guide/useDlcGuides';
-import { useGuide } from '@/composables/guide/useGuide';
-import { useTrophyData } from '@/composables/guide/useTrophyData';
-import { useTrophyNotes } from '@/composables/guide/useTrophyNotes';
-import { useTrophyVersions } from '@/composables/guide/useTrophyVersions';
-import { useGameDetails } from '@/composables/useGameDetails';
+import { useGuideReader } from '@/composables/guide/useGuideReader';
 import { useQueryParam } from '@/composables/useQueryParam';
-import { useAuth } from '@/composables/useAuth';
+import { trophyPageRoute } from '@/utils/trophyRef';
 import { useToast } from '@/composables/useToast';
 import { APP_NAME } from '@/config/app';
 import { absoluteUrl, copyText } from '@/utils/share';
@@ -41,35 +34,14 @@ const router = useRouter();
 const toast = useToast();
 // :id = guia do jogo ("rawg-123") ou de uma DLC ("rawg-123~001")
 const guideId = computed(() => String(route.params.id ?? ''));
-const gameId = computed(() => parseGuideId(guideId.value).gameId ?? '');
-const isDlc = computed(() => !!guide.value?.dlc);
 
-const { guide, source, loading, error } = useGuide(guideId);
-const { game } = useGameDetails(computed(() => (guide.value ? gameId.value : '')), { saved: () => guide.value?.game }); // ano, gêneros, resumo (guardados no guia)
+// Guia, jogo, troféus (anotações, versões, lista e progresso) e coletáveis: o mesmo da página do troféu
+const {
+  gameId, guide, source, loading, error, game, canEdit, isDlc, title: pageTitle,
+  getNote, backlinks, versions, active, activeId, list, progress, listLoading, listError, openCollectible,
+} = useGuideReader(guideId);
 // Guia do jogo: os guias das DLCs (cada DLC é um guia separado)
 const { items: dlcGuides } = useDlcGuides(computed(() => (guide.value && !guide.value.dlc ? gameId.value : '')));
-const { enabled, isAdmin } = useAuth();
-
-// Troféus (compartilhados pelas duas abas)
-const { getNote, backlinks } = useTrophyNotes(guide);
-const { versions, active, activeId } = useTrophyVersions(guide);
-const withProgress = computed(() => !enabled || isAdmin.value); // progresso da conta: só o admin
-const { list, progress, loading: listLoading, error: listError } = useTrophyData(active, { withProgress, scope: guide }); // jogo base ou a DLC
-
-// Coletáveis: progresso pessoal compartilhado por todas as abas (marcar no Detonado marca na aba Coletáveis)
-const { collected, toggle: toggleCollected } = useCollected(guideId);
-const collectibleItems = computed(() => collectiblesOf(guide.value));
-const collectibleById = computed(() => new Map(collectibleItems.value.map((c) => [c.id, c])));
-const openCollectible = ref(null);
-provideCollectibleContext({
-  items: collectibleItems,
-  byId: collectibleById,
-  collected,
-  toggle: toggleCollected,
-  open: (id) => (openCollectible.value = id),
-});
-
-const canEdit = computed(() => !enabled || isAdmin.value || source.value === 'local');
 
 // Abas de seções (Guia, Roadmap…): aparecem se estiverem no guia e tiverem alguma seção preenchida
 // (Perdíveis/Online também aparecem só com troféus marcados na aba Troféus)
@@ -98,12 +70,22 @@ const tab = computed({
   set: (id) => (tabParam.value = id === 'geral' ? '' : id),
 });
 
-// Visão geral → troféu: abre a aba e rola até ele
+// Tocar num troféu (texto, cartões, Visão geral) → página do troféu
+const pageOf = (id) => trophyPageRoute(guideId.value, id);
+const openTrophy = (id) => router.push(pageOf(id));
+
+// Vindo da página do troféu ("Ver na lista": ?aba=trofeus&trofeu=12): rola até ele na aba Troféus
+const trophyParam = useQueryParam('trofeu');
 const focus = ref(null);
-function openTrophy(id) {
-  tab.value = 'trofeus';
-  focus.value = id;
-}
+watch(
+  [trophyParam, list],
+  ([id, l]) => {
+    if (!id || !l) return;
+    focus.value = Number(id);
+    trophyParam.value = '';
+  },
+  { immediate: true },
+);
 
 const myProgress = computed(() => {
   const p = progress.value;
@@ -111,7 +93,6 @@ const myProgress = computed(() => {
   return { ...p, pct: Math.round((p.earned / p.total) * 100) };
 });
 
-const pageTitle = computed(() => (guide.value?.dlc ? guide.value.dlc.name || 'DLC' : (guide.value?.game?.title ?? 'Guia')));
 watch(pageTitle, (t) => guide.value && (document.title = `Guia: ${t} · ${APP_NAME}`));
 
 // Voltar: de onde veio; aberto direto → DLC volta ao guia do jogo, jogo volta a Meus guias
@@ -208,6 +189,7 @@ async function share() {
             :get-note="getNote"
             :backlinks="backlinks"
             :focus="focus"
+            :page-of="pageOf"
             @select-version="activeId = $event"
             @focused="focus = null"
           />

@@ -17,6 +17,7 @@ const routes = [
   },
   { path: '/guia/:id/editar', name: 'guide-edit', component: GuideEditPage, meta: { title: 'Editar guia' } },
   { path: '/jogo/:id', name: 'game', component: () => import('@/pages/GamePage.vue'), meta: { title: 'Jogo', immersive: true } },
+  { path: '/guia/:id/trofeu/:trophyId', name: 'trophy-view', component: () => import('@/pages/TrophyPage.vue'), meta: { title: 'Troféu', immersive: true } },
   { path: '/guia/:id', name: 'guide-view', component: () => import('@/pages/GuideViewPage.vue'), meta: { title: 'Guia', immersive: true } }, // celular: sem a barra do topo (imagem até o alto)
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ];
